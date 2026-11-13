@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Café Kafka</title>
+<meta name="description" content="Learn Apache Kafka by running a restaurant kitchen. Take orders, hire chefs and survive the Friday rush. Every move maps to a real Kafka idea. No Kafka knowledge needed.">
+<meta name="theme-color" content="#0F1113">
+<link rel="canonical" href="https://kafka.omersher.com/">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Café Kafka">
+<meta property="og:title" content="Café Kafka · learn Kafka by running a kitchen">
+<meta property="og:description" content="Learn Apache Kafka by running a restaurant kitchen. Take orders, hire chefs and survive the Friday rush. Every move maps to a real Kafka idea. No Kafka knowledge needed.">
+<meta property="og:url" content="https://kafka.omersher.com/">
+<meta property="og:image" content="https://kafka.omersher.com/og.png">
+<meta property="og:image:secure_url" content="https://kafka.omersher.com/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Neon Café Kafka sign: learn Apache Kafka by running a kitchen">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Café Kafka · learn Kafka by running a kitchen">
+<meta name="twitter:description" content="Learn Apache Kafka by running a restaurant kitchen. Take orders, hire chefs and survive the Friday rush. Every move maps to a real Kafka idea. No Kafka knowledge needed.">
+<meta name="twitter:image" content="https://kafka.omersher.com/og.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Yellowtail&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0F1113; --board2:#16191C; --line:#262B30; --steel:#3A4148;
+  --paper:#F6F2EA; --ink:#1D1B18; --ink2:#6A6256;
+  --brass:#D9A441; --amber:#FFB547; --heat:#FF8A3D; --tomato:#FF5E4D; --herb:#6DBF55; --neon:#FF5E3A;
+  --mut:#7D868E; --txt:#E9E5DC; --xr:#5FE0D0;
+  --mono:'Space Mono',ui-monospace,monospace; --sans:'Space Grotesk',ui-sans-serif,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;color:var(--txt);font:14px/1.5 var(--sans);
+  background:
+    radial-gradient(1000px 420px at 62% -160px,rgba(255,138,61,.20),transparent 70%),
+    linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px) 0 0/56px 28px,
+    linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px) 0 0/56px 28px,
+    var(--bg)}
+button{font:inherit;cursor:pointer}
+button:disabled{cursor:not-allowed}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.app{height:100vh;display:flex;flex-direction:column}
+
+/* header: neon sign over the pass */
+.hdr{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:12px 20px;flex:none;
+  background:linear-gradient(#17191C,rgba(18,20,22,.85));border-bottom:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.logo{display:flex;align-items:center;gap:10px}
+.neon{font-family:'Yellowtail',cursive;font-size:32px;line-height:1;color:#FFE6DA;padding:0 2px 4px;
+  text-shadow:0 0 3px #FFB08F,0 0 10px var(--neon),0 0 24px rgba(255,70,30,.75),0 0 44px rgba(255,70,30,.35);animation:flick 7s infinite}
+@keyframes flick{0%,90%,93%,100%{opacity:1}91.5%{opacity:.55}}
+.open{font:700 9px var(--mono);letter-spacing:.2em;color:#FF6F86;border:1.5px solid #FF4D6D;border-radius:4px;padding:2px 6px;
+  text-shadow:0 0 6px #FF4D6D;box-shadow:0 0 10px rgba(255,77,109,.55),inset 0 0 6px rgba(255,77,109,.35)}
+.tag{font:700 9.5px var(--mono);color:var(--mut);letter-spacing:.16em;text-transform:uppercase}
+.hdr .right{margin-left:auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pill{width:30px;height:30px;border:1px solid #2E353B;background:#16191C;color:#5F6971;border-radius:8px;
+  font:700 12px var(--mono);transition:all .15s}
+.pill:hover:not(:disabled){border-color:var(--amber);color:var(--paper)}
+.pill.on{background:var(--amber);border-color:var(--amber);color:#1A1206;box-shadow:0 0 16px rgba(255,181,71,.55)}
+.pill.won:not(.on){color:#8FD27A;border-color:#2F4A2A}
+.pill:disabled{opacity:.35}
+.tool{border:1px solid #2E353B;background:#16191C;color:var(--txt);border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:500}
+.tool:hover:not(:disabled){border-color:var(--amber)}
+.tool:disabled{opacity:.35}
+.tool.xon{background:var(--xr);border-color:var(--xr);color:#0F2A2A;font-weight:700;box-shadow:0 0 16px rgba(95,224,208,.5)}
+
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:330px 1fr;gap:16px;padding:14px 20px 18px}
+
+/* the lesson panel is a clipboard */
+.panel{position:relative;background:linear-gradient(#F7F3EB,#EEE8DB);color:var(--ink);border-radius:16px;padding:40px 20px 18px;
+  overflow-y:auto;border:9px solid #23272B;box-shadow:0 0 0 1px #363C42,0 20px 44px rgba(0,0,0,.55);display:flex;flex-direction:column;scrollbar-width:thin}
+.panel::before{content:'';position:absolute;top:6px;left:50%;transform:translateX(-50%);width:120px;height:22px;border-radius:6px 6px 12px 12px;
+  background:linear-gradient(#E3E7EA,#9AA3AA 55%,#B9C1C7);box-shadow:0 3px 6px rgba(0,0,0,.3),inset 0 1px 0 #fff}
+.panel::after{content:'';position:absolute;top:13px;left:50%;transform:translateX(-50%);width:30px;height:7px;border-radius:4px;background:#5B646B;box-shadow:inset 0 1px 2px rgba(0,0,0,.5)}
+.chip{font:700 9.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink2);border-bottom:1.5px dashed #CFC4AE;padding-bottom:8px}
+.panel h2{font-family:var(--sans);font-weight:700;font-size:27px;letter-spacing:-.02em;margin:10px 0 4px;color:#14120F;line-height:1.1}
+.panel p{margin:8px 0;font-size:13.5px;color:#2C2822}
+.panel b{color:#14120F}
+.panel h4{margin:16px 0 8px;font:700 9.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);
+  border-top:1.5px dashed #CFC4AE;padding-top:12px}
+.storyd summary{cursor:pointer;list-style:none;font:700 9.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink2);margin-top:6px}
+.storyd summary::-webkit-details-marker{display:none}
+.storyd summary::before{content:'▸ ';display:inline-block;transition:transform .2s}
+.storyd[open] summary::before{transform:rotate(90deg)}
+.storyd:not([open]) summary::after{content:' · tap to reread'}
+.goals{list-style:none;margin:0;padding:0}
+.goals li{display:flex;gap:10px;align-items:flex-start;margin:6px 0;font-size:13.5px;transition:color .3s}
+.goals .box{flex:none;width:18px;height:18px;border:2px solid #BDB096;border-radius:5px;margin-top:1px;
+  display:grid;place-items:center;font-size:11px;color:#fff;font-weight:700;transition:all .25s}
+.goals li.done .box{background:var(--herb);border-color:var(--herb);transform:scale(1.05)}
+.goals li.done .gt{color:#958B78;text-decoration:line-through}
+.goals li.cur .box{border-color:#E39A2E;background:#FFF1D6;color:#C9781A;font-size:8px}
+.goals li.cur .gt{font-weight:700}
+.goals .pg{margin-left:auto;font:10.5px var(--mono);color:var(--ink2);flex:none}
+.goals i{color:var(--ink2)}
+.ctls{display:flex;flex-direction:column;gap:9px}
+.knob label{display:flex;justify-content:space-between;font:700 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.knob label b{color:var(--ink)}
+.knob input{width:100%;accent-color:#E39A2E}
+.knob .ends{display:flex;justify-content:space-between;font-size:14px;margin-top:-4px}
+.btn{border:none;border-radius:11px;padding:10px 14px;font-weight:700;font-size:13.5px;background:#1D2024;color:var(--paper);
+  transition:transform .1s,box-shadow .2s;text-align:left;display:flex;gap:8px;align-items:center}
+.btn small{font-weight:500;opacity:.6;font-size:11px;margin-left:auto}
+.btn:hover:not(:disabled){transform:translateY(-1px)}
+.btn:disabled{opacity:.35}
+.btn.gold{background:linear-gradient(#FFCB6E,#F2A03A);color:#1A1206;box-shadow:0 2px 0 #B8741F,0 8px 18px rgba(242,160,58,.3)}
+.btn.ghost{background:transparent;color:#4F483E;border:1.5px solid #D2C8B4}
+.btn.xr{background:#0F2A2A;color:var(--xr)}
+.glow{animation:glowp 1.1s ease-in-out infinite;border-radius:11px}
+@keyframes glowp{50%{box-shadow:0 0 0 3px var(--amber),0 0 22px rgba(255,181,71,.85)}}
+.row{display:flex;gap:6px}
+.row .btn{flex:1;justify-content:center}
+.trow{align-items:stretch}
+.trow .seg{flex:1;margin:0}
+.row .btn.ib{flex:none;width:40px;padding:0;font-size:15px}
+.seg{display:flex;background:#E6DFD0;border-radius:10px;padding:3px;margin-top:3px;gap:3px}
+.seg button{flex:1;border:none;background:transparent;color:var(--ink2);padding:7px 6px;font-size:12.5px;font-weight:700;border-radius:8px}
+.seg button.on{background:#1D2024;color:var(--paper);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+/* counters are little LED displays */
+.score{margin-top:auto;padding-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:6px;text-align:center}
+.score div{background:#121518;border-radius:10px;padding:7px 4px 6px;font:700 9px var(--mono);color:#6F7880;text-transform:uppercase;letter-spacing:.1em;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.8)}
+.score b{display:block;font-size:22px;line-height:1.2;color:var(--amber);text-shadow:0 0 10px rgba(255,181,71,.55);letter-spacing:.04em}
+.score .hot b{color:var(--tomato);text-shadow:0 0 10px rgba(255,94,77,.6)}
+
+/* the stage: a kitchen display ticker above the line */
+.stage{position:relative;min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px}
+.status{flex:none;height:52px;overflow:hidden;display:flex;align-items:center;gap:12px;border-radius:12px;padding:8px 14px 8px 8px;
+  font:700 12.5px/1.35 var(--mono);background:#08090A;border:1px solid #272C31;color:#C8CED3;
+  box-shadow:inset 0 0 22px rgba(0,0,0,.9),0 6px 18px rgba(0,0,0,.35)}
+.status::before{content:'KDS';flex:none;font-size:9px;letter-spacing:.16em;color:#08090A;background:#6F7880;border-radius:5px;padding:4px 7px}
+.status.ask{color:var(--amber);text-shadow:0 0 8px rgba(255,181,71,.5)}
+.status.ask::before{content:'NOW';background:var(--amber);box-shadow:0 0 12px rgba(255,181,71,.6)}
+.status.do{font-size:14.5px;color:#1A1206;border-color:transparent;text-shadow:none;
+  background:linear-gradient(#FFCB6E,#F2A03A);box-shadow:0 0 0 0 rgba(255,181,71,.7),0 8px 24px rgba(242,160,58,.35);animation:dopulse 1.6s ease-out infinite}
+.status.do::before{content:'YOUR TURN';font-size:10.5px;padding:6px 9px;background:#1A1206;color:var(--amber);box-shadow:none}
+@keyframes dopulse{0%{box-shadow:0 0 0 0 rgba(255,181,71,.7),0 8px 24px rgba(242,160,58,.35)}70%,100%{box-shadow:0 0 0 12px rgba(255,181,71,0),0 8px 24px rgba(242,160,58,.35)}}
+.status.huddle{color:#1A1206;border-color:transparent;text-shadow:none;
+  background:repeating-linear-gradient(-45deg,var(--amber) 0 14px,#E39A2E 14px 28px);background-size:40px 40px;animation:slide 1s linear infinite}
+.status.huddle::before{content:'HUDDLE';background:#1A1206;color:var(--amber)}
+.status.xr{box-shadow:inset 0 0 22px rgba(0,0,0,.9),inset 0 0 0 1px rgba(95,224,208,.5)}
+@keyframes slide{to{background-position:40px 0}}
+.scene{flex:1;min-height:0;overflow-y:auto;border-radius:16px;scrollbar-width:thin}
+.cwrap{position:relative}
+canvas{display:block;width:100%;touch-action:none;border-radius:16px}
+.coach{position:absolute;top:0;left:0;z-index:5;width:250px;background:var(--paper);color:var(--ink);border-radius:12px;padding:10px 13px 11px;
+  font-size:12.5px;line-height:1.45;box-shadow:0 14px 34px rgba(0,0,0,.55);border-left:4px solid var(--amber);
+  transition:opacity .25s,transform .25s;cursor:pointer}
+.coach.xr{border-left-color:var(--xr)}
+.coach[hidden]{display:block;opacity:0;transform:translateY(6px);pointer-events:none}
+.lesson[hidden]{display:none}
+.lesson.docked .arrow{display:none}
+.coach .arrow{position:absolute;width:12px;height:12px;background:var(--paper);transform:rotate(45deg)}
+.coach .who{font:700 9px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);display:block;margin-bottom:2px}
+.coach code{font:11px var(--mono);background:#DDF3EF;color:#0F5A52;padding:0 3px;border-radius:3px}
+
+/* the lesson card is a freshly printed kitchen ticket */
+.lesson{width:360px;cursor:default;padding:14px 16px 14px;font-size:13.5px;z-index:6;background:#FCFBF7;border-left:none;border-radius:3px;
+  box-shadow:0 18px 40px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.05)}
+.lesson::before,.lesson::after{content:'';position:absolute;left:0;right:0;height:7px;background-size:10px 7px}
+.lesson::before{top:-7px;background-image:linear-gradient(135deg,transparent 50%,#FCFBF7 50%),linear-gradient(-135deg,transparent 50%,#FCFBF7 50%)}
+.lesson::after{bottom:-7px;background-image:linear-gradient(45deg,transparent 50%,#FCFBF7 50%),linear-gradient(-45deg,transparent 50%,#FCFBF7 50%)}
+.lesson .arrow{background:#FCFBF7;z-index:1}
+.lesson .who{display:flex;justify-content:space-between;font-size:9.5px;color:#8C8170;border-bottom:1.5px dashed #D9D1C1;padding-bottom:6px;margin-bottom:6px}
+.lesson h5{margin:0 0 4px;font:700 18px/1.2 var(--sans);letter-spacing:-.01em;color:#14120F}
+.lesson .kit,.lesson .kaf{margin:8px 0;line-height:1.5}
+.lesson .kit>b:first-child,.lesson .kaf>b:first-child{display:block;font:700 9.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;margin-bottom:3px}
+.lesson .kit>b:first-child{color:#8C8170}
+.lesson .kaf{background:#0D2626;color:#CFEDEA;border-radius:10px;padding:9px 11px;box-shadow:inset 0 0 0 1px rgba(95,224,208,.25)}
+.lesson .kaf>b:first-child{color:var(--xr)}
+.lesson .kaf b{color:var(--xr)}
+.lesson .kaf code{background:#1B4140;color:var(--xr)}
+.lesson .btn{width:100%;justify-content:center;margin-top:6px}
+
+.veil{position:absolute;inset:0;z-index:9;display:grid;place-items:center;padding:20px;
+  background:rgba(10,12,14,.62);backdrop-filter:blur(3px);border-radius:16px}
+.veil[hidden]{display:none}
+.card{position:relative;background:#FCFBF7;color:var(--ink);border-radius:4px;padding:22px 26px;max-width:520px;width:100%;
+  box-shadow:0 24px 60px rgba(0,0,0,.6);animation:rise .35s ease}
+.card::before{content:'';position:absolute;left:0;right:0;top:-7px;height:7px;background-size:10px 7px;
+  background-image:linear-gradient(135deg,transparent 50%,#FCFBF7 50%),linear-gradient(-135deg,transparent 50%,#FCFBF7 50%)}
+@keyframes rise{from{transform:translateY(14px);opacity:0}}
+.card .mise{font:700 9.5px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#8C8170}
+.card h3{font:700 26px/1.12 var(--sans);letter-spacing:-.02em;margin:6px 0 8px}
+.card p{font-size:13.5px;margin:6px 0 14px}
+.card .tale{margin:10px 0 16px}
+.card .tale p{font-size:14px;line-height:1.5;margin:0 0 8px}
+.card .tale b{color:#B4651A}
+.card.intro{max-width:620px;padding:30px 38px 32px;max-height:100%;overflow-y:auto}
+.card.intro .mise{font-size:11px}
+.card.intro h3{font-size:34px;margin:8px 0 10px}
+.card.intro .tale{margin:14px 0 16px}
+.card .dish{font:700 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#B4651A;margin-top:-2px}
+.pill.freep{width:auto;padding:0 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.panel.free .stepsh,.panel.free #goals{display:none}
+.panel.free .score{grid-template-columns:repeat(5,1fr);gap:4px;padding-top:10px}
+.panel.free .score div{letter-spacing:.02em;font-size:8.5px;padding-inline:2px}
+.panel.free .ctls{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.panel.free .ctls>.knob,.panel.free .ctls>.row{grid-column:1/-1}
+.panel.free .ctls>.btn{font-size:12px;padding:9px 8px;line-height:1.2;justify-content:center;text-align:center}
+.panel.free .ctls>.btn small{display:none}
+.card .castp{font-size:14.5px;line-height:1.5;margin:4px 0 12px}
+.card.intro.crew{max-width:780px}
+.card .cast{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;margin:0 0 8px}
+.card .cr{display:grid;grid-template-columns:26px 1fr auto;align-items:center;column-gap:10px;padding:7px 0;border-bottom:1px dashed #DCD2BF}
+.card .cast .ce{font-size:20px;line-height:1;text-align:center}
+.card .cast .ck{font-weight:700;font-size:14.5px;line-height:1.25}
+.card .cast .ck small{display:block;font-weight:400;font-size:12px;color:#7A705F}
+.card .cast .cx{font:700 11.5px var(--mono);color:var(--xr);background:#0F2A2A;border-radius:6px;padding:4px 8px;white-space:nowrap}
+@media(max-width:620px){.card .cast{grid-template-columns:1fr}}
+.card .castn{font-size:12.5px;color:#7A705F;margin:0 0 18px}
+.card .learn{background:#0F2A2A;color:#CFEDEA;border-radius:10px;padding:12px 15px 13px;margin:0 0 22px;font-size:14.5px;line-height:1.5}
+.card .learn .lh{display:block;font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--xr);margin-bottom:5px}
+.card .learn b{color:var(--xr)}
+.card .learn code{background:#1B4140;color:var(--xr);border-radius:4px;padding:0 4px;font-size:.9em}
+.card.intro .tale p{font-size:16px;line-height:1.55;margin:0 0 10px}
+.card.intro .bell{display:flex;justify-content:center;gap:10px;width:100%;font-size:19px;padding:18px 28px;border-radius:14px}
+@media(max-width:560px){.card.intro{padding:24px 22px 24px}.card.intro h3{font-size:28px}.card.intro .tale p{font-size:15px}}
+.bell{border:none;border-radius:12px;background:linear-gradient(#FFCB6E,#F2A03A);color:#1A1206;font-weight:700;font-size:15px;padding:13px 28px;
+  box-shadow:0 4px 0 #B8741F,0 10px 26px rgba(242,160,58,.4);transition:transform .1s}
+.bell:hover{transform:translateY(-1px)}
+.bell:active{transform:translateY(2px);box-shadow:0 1px 0 #B8741F}
+.card.win{max-width:580px;max-height:100%;overflow-y:auto;border-radius:4px}
+.xrows{display:grid;grid-template-columns:auto 1fr;gap:0;margin:8px 0 14px;border-top:1.5px dashed #D9D1C1}
+.xrows>div{padding:9px 4px;border-bottom:1.5px dashed #D9D1C1;font-size:13px}
+.xrows .k{font-weight:700;white-space:nowrap;padding-right:14px}
+.xrows .k span{font-size:17px;margin-right:6px}
+.xrows .v b{font:700 12px var(--mono);background:#0D2626;color:var(--xr);padding:2px 7px;border-radius:5px}
+.xrows .v div{color:var(--ink2);margin-top:3px}
+.card .acts{display:flex;flex-wrap:wrap;gap:8px}
+.card .acts .btn{flex:1;justify-content:center;min-width:180px}
+.crew{display:flex;flex-direction:column;gap:4px}
+.cm{display:flex;align-items:center;gap:8px;background:#E6DFD0;border-radius:10px;padding:5px 8px}
+.cm .ce{font-size:20px}
+.cm .cn{font-weight:700;font-size:12.5px;line-height:1.2;min-width:0}
+.cm .cn small{display:block;font:400 9.5px var(--mono);color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm.down{background:#F3D6CE}
+.cm .acts{margin-left:auto;display:flex;gap:4px;flex:none}
+.cm button{border:1.5px solid #CFC4AE;background:var(--paper);border-radius:7px;padding:3px 7px;font-size:11px;font-weight:700;color:var(--ink)}
+.cm button:hover{border-color:var(--ink)}
+.status.alert{background:#2A1210;border-color:var(--tomato);color:#FFD9D0}
+.status.alert::before{content:'ALERT';background:var(--tomato)}
+.soon{font-size:12.5px;color:var(--ink2);background:#F0EADD;border-radius:10px;padding:9px 11px;margin:0 0 14px}
+.split{flex:1;min-height:0;display:flex;gap:12px}
+.split .scene{flex:1;min-width:0}
+.codep{display:none;width:440px;flex:none;overflow:auto;background:#0B0D0F;border:1px solid #262B30;border-radius:16px;
+  padding:12px 0 14px;font:11.5px/1.6 var(--mono);scrollbar-width:thin;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.split.coded .codep{display:block}
+.chead{padding:0 14px;font:700 14px var(--sans);color:#F2EEE6;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.chead span{font:700 9.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#6F7880;white-space:nowrap}
+.csub{margin:2px 14px 6px;color:#6F7880;font:11.5px var(--sans)}
+.file{margin-top:8px}
+.fname{padding:4px 14px;background:#14181B;border-block:1px solid #1E2327;color:#E2C58F;font-weight:700;display:flex;justify-content:space-between}
+.fname span{color:#5F6971;font-weight:400}
+.ln{position:relative;display:flex;color:#C8CED3;white-space:pre;min-width:max-content;padding-right:10px}
+.ln i{font-style:normal;width:32px;text-align:right;padding-right:12px;color:#3D454C;flex:none;user-select:none}
+.ln code{font:inherit}
+.ln .k{color:#C792EA}.ln .s{color:#C3E88D}.ln .n{color:#F78C6C}.ln .f{color:#82AAFF}.ln .c{color:#5C6773;font-style:italic}
+.ln.focus{background:rgba(95,224,208,.13);box-shadow:inset 3px 0 0 var(--xr)}
+.ln.hot{animation:hot 1.8s ease-out}
+@keyframes hot{0%,25%{background:rgba(255,181,71,.3);box-shadow:inset 3px 0 0 var(--amber)}100%{background:transparent;box-shadow:inset 3px 0 0 transparent}}
+.ln.hot:not([data-badge=""])::after{content:attr(data-badge);position:absolute;right:8px;top:2px;font:700 9.5px var(--mono);
+  color:#1A1206;background:var(--amber);border-radius:4px;padding:0 5px;line-height:1.5;animation:fadeout 1.8s ease-out forwards}
+@keyframes fadeout{0%,60%{opacity:1}100%{opacity:0}}
+.ln.act{cursor:pointer}
+.ln.act:hover{background:rgba(255,255,255,.07)}
+@media(max-height:860px){
+  .home .hero{padding-block:22px 24px}
+  .home .sign{font-size:clamp(56px,10vh,110px)}
+  .home .hero h1{margin:6px auto 8px}
+  .home .hero .sub{margin-bottom:18px}
+  .home .demo{margin-top:24px}
+}
+@media(min-width:901px){.scene{overflow:hidden}} /* the kitchen zooms to fit, so a scrollbar would only flash for a frame */
+@media(max-height:860px) and (min-width:901px){
+  .hdr{padding-block:8px}
+  .layout{padding-block:10px 12px;gap:12px}
+  .panel{padding:32px 16px 12px}
+  .panel h2{font-size:22px;margin:6px 0 2px}
+  .panel h4{margin:10px 0 6px;padding-top:8px}
+  .goals li{margin:3px 0;font-size:13px}
+  .ctls{gap:6px}
+  .btn{padding:7px 12px}
+  .seg button{padding:5px 6px}
+  .score{padding-top:8px}
+  .score div{padding:4px 2px}
+  .score b{font-size:18px}
+  .stage{gap:8px}
+  .codep{line-height:1.45;padding-block:8px 10px}
+  .file{margin-top:4px}
+}
+@media(max-width:1250px) and (min-width:901px){.split.coded{flex-direction:column}.codep{width:auto;height:36%}}
+@media(prefers-reduced-motion:reduce){.neon,.glow,.status.huddle,.status.do{animation:none}}
+
+
+/* ---------- front door ---------- */
+.home{display:none;flex:1;overflow-y:auto}
+.app.on-home .home{display:flex;flex-direction:column;justify-content:center}
+.app.on-home .hdr,.app.on-home .layout{display:none}
+.hero{width:100%;max-width:1220px;margin:0 auto;padding:48px 22px 56px;text-align:center;
+  background:radial-gradient(700px 300px at 50% 60px,rgba(255,90,50,.16),transparent 70%)}
+.signrow{display:inline-flex;align-items:center;gap:18px}
+.sign{font-family:'Yellowtail',cursive;font-size:clamp(66px,12vw,132px);line-height:1;color:#FFEDE4;padding:0 6px 12px;
+  text-shadow:0 0 4px #FFB08F,0 0 14px var(--neon),0 0 36px rgba(255,70,30,.8),0 0 80px rgba(255,70,30,.45);animation:flick 7s infinite}
+.open.big{font-size:12px;padding:5px 9px;border-width:2px;transform:rotate(-6deg)}
+.hero h1{font:700 clamp(24px,3.4vw,38px)/1.15 var(--sans);letter-spacing:-.025em;margin:10px auto 12px;max-width:760px;color:#F4F0E8}
+.hero .sub{color:#A3ACB4;font-size:16.5px;max-width:610px;margin:0 auto 28px}
+.cta{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
+.ghost2{color:#E9E5DC;border:1px solid #3A4148;border-radius:12px;padding:13px 22px;font-weight:700;font-size:15px;background:#16191C}
+.ghost2:hover{border-color:var(--amber)}
+
+
+.demo{position:relative;max-width:1180px;margin:52px auto 0;border-radius:22px;padding:18px 22px 16px;text-align:left;overflow:hidden;
+  background:linear-gradient(#262B30,#191C1F);border:1px solid #363D43;box-shadow:0 40px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.07)}
+.dhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.dlabel{font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#FF6F86;display:flex;align-items:center;gap:7px}
+.dlabel::before{content:'';width:8px;height:8px;border-radius:50%;background:#FF4D6D;box-shadow:0 0 10px #FF4D6D;animation:flick 2s infinite}
+.seg.dark{background:#0F1113;margin:0}
+.seg.dark button{color:#9AA4AC;white-space:nowrap;padding:7px 12px}
+.seg.dark button.on{background:var(--amber);color:#1A1206}
+.demo.kx .seg.dark button.on{background:var(--xr);color:#0F2A2A}
+.dstage{position:relative;height:250px;margin-top:6px;min-width:0}
+.dtools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.hoodsw{display:flex;align-items:center;gap:8px;border:1px solid #363D43;background:#0F1113;color:#9AA4AC;border-radius:10px;padding:6px 12px 6px 7px;font-weight:700;font-size:12.5px;white-space:nowrap}
+.hoodsw code{font:700 11px var(--mono);color:#6F7880}
+.hoodsw .sw{position:relative;width:30px;height:17px;border-radius:9px;background:#2A3036;transition:background .2s}
+.hoodsw .sw::after{content:'';position:absolute;left:2px;top:2px;width:13px;height:13px;border-radius:50%;background:#9AA4AC;transition:transform .2s,background .2s}
+.hoodsw[aria-checked="true"]{border-color:var(--xr);color:var(--xr);box-shadow:0 0 14px rgba(95,224,208,.35)}
+.hoodsw[aria-checked="true"] code{color:var(--xr)}
+.hoodsw[aria-checked="true"] .sw{background:#0F4A45}
+.hoodsw[aria-checked="true"] .sw::after{transform:translateX(13px);background:var(--xr)}
+.dbody{display:grid;grid-template-columns:minmax(0,1fr) 0;column-gap:0;transition:grid-template-columns .6s ease,column-gap .6s ease}
+.dcode{background:#0B0D0F;border:1px solid #262B30;border-radius:14px;padding:4px 0 8px;font:11px/1.6 var(--mono);overflow:hidden;margin-top:6px;height:250px;
+  min-width:0;opacity:0;transition:opacity .4s}
+.dcode .ln{min-width:0}
+.demo.hood .dbody{grid-template-columns:minmax(0,1fr) 410px;column-gap:16px}
+.demo.hood .dcode{opacity:1;transition-delay:.25s}
+.dcode .ln.live{background:rgba(255,181,71,.14);box-shadow:inset 3px 0 0 var(--amber)}
+.dcode .ln.live::after{content:attr(data-live);position:absolute;right:8px;top:2px;font:700 9.5px var(--mono);color:#1A1206;background:var(--amber);border-radius:4px;padding:0 5px;line-height:1.5}
+@media(max-width:1000px){.dbody,.demo.hood .dbody{grid-template-columns:1fr;transition:none}.dcode{display:none;height:auto}.demo.hood .dcode{display:block}}
+.dlamps{position:absolute;left:190px;right:110px;top:26px;display:flex;justify-content:space-around}
+.dlamps i{width:22px;height:10px;border-radius:11px 11px 2px 2px;background:linear-gradient(90deg,#3B444B,#7D8890,#2F363C);position:relative}
+.dlamps i::after{content:'';position:absolute;left:50%;top:9px;width:220px;height:170px;transform:translateX(-50%);pointer-events:none;
+  background:radial-gradient(closest-side,rgba(255,150,60,.2),transparent)}
+.dbar{position:absolute;left:0;right:0;top:66px;height:8px;border-radius:4px;background:linear-gradient(#F1F5F7,#AEB9C0 40%,#4F5961);box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.dtks{position:absolute;left:0;right:0;top:70px;height:70px}
+.dtk{position:absolute;left:0;top:0;width:46px;height:60px;background:#FCFBF7;color:#1D1B18;font:700 11px var(--mono);padding:4px 5px;
+  clip-path:polygon(0 0,100% 0,100% 93%,91% 100%,82% 93%,73% 100%,64% 93%,55% 100%,46% 93%,37% 100%,28% 93%,19% 100%,10% 93%,0 100%);
+  transition:transform .9s cubic-bezier(.3,.7,.3,1),opacity .6s,background .4s;box-shadow:0 3px 6px rgba(0,0,0,.4)}
+.dtk::before{content:'';position:absolute;left:4px;right:4px;top:19px;border-top:1px dashed rgba(0,0,0,.25)}
+.dtk span{position:absolute;left:0;right:0;top:26px;text-align:center;font-size:20px;font-family:var(--emo,inherit)}
+.dtk.new{transition:none}
+.dtk.cook{background:#FFF1D6;box-shadow:0 0 0 2.5px var(--amber),0 0 18px rgba(255,181,71,.8)}
+.dtk.done{background:#CFCAC0;opacity:.55}
+.dtk.done::after{content:'✓';position:absolute;right:4px;bottom:6px;color:#4E8A3A;font-size:13px}
+.dtk.gone{opacity:0}
+.dclip{position:absolute;top:56px;width:11px;height:36px;border-radius:3px;background:linear-gradient(90deg,#F3CD78,#D9A441,#9C7426);
+  box-shadow:0 0 10px rgba(217,164,65,.7);transition:transform .25s}
+.dclip.kick{transform:scale(1.3)}
+.dchef{position:absolute;top:168px;display:flex;flex-direction:column;align-items:center}
+.em{font-size:38px;line-height:1}
+.dwaiter{position:absolute;right:6px;top:-2px;display:flex;flex-direction:column;align-items:center}
+.dwaiter .em{font-size:32px;transition:transform .2s}
+.dwaiter.kick .em{transform:translateY(-6px)}
+.dstove{position:absolute;top:178px;width:96px;height:30px;border-radius:7px;background:linear-gradient(#16191C,#08090A);border:1.5px solid #7D8890;
+  display:flex;align-items:center;padding-left:8px;font-size:18px}
+.dstove::after{content:'';position:absolute;right:12px;top:8px;width:12px;height:12px;border-radius:50%;border:2px solid #2F363C}
+.dstove.on{box-shadow:0 0 22px rgba(255,120,40,.45)}
+.dstove.on::after{border-color:#FF8A3D;box-shadow:0 0 10px #FF8A3D}
+.cap{display:block;font:700 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#E2C58F;white-space:nowrap;margin-top:4px;transition:color .3s}
+.demo.kx .cap{color:var(--xr);text-shadow:0 0 8px rgba(95,224,208,.5)}
+.dclip .cap{position:absolute;bottom:42px;left:50%;transform:translateX(-50%)}
+.rcap{position:absolute;right:70px;top:38px}
+.tcap{position:absolute;top:150px}
+.dnote{margin:2px 0 0;min-height:22px;font-size:14px;color:#C8CED3}
+.dnote b{color:var(--amber)}
+.demo.kx .dnote b{color:var(--xr)}
+
+.logo{cursor:pointer}
+
+@media(max-width:700px){
+  .hero{padding-top:40px}
+  .demo{padding:14px 12px}
+  .dlamps{left:110px;right:60px}
+  .rcap{display:none}
+}
+
+@media(max-width:900px){
+  .status{height:auto;min-height:52px}
+  .app{height:auto;min-height:100vh;overflow-x:clip}
+  .layout{grid-template-columns:1fr;padding:10px}
+  .panel{overflow:visible}
+  .scene{overflow:visible}
+  .split{flex-direction:column}
+  .codep{width:auto;max-height:70vh}
+  .veil{place-items:start center;padding-top:40px}
+  .hdr{padding:10px}
+  .tag{display:none}
+  .xrows{grid-template-columns:38% 1fr}
+  .xrows .k{white-space:normal}
+  .card{padding:18px}
+}
+</style>
+</head>
+<body>
+<div class="app on-home">
+  <header class="hdr">
+    <div class="logo"><span class="neon">Café Kafka</span><span class="open">OPEN</span></div>
+    <div class="tag">learn Kafka by running a kitchen</div>
+    <div class="right">
+      <nav id="pills" style="display:flex;gap:5px" aria-label="Levels"></nav>
+      <button id="codebtn" class="tool" title="Show the Node.js code behind the kitchen">&lt;/&gt; Code</button>
+      <button id="xray" class="tool">🩻 Kafka X-ray</button>
+      <button id="snd" class="tool" aria-label="Toggle sound">🔊</button>
+    </div>
+  </header>
+  <section class="home" id="home" aria-label="Welcome to Café Kafka">
+    <div class="hero">
+      <div class="signrow"><span class="sign">Café Kafka</span><span class="open big">OPEN</span></div>
+      <h1>Learn Apache Kafka by running a restaurant kitchen.</h1>
+      <p class="sub">No Kafka knowledge needed. You’ll take orders, hire chefs and survive the Friday rush, and every move maps to a real Kafka idea.</p>
+      <div class="cta"><button class="bell" id="hstart">🔔 Start service</button><button class="ghost2" id="hfree">🎛 Free play</button></div>
+
+      <div class="demo" aria-label="A tiny kitchen: orders arrive on a rail and a chef cooks them in order">
+        <div class="dhead">
+          <span class="dlabel">Live from the pass</span>
+          <div class="dtools">
+            <div class="seg dark" role="group" aria-label="Words"><button id="wk" class="on">🍳 Kitchen words</button><button id="wx">🩻 Kafka words</button></div>
+            <button class="hoodsw" id="hood" role="switch" aria-checked="false"><span class="sw"></span>Under the hood <code>&lt;/&gt;</code></button>
+          </div>
+        </div>
+        <div class="dbody">
+        <div class="dstage" id="dstage">
+          <div class="dlamps"><i></i><i></i><i></i></div>
+          <div class="dwaiter"><span class="em">🤵</span><span class="cap" data-k="Waiter" data-x="Producer"></span></div>
+          <div class="cap rcap" data-k="The Mains rail" data-x="Topic “mains”"></div>
+          <div class="dbar"></div>
+          <div class="dtks" id="dtks"></div>
+          <div class="dclip"><span class="cap" data-k="Brass clip: done up to here" data-x="Committed offset"></span></div>
+          <div class="dchef"><span class="em" id="dchef">🧑‍🍳</span><span class="cap" data-k="Chef Marco" data-x="Consumer"></span></div>
+          <div class="dstove" id="dstove"><span id="dpan"></span></div>
+          <div class="cap tcap" data-k="← waiting tickets" data-x="← consumer lag"></div>
+        </div>
+        <div class="dcode" id="dcode" aria-label="The KafkaJS code running this kitchen"></div>
+        </div>
+        <p class="dnote" id="dnote"></p>
+      </div>
+    </div>
+  </section>
+  <div class="layout">
+    <aside class="panel" id="panel">
+      <div class="chip" id="chip"></div>
+      <h2 id="title"></h2>
+      <details class="storyd" id="storyd"><summary>The story</summary><div id="story"></div></details>
+      <h4 class="stepsh">Lesson steps</h4>
+      <ul class="goals" id="goals" aria-live="polite"></ul>
+      <h4>Your controls</h4>
+      <div class="ctls" id="ctls"></div>
+      <div class="score" id="score"></div>
+    </aside>
+    <main class="stage" id="stage">
+      <div class="status" id="status" role="status"></div>
+      <div class="split" id="split">
+      <div class="scene" id="scene">
+        <div class="cwrap" id="cwrap">
+          <canvas id="cv" aria-label="The café kitchen, animated"></canvas>
+          <div class="coach" id="coach" hidden><span class="arrow" id="arrow"></span><span class="who" id="cwho"></span><span id="ctext"></span></div>
+          <div class="coach lesson" id="lesson" hidden></div>
+        </div>
+      </div>
+      <aside class="codep" id="codep" aria-label="The Node.js code behind the kitchen">
+        <div class="chead">🧑‍💻 Behind the kitchen<span>Node.js · KafkaJS</span></div>
+        <p class="csub">The real code. Lines light up as the kitchen runs them.</p>
+        <div id="codefiles"></div>
+      </aside>
+      </div>
+      <div class="veil" id="veil"></div>
+      <div class="veil" id="win" hidden></div>
+    </main>
+  </div>
+</div>
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+const cv = $('#cv'), ctx = cv.getContext('2d');
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const EMO = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+const MONO = '"Space Mono",ui-monospace,monospace';
+const SANS = '"Space Grotesk",system-ui,sans-serif';
+const C = {paper:'#F7F0E3', ink:'#2B2620', ink2:'#6E6354', brass:'#D9A441', tomato:'#E4573D', herb:'#7FB069', mut:'#93A0A9', xr:'#5FE0D0'};
+const TCOL = ['#E4573D', '#5B8DB8', '#7FB069', '#C9A0DC'];
+const DINERS = ['🧑‍🦰', '👵', '🧔', '👩🏽'];
+const CREW = [['🧑‍🍳', 'Marco'], ['👩‍🍳', 'Yuki'], ['👨🏾‍🍳', 'Kofi'], ['👩🏼‍🍳', 'Elena'], ['🧑🏽‍🍳', 'Priya'], ['👨🏻‍🍳', 'Sam']];
+const STATIONS = {
+  mains: {key: 'mains', name: 'Mains', e: '🥩', share: .6, dishes: ['🍕', '🥩', '🍝', '🥘', '🍔']},
+  desserts: {key: 'desserts', name: 'Desserts', e: '🍰', share: .4, dishes: ['🍰', '🧁', '🍮', '🍨']},
+};
+const HUDDLE = 1.8, FLY = .6, UPSET = 15;
+
+// ---------- levels: kitchen words first, Kafka words only in the X-ray ----------
+const LEVELS = [
+  {
+    title: 'Producers, Topics & Offsets', dish: 'The Ticket Rail', chip: 'orders · numbers · the clip',
+    story: [
+      'You just opened a tiny café. When a diner orders, the <b>waiter</b> writes it on a <b>ticket</b> and clips it to the end of the <b>rail</b>.',
+      'Every ticket gets the next number: 0, 1, 2… Numbers never repeat and never change order, and chef <b>Marco</b> always cooks them in that order.',
+      'Watch the <b>brass clip</b>. It marks how far Marco has gotten: everything to its left is done, but it stays on the rail.'],
+    learn: 'A <b>producer</b> appends <b>messages</b> to the end of a <b>topic</b>, and each one gets the next <b>offset</b>. A <b>consumer</b> reads them in order and <b>commits its offset</b> to remember how far it got. Reading never deletes anything.',
+    setup: {stations: ['mains'], chefs: 1, rate: .45, serial: true},
+    ctl: {rateMax: 1.2},
+    steps: [
+      {title: 'An order comes in', ask: 'Watch the dining room. A diner is about to order.',
+        until: S => S.stations[0].rails[0].tickets[0]?.landed, at: () => tkAt(0, 0, 0),
+        kitchen: 'A diner ordered. The <b>waiter</b> wrote it on <b>ticket #0</b> and clipped it to the end of the <b>Mains rail</b>.',
+        kafka: 'The waiter is a <b>producer</b>: an app that writes data into Kafka. The ticket is a <b>message</b> (also called a record). The rail is a <b>topic</b> named <code>mains</code>. A new message always goes on the <i>end</i> of the topic.'},
+      {title: 'A chef picks it up', ask: 'Watch Marco.',
+        until: S => S.chefs[0].job, at: () => chefAt(S.chefs[0]),
+        kitchen: 'Marco took the first ticket and started cooking. Look closely: the ticket is <b>still on the rail</b>. Marco reads it; he doesn’t take it down.',
+        kafka: 'Marco is a <b>consumer</b>: an app that reads messages from a topic and does work with them. Reading a message does <b>not</b> delete it.'},
+      {title: 'The clip moves', ask: 'Watch the brass clip on the rail while Marco cooks.',
+        until: S => S.stats.served >= 1, at: () => clipPos(0, 0),
+        kitchen: 'The dish went out, and Marco slid the <b>brass clip</b> to just after ticket #0. The clip means “I’m done with everything to my left.”',
+        kafka: 'The clip is the <b>committed offset</b>: the consumer’s saved bookmark. If Marco went home and came back, he’d start from the clip, not from #0 and not from the newest ticket.'},
+      {title: 'Numbers only go up', ask: 'Let a few more orders come in.',
+        until: S => S.stations[0].rails[0].tickets.filter(t => t.landed).length >= 3, at: () => tkAt(0, 0, 2),
+        kitchen: 'Each new ticket gets the next number: 0, 1, 2… A number is never reused, and tickets never change order on the rail.',
+        kafka: 'That number is the <b>offset</b>: a message’s position in the topic. A topic is an <b>append-only log</b>: new messages go on the end, in order, and stay there.'},
+      {title: 'Who’s next?', do: true, paused: true, ask: 'I paused the kitchen. Tap the ticket Marco will cook next.',
+        until: S => S.flags.next, at: () => clipPos(0, 0),
+        kitchen: 'Right! The next ticket is always the first one after the clip. Chefs never skip ahead and never go back.',
+        kafka: 'A consumer reads in offset order, starting at its committed offset. Kafka guarantees that order within a rail (a <b>partition</b>; more on those in lesson 2).'},
+      {title: 'Old tickets stay', do: true, paused: true, ask: 'Still paused. Tap a ticket that was already served (left of the clip).',
+        until: S => S.flags.hist, at: () => tkAt(0, 0, 0),
+        kitchen: 'Served tickets aren’t thrown away. They stay on the rail, left of the clip, as a record of every order.',
+        kafka: 'Kafka keeps messages after they’re read, for a set time called <b>retention</b> (often 7 days). That’s what lets a <i>different</i> app read the same orders later without bothering Marco.'},
+      {title: 'The whole loop', ask: 'Unpaused. Watch Marco serve a few more dishes.',
+        until: S => S.stats.served >= 4, at: () => clipPos(0, 0),
+        kitchen: 'That’s the whole café: diners order, the waiter clips tickets to the rail, and Marco cooks them in order and moves the clip.',
+        kafka: '<b>Producer</b> writes → the message lands at the end of the <b>topic</b> with the next <b>offset</b> → the <b>consumer</b> reads in order → it <b>commits</b> its offset. Every Kafka system is this loop.'},
+    ],
+    xray: [
+      ['🤵', 'Waiter', 'Producer', 'The app that writes events into Kafka. Here, every order is an event.'],
+      ['🎫', 'Ticket', 'Message (record)', 'One event: “table 2 wants a burger”.'],
+      ['🧵', 'The Mains rail', 'Topic “mains”', 'A named log. New messages only ever go on the end; reading one doesn’t remove it.'],
+      ['#️⃣', 'Ticket number', 'Offset', 'A message’s position in the log. Never reused, never reordered.'],
+      ['🧑‍🍳', 'Chef', 'Consumer', 'The app that reads messages in order and does the work.'],
+      ['📎', 'Brass clip', 'Committed offset', 'The consumer’s saved bookmark: “done up to here”. After a restart it picks up from the clip.'],
+    ],
+  },
+  {
+    title: 'Consumer Groups & Lag', dish: 'Friday Rush', chip: 'falling behind · one chef per rail',
+    story: [
+      'It’s Friday. Turn up the <b>crowd</b> and orders arrive faster than Marco can cook. Every ticket <b>after the clip</b> is a diner still waiting, so watch their faces.',
+      'Obvious fix: hire help! The <b>head chef</b> decides who works which rail. Hire a second chef and see where they end up.',
+      'Then try to squeeze them onto Marco’s rail yourself: <b>drag them from the staff room</b>.'],
+    learn: '<b>Consumer lag</b>: how far a consumer is behind the newest message. Consumers share work in a <b>consumer group</b>, but each <b>partition</b> goes to only one consumer in the group, so an extra consumer can end up idle.',
+    setup: {stations: ['mains'], chefs: 1, rate: .4},
+    ctl: {rateMax: 3, hire: 3},
+    steps: [
+      {title: 'Falling behind', do: true, btn: '#rate', ask: 'Drag the Crowd slider (left panel) all the way to the right.',
+        until: S => totalLag() >= 6, at: () => lastWaitAt(0, 0),
+        kitchen: 'Orders now arrive faster than Marco can cook. Every ticket to the right of the clip is a diner still waiting for food, and the line keeps growing.',
+        kafka: 'The number of messages after the committed offset is <b>consumer lag</b>. It’s the number teams watch most: growing lag means the consumer can’t keep up with the producers.'},
+      {title: 'Hire help?', do: true, btn: '#hire', ask: 'The obvious fix: click ＋ Hire a chef in the left panel.',
+        until: S => S.chefs.length >= 2 && S.huddle === 0 && settled(), at: () => chefAt(S.chefs[S.chefs.length - 1]),
+        kitchen: 'The <b>head chef</b> stopped everyone for a moment (a huddle), decided who works where, and gave the only rail to Marco. Yuki is in the staff room with nothing to do.',
+        kafka: 'Marco and Yuki form a <b>consumer group</b>: consumers sharing one job. The head chef is the <b>group coordinator</b>, which hands out the work. The rail is a <b>partition</b>, and within a group <b>each partition goes to exactly one consumer</b>. One partition means one worker; the extra consumer sits <b>idle</b>.'},
+      {title: 'Two on one rail?', do: true, ask: 'Try it anyway: drag Yuki from the staff room onto Marco’s rail.',
+        until: S => S.flags.squeeze, at: () => chefAt(S.chefs[0]),
+        kitchen: 'Bounced! If two chefs worked one rail, they’d grab the same ticket and cook it twice, or send dishes out of order.',
+        kafka: 'Kafka enforces this rule, and it’s what keeps messages <b>in order</b> and handled <b>once per group</b>. To get more consumers working in parallel you need <b>more partitions</b> (lesson 4).'},
+      {title: 'Catching up', do: true, btn: '#rate', ask: 'Drag the Crowd slider back down low and watch the waiting line.',
+        until: S => totalLag() <= S.stats.maxLag - 4, at: () => clipPos(0, 0),
+        kitchen: 'With fewer orders coming in, Marco is working through the backlog and the line is shrinking. No order was lost while he was behind; they just waited on the rail.',
+        kafka: 'Lag falls when a consumer reads faster than producers write. Nothing is lost while a consumer is slow: messages wait safely in the log until it gets to them.'},
+    ],
+    xray: [
+      ['⏳', 'Tickets after the clip', 'Consumer lag', 'How far behind the readers are. The #1 number people watch in Kafka.'],
+      ['👥', 'Your kitchen crew', 'Consumer group', 'Consumers that split one job between them.'],
+      ['📋', 'Head chef', 'Group coordinator', 'Decides which consumer reads which partition.'],
+      ['🧵', 'A rail', 'Partition', 'One ordered log. A topic can have several, and they are the unit of parallel work.'],
+      ['🚫', 'One chef per rail', 'One consumer per partition', 'Within a group, a partition has at most one reader. More consumers than partitions = someone idles.'],
+    ],
+    teaser: 'So how do you get more chefs cooking? More rails at the same station. That’s Level 4.',
+  },
+  {
+    title: 'Multiple Topics & Rebalancing', dish: 'Dessert Menu', chip: 'a second station · the huddle',
+    story: [
+      'Diners want dessert. Open a <b>dessert station</b> with its own rail. The waiter sends every dessert there, not by luck, but because it’s a dessert.',
+      'With one chef, Marco runs <b>both</b> rails, jogging between the stove and the dessert counter. Hire a pastry chef and the head chef calls a <b>huddle</b> to split the work. Everyone stops while it happens, and orders keep coming.'],
+    learn: 'A second <b>topic</b>: the producer picks the topic for every message. When a consumer joins or leaves, the group <b>rebalances</b>, handing out partitions again, and everyone pauses while it happens.',
+    setup: {stations: ['mains'], chefs: 1, rate: .5, offer: ['desserts']},
+    ctl: {rateMax: 2.5, hire: 3, open: true},
+    steps: [
+      {title: 'A second station', do: true, btn: '#open', ask: 'Click 🍰 Open the dessert station in the left panel.',
+        until: S => S.stations.length >= 2 && S.huddle === 0 && settled(), at: () => stationAt(1),
+        kitchen: 'There’s a new rail just for desserts. The head chef held a quick huddle and handed it to Marco, since he’s the only chef.',
+        kafka: 'The dessert rail is a second <b>topic</b>, <code>desserts</code>. Topics separate data by <i>what it is</i>: mains vs desserts, payments vs clicks. You don’t make a new topic just to go faster.'},
+      {title: 'The waiter picks the rail', ask: 'Watch where the waiter clips the next dessert order.',
+        until: S => S.stations[1]?.rails[0].tickets.some(t => t.landed), at: () => tkAt(1, 0, 0),
+        kitchen: 'A dessert order went to the dessert rail. Not by chance: the waiter checks what was ordered and picks the matching rail.',
+        kafka: 'The <b>producer chooses the topic</b> for every message it sends, e.g. <code>send("desserts", order)</code>.'},
+      {title: 'One chef, two rails', ask: 'Watch what Marco does next.',
+        until: S => S.chefs.some(c => c.job?.si === 1), at: () => chefAt(S.chefs.find(c => c.job?.si === 1) || S.chefs[0]),
+        kitchen: 'Marco moves between the stove and the blender. He always takes whichever rail has the oldest waiting ticket. Busy, but nothing gets stuck.',
+        kafka: 'One consumer can read several topics at once: <code>subscribe(["mains", "desserts"])</code>. It owns both partitions until someone joins to share the work.'},
+      {title: 'Huddle!', do: true, btn: '#hire', ask: 'Marco is stretched thin. Click ＋ Hire a chef to bring in a pastry chef.',
+        until: S => S.chefs.length >= 2 && S.huddle > 0 && S.huddle < HUDDLE - .4, at: () => ({x: G.pad + 40, y: G.staff.top + 34, h: 60, w: 60}),
+        kitchen: 'Everyone stopped cooking. The head chef is taking back every rail and dealing them out again between Marco and Yuki. Meanwhile, orders keep arriving.',
+        kafka: 'This is a <b>rebalance</b>. When a consumer joins or leaves the group (or partitions change), the coordinator pauses the group and reassigns partitions. While it happens nobody consumes, so lag jumps.'},
+      {title: 'One station each', ask: 'Watch the head chef finish the huddle.',
+        until: S => S.huddle === 0 && settled(), at: () => chefAt(S.chefs[1]),
+        kitchen: 'Huddle over: Marco keeps Mains and Yuki takes Desserts.',
+        kafka: 'After the rebalance each consumer owns one partition: <code>mains-0 → Marco</code>, <code>desserts-0 → Yuki</code>.'},
+      {title: 'Cooking in parallel', ask: 'Watch both stations.',
+        until: S => S.chefs.filter(c => c.job).length >= 2, at: () => S.chefs.filter(c => c.job).map(chefAt),
+        kitchen: 'Both chefs are cooking at the same time, each from their own rail.',
+        kafka: 'This is how Kafka scales: <b>work is split by partition</b>. Each partition goes to at most one consumer in a group, so the number of partitions caps how many consumers can work at once.'},
+    ],
+    xray: [
+      ['🍰', 'Dessert station', 'A second topic “desserts”', 'Topics split data by meaning: what kind of event it is. Never make a topic just to go faster.'],
+      ['🤵', 'Waiter sends desserts there', 'Producer picks the topic', 'Explicit: a dessert goes to “desserts” because the app says so.'],
+      ['🏃', 'Marco runs both rails', 'One consumer, many partitions', 'A consumer can subscribe to several topics: subscribe(["mains","desserts"]).'],
+      ['🗣️', 'The huddle', 'Rebalance', 'When members or topics change, the group pauses and re-deals partitions. Lag spikes while it happens.'],
+    ],
+    teaser: 'Next: more rails at one station, so more chefs can cook at the same time.',
+  },
+  {
+    title: 'Partitions & Parallelism', dish: 'More Rails', chip: 'partitions · parallel chefs',
+    story: [
+      'Friday again, and one Mains rail can’t keep up. Last time a second chef just stood around, because one rail gets one chef.',
+      'The fix is <b>more rails</b> at the same station. Each rail gets its own chef, its own ticket numbers and its own brass clip.'],
+    learn: 'More <b>partitions</b> in one topic means <b>parallelism</b>: each partition has its own offsets and can go to a different consumer in the group. You can add partitions, never remove them.',
+    setup: {stations: ['mains'], chefs: 2, rate: .85},
+    ctl: {rateMax: 2.5, rails: 3},
+    steps: [
+      {title: 'One rail, one cook', ask: 'Watch the Mains rail fill up while Yuki waits in the staff room.',
+        until: S => totalLag() >= 5, at: () => lastWaitAt(0, 0),
+        kitchen: 'Orders pile up on the only rail. Yuki is ready to cook, but the rail belongs to Marco.',
+        kafka: 'A topic with <b>one partition</b> can be read by only <b>one consumer</b> in a group. Adding consumers doesn’t help: the number of partitions is the limit.'},
+      {title: 'A second rail', do: true, btn: '#addrail', ask: 'Click ＋ Add a rail to Mains in the left panel.',
+        until: S => S.stations[0].rails.length >= 2 && S.huddle === 0 && settled(), at: () => chefAt(S.chefs[1]),
+        kitchen: 'Mains now has two rails. The head chef held a huddle and gave Rail 2 to Yuki, so both chefs cook at the same time.',
+        kafka: 'You added a <b>partition</b>: topic <code>mains</code> now has <code>mains-0</code> and <code>mains-1</code>. The rebalance gave each consumer one, so the group works <b>in parallel</b>.'},
+      {title: 'Taking turns', ask: 'Watch where the waiter clips the next orders.',
+        until: S => S.stations[0].rails[1].tickets.filter(t => t.landed).length >= 2, at: () => lastLandedAt(0, 1),
+        kitchen: 'With nothing else to go on, the waiter takes turns: one ticket on Rail 1, the next on Rail 2. Both rails get an even share.',
+        kafka: 'A producer sending messages <b>without a key</b> spreads them across partitions, so the load is balanced.'},
+      {title: 'Each rail counts on its own', ask: 'Look at the ticket numbers on both rails.',
+        until: S => S.stations[0].rails[1].tickets.filter(t => t.landed).length >= 3, at: () => clipPos(0, 1),
+        kitchen: 'Each rail numbers its own tickets from #0 and has its own brass clip. “#3” on Rail 1 and “#3” on Rail 2 are different orders.',
+        kafka: '<b>Offsets are per partition.</b> A message’s address is topic + partition + offset, like <code>mains-1 @ 3</code>. Each partition has its own committed offset too.'},
+      {title: 'Out of order', ask: 'Watch the two chefs race.', start: S => { S.flags.ooo = null },
+        until: S => S.flags.ooo, at: () => tkAt(S.flags.ooo.si, S.flags.ooo.ri, S.flags.ooo.t.off),
+        kitchen: 'A newer order on the other rail just went out before this older ticket. Each rail stays in order, but nobody keeps the two rails in step.',
+        kafka: 'Kafka guarantees order <b>only inside a partition</b>. Across partitions there is no global order. The next lesson shows how to keep related orders together.'},
+      {title: 'Rails only get added', do: true, btn: '#addrail', ask: 'Add one more rail to Mains.',
+        until: S => S.stations[0].rails.length >= 3 && S.huddle === 0 && settled(), at: () => chefAt(S.chefs.find(c => c.rails.length > 1) || S.chefs[0]),
+        kitchen: 'Three rails, two chefs: the head chef gave one chef two rails, and that works fine. The button warned you: rails can be added, but never taken away.',
+        kafka: 'One consumer can own several partitions. Partitions can be <b>added but never removed</b>, so teams pick a count with room to grow.'},
+    ],
+    xray: [
+      ['🧵', 'Each rail at a station', 'Partition', 'A topic is split into partitions. Each one is its own ordered log.'],
+      ['🔢', 'Rail-by-rail numbers', 'Offset per partition', 'An offset only means something together with its partition.'],
+      ['🔁', 'Waiter takes turns', 'Keyless partitioning', 'Without a key, the producer spreads messages across partitions.'],
+      ['↔️', 'Rails race each other', 'No order across partitions', 'Order holds inside one partition only.'],
+      ['➕', 'Rails only get added', 'Partitions only grow', 'You can add partitions to a topic, never remove them.'],
+    ],
+    teaser: 'But what if one table orders three courses and they land on different rails? Lesson 5: table numbers.',
+  },
+  {
+    title: 'Message Keys & Ordering', dish: 'Table Numbers', chip: 'keys · ordering per table',
+    story: [
+      'One table ordered a starter, a main and a second main. With the waiter taking turns, those tickets scatter across rails and could go out in the wrong order.',
+      'So now the waiter writes the <b>table number</b> on every ticket and uses it to pick the rail: the same table always goes to the same rail.'],
+    learn: '<b>Message keys</b>: the producer hashes the key to pick the partition, so messages with the same key always land on the same partition and stay <b>in order</b>. Kafka only guarantees order inside a partition.',
+    setup: {stations: ['mains'], rails: 2, chefs: 2, rate: .8, keys: true},
+    ctl: {rateMax: 2.5, rails: 3},
+    steps: [
+      {title: 'Same table, same rail', ask: 'Watch the colored band on each ticket: it’s the table’s color.',
+        until: S => S.stations[0].rails.reduce((a, r) => a + r.tickets.filter(t => t.landed).length, 0) >= 6, at: () => clipPos(0, 0),
+        kitchen: 'Every ticket from one table lands on the same rail. Tables 1 and 3 go to Rail 1; tables 2 and 4 go to Rail 2.',
+        kafka: 'The table number is the message <b>key</b>. The producer picks the partition from it: <code>hash(key) % partitions</code>. Same key, same partition, every time.'},
+      {title: 'Follow one table', do: true, ask: 'Tap a diner in the dining room to light up their tickets.',
+        until: S => S.flags.tableTap, at: () => ({x: G.tables[S.flags.tableTap.i], y: 44, h: 50, w: 60}),
+        kitchen: 'All of that table’s tickets light up on one rail, in the order they were placed. Their courses can’t overtake each other.',
+        kafka: 'This is <b>per-key ordering</b>: all events for one key (a customer, an account, an order) go to one partition and are processed in order. It’s the main reason to use keys.'},
+      {title: 'Another rail', do: true, btn: '#addrail', ask: 'Add a third rail to Mains.',
+        until: S => S.stations[0].rails.length >= 3 && S.huddle === 0 && settled(), at: () => clipPos(0, 2),
+        kitchen: 'Mains has three rails now. The waiter’s rule hasn’t changed (“the table number decides the rail”), but there are now three rails to divide among.',
+        kafka: 'Adding a partition changes the math: <code>hash(key) % 3</code> instead of <code>% 2</code>.'},
+      {title: 'A table moved', ask: 'Watch tables 3 and 4.',
+        until: S => S.flags.remap?.t?.landed, at: () => { const m = S.flags.remap; return tkAt(m.si, m.ri, m.t.off) },
+        kitchen: 'This table’s tickets used to go to another rail. Its new ticket landed here while its older ones still wait on the old rail, so its courses could now go out of order.',
+        kafka: 'Adding partitions <b>remaps keys</b>: some keys move to a different partition, and per-key ordering breaks around the change. That’s why teams choose partition counts up front for keyed topics.'},
+    ],
+    xray: [
+      ['🔢', 'Table number', 'Message key', 'Decides the partition: hash(key) % partitions.'],
+      ['🎯', 'Same table, same rail', 'Per-key ordering', 'All messages with one key land in one partition, in order.'],
+      ['🔀', 'A table jumps rails', 'Key remapping', 'Adding partitions moves some keys to a new partition.'],
+    ],
+    teaser: 'Next: Burger Night. What if one key gets most of the orders?',
+  },
+  {
+    title: 'Choosing a Key: Hot Partitions', dish: 'Burger Night', chip: 'key choice · hot partitions',
+    story: [
+      'It’s Burger Night: most orders are 🍔. The grill cook has an idea: “Key the tickets by <b>dish</b> instead of table, so all the burgers land on one rail.”',
+      'The same dish always goes to the same rail, just like tables did. But what happens to that rail when nearly every order is a burger?'],
+    learn: 'The key decides the partition, so it also decides the <b>load</b>. A key with few values, or one very popular value, makes a <b>hot partition</b>: one partition flooded while the rest sit idle. Adding partitions or consumers doesn’t split a key. A good key has many evenly spread values.',
+    setup: {stations: ['mains'], rails: 2, chefs: 2, rate: .8, keys: true, burger: .75},
+    ctl: {rateMax: 2, rails: 3, keyBy: true},
+    steps: [
+      {title: 'Key by dish', do: true, btn: '#keyBy', ask: 'Switch the waiter’s key to 🍔 Dish in the left panel.',
+        until: S => S.keyBy === 'dish' && S.stats.produced - S.flags.keyAt >= 4, at: () => clipPos(0, burgerRail()),
+        kitchen: 'The waiter now picks the rail from the <b>dish</b>. Every burger lands on the same rail, along with any other dish that happens to share it.',
+        kafka: 'The key is now the dish: <code>key: order.dish</code>. Still <code>hash(key) % partitions</code>, still same key → same partition. Only the key changed.'},
+      {title: 'One busy rail', ask: 'Watch the two rails fill up.',
+        until: S => lagOf(S.stations[0].rails[burgerRail()]) >= 6, at: () => pileAt(0, burgerRail()),
+        kitchen: 'The burger rail is piling up while the other chef has almost nothing to do. Diners waiting for burgers are getting angry.',
+        kafka: 'A <b>hot partition</b>. Most messages share one key, so they all land on one partition. Only one consumer in the group can read a partition, so its lag grows while the other consumer sits idle.'},
+      {title: 'More rails won’t help', do: true, btn: '#addrail', ask: 'Try the usual fix: add a third rail to Mains.',
+        until: S => S.stations[0].rails.length >= 3 && S.huddle === 0 && settled() && S.stats.produced - S.flags.railAt >= 10, at: () => pileAt(0, burgerRail()),
+        kitchen: 'New burgers now land on a different rail, but they <b>all still land on one rail</b>. The old pile stays where it was. A third rail didn’t share the burgers out.',
+        kafka: 'One key always maps to exactly one partition, however many partitions there are. More partitions or more consumers can’t split a hot key; only a different key can.'},
+      {title: 'Back to tables', do: true, btn: '#keyBy', ask: 'Switch the key back to 🔢 Table.',
+        until: S => S.keyBy === 'table' && S.stats.produced - S.flags.keyAt >= 9, at: () => S.stations[0].rails.map((_, ri) => clipPos(0, ri)),
+        kitchen: 'Tickets spread across all three rails again, and every chef is cooking. Each table’s courses still stay in order on their own rail.',
+        kafka: 'Pick a key with <b>many values that spread evenly</b> and that you need ordering for: a customer, an account, an order ID. Keys like a type, status or country make hot partitions.'},
+    ],
+    xray: [
+      ['🍔', 'Key by dish', 'Low-cardinality key', 'Few distinct values (or one popular one) means few busy partitions.'],
+      ['🔥', 'One rail piles up', 'Hot partition', 'One partition gets most of the traffic; its single consumer falls behind.'],
+      ['➕', 'Extra rail, same pile', 'Keys don’t split', 'One key always maps to one partition, however many there are.'],
+      ['🔢', 'Key by table', 'High-cardinality key', 'Many evenly spread values balance the load and keep per-key order.'],
+    ],
+    teaser: 'Next: the auditor wants to read every ticket too, without slowing the kitchen down.',
+  },
+  {
+    title: 'Multiple Consumer Groups', dish: 'The Auditor', chip: 'a second reader · her own clip',
+    story: [
+      'The café’s auditor wants to see <b>every</b> order for the books. She doesn’t cook, she can’t take tickets off the rail, and she mustn’t slow the chefs down.',
+      'So she brings her own <b>blue clip</b>.'],
+    learn: '<b>Multiple consumer groups</b>: a second group reads the same topic on its own, with its own committed offsets. It doesn’t take messages away from the first group or slow it down.',
+    setup: {stations: ['mains'], rails: 2, chefs: 2, rate: .8},
+    ctl: {rateMax: 2.5, audit: true},
+    steps: [
+      {title: 'A second reader', do: true, btn: '#aud', ask: 'Click 🕵️ Call in the auditor in the left panel.',
+        until: S => S.aud.on && S.stats.audited >= 2, at: () => audAt(),
+        kitchen: 'The auditor reads every ticket on every rail, one by one, and marks her place with her own <b>blue clip</b>. She doesn’t cook, and she never touches the brass clips.',
+        kafka: 'She is a second <b>consumer group</b> (say <code>billing</code>) reading the same topic. Each group keeps <b>its own committed offsets</b>, so the kitchen’s offsets are untouched.'},
+      {title: 'Everyone gets everything', ask: 'Watch both kinds of clip on the rails.',
+        until: S => S.stats.audited >= 10, at: () => audAt(),
+        kitchen: 'The chefs split the tickets between them, but the auditor sees all of them, even ones served long ago.',
+        kafka: 'Inside a group, partitions are <b>split</b> between consumers, like a work queue. Across groups, every group gets <b>every message</b>: publish/subscribe. One topic can feed many apps.'},
+      {title: 'She steps out', do: true, btn: '#aud', ask: 'Send the auditor home, then watch tickets pile up past her blue clip.',
+        until: S => !S.aud.on && audLag() >= 8, at: () => audAt(),
+        kitchen: 'She left, but her blue clip stays exactly where she stopped. The kitchen didn’t notice a thing; the chefs kept cooking.',
+        kafka: 'Committed offsets are stored in Kafka itself, so a group can stop for minutes or days and lose nothing, as long as the messages are still within retention.'},
+      {title: 'Back where she left off', do: true, btn: '#aud', ask: 'Call the auditor back in.',
+        until: S => S.aud.on && S.aud.resumeLag - audLag() >= 5, at: () => audAt(),
+        kitchen: 'She picked up exactly at her blue clip and is racing through everything she missed.',
+        kafka: 'A returning consumer resumes from its committed offset and catches up. Different groups can be at completely different places in the same topic.'},
+    ],
+    xray: [
+      ['🕵️', 'The auditor', 'A second consumer group', 'Reads the same topic, independently of the kitchen.'],
+      ['🔵', 'Blue clip', 'Her group’s committed offset', 'Every group has its own offset in every partition.'],
+      ['📢', 'Everyone sees every ticket', 'Publish/subscribe', 'Every group gets every message; inside a group the work is split.'],
+      ['🚪', 'Leaving and coming back', 'Resume from committed offset', 'Retention keeps the messages; the offset says where to resume.'],
+    ],
+    teaser: 'Next: what happens when a chef slips in the middle of an order?',
+  },
+  {
+    title: 'Committing Offsets', dish: 'Dropped Plates', chip: 'when the clip moves · lost or twice',
+    story: [
+      'Accidents happen: a chef can slip and drop everything. Another chef then takes over the rail and starts <b>from the clip</b>.',
+      'So <b>when</b> the clip moves matters. Move it too early and orders vanish. Move it too late and a dish can go out twice.'],
+    learn: '<b>When to commit the offset.</b> Commit before the work is done (auto commit with the work handed off) and a crash loses messages: <b>at-most-once</b>. Commit after (manual <code>commitOffsets()</code>) and a crash can process one twice: <b>at-least-once</b>.',
+    setup: {stations: ['mains'], chefs: 2, rate: .5, commit: 'grab'},
+    ctl: {rateMax: 1.5, commit: true, trip: 'worst', detect: .5, recover: 4},
+    steps: [
+      {title: 'Clip first, cook later', ask: 'Watch the brass clip when the chef grabs a ticket.',
+        until: S => S.chefs.some(c => c.job && c.job.p > .15), at: () => clipPos(0, 0),
+        kitchen: 'The clip is on <b>auto</b>: it moves the moment the chef grabs a ticket, before cooking. The clip already says “done” for a dish that’s still in the pan.',
+        kafka: 'This is <b>auto commit</b> (<code>autoCommit: true</code>, the default) with the cooking handed off: the handler returns as soon as the ticket is grabbed, so the offset is committed while the dish is still in the pan. Java’s <code>enable.auto.commit</code> bites the same way.'},
+      {title: 'A vanished order', do: true, btn: '#trip', ask: 'Click 💥 Trip the chef. He’ll slip at the worst possible moment.',
+        until: S => S.stats.lost >= 1 && S.flags.detected && S.huddle === 0 && settled(), at: () => tkAt(S.flags.lostT.si, S.flags.lostT.ri, S.flags.lostT.t.off),
+        kitchen: 'The chef slipped mid-cook. Another chef took over and started after the clip, but the clip had already moved past this ticket. Nobody will ever cook it: that diner gets nothing.',
+        kafka: 'The consumer went <b>down</b> after its offset was committed but before the work was done. The new owner of the partition resumes from the committed offset, so that message is <b>lost</b>. This is <b>at-most-once</b> delivery.'},
+      {title: 'Clip after plating', do: true, btn: '#commit', ask: 'Switch “Move the clip” to ✋ manual (after plating), in the left panel.',
+        until: S => S.commit === 'plate' && S.chefs.some(c => c.job?.phase === 'commit'), at: () => clipPos(0, 0),
+        kitchen: 'Now the chef cooks, sends the plate out, and only then moves the clip.',
+        kafka: 'This is <b>manual commit</b>: <code>autoCommit: false</code>, and the chef calls <code>commitOffsets()</code> only after the dish is served.'},
+      {title: 'Two plates, one order', do: true, btn: '#trip', ask: 'Trip the chef again, and watch the plates.',
+        until: S => S.stats.dup >= 1, at: () => tkAt(S.flags.dupT.si, S.flags.dupT.ri, S.flags.dupT.t.off),
+        kitchen: 'The chef plated this dish but slipped before moving the clip. The next chef saw the clip still in front of it and cooked it again. The diner got two plates.',
+        kafka: '<b>At-least-once</b>: nothing is lost, but a crash can cause <b>duplicates</b>. The usual fix is <b>idempotent</b> processing (the diner says “I already have this one”) or Kafka transactions for exactly-once.'},
+    ],
+    xray: [
+      ['🤖', 'Clip moves on its own', 'Auto commit', 'Offsets committed for fetched messages, done or not. A crash can lose them.'],
+      ['✋', 'Clip after plating', 'Manual commit after processing', 'At-least-once: nothing lost, but a crash can duplicate.'],
+      ['💥', 'A chef slips', 'Consumer crash', 'Its partitions move to another consumer, which resumes from the committed offset.'],
+      ['🤨', 'Two plates', 'Duplicate processing', 'Handled with idempotent processing or transactions (exactly-once).'],
+    ],
+    teaser: 'Last lesson: what if nobody notices a chef went down?',
+  },
+  {
+    title: 'Failover & Session Timeouts', dish: 'Shift Change', chip: 'noticing failures · leaving cleanly',
+    story: [
+      'Chefs come and go during a shift. Some leave properly. Some just… stop.',
+      'The <b>head chef</b> checks on everyone, but only every few seconds. Until he notices a chef is gone, that chef’s rail sits still.'],
+    learn: '<b>Failover</b>: consumers send <b>heartbeats</b>. One that dies silently is only noticed after the <b>session timeout</b>, then the group rebalances and another consumer resumes from the committed offset. A consumer that calls <code>disconnect()</code> leaves at once.',
+    setup: {stations: ['mains'], rails: 2, chefs: 2, rate: 1.2, commit: 'plate'},
+    ctl: {rateMax: 2.5, hire: 4, trip: 'now', detect: 5, recover: 9, leave: true},
+    steps: [
+      {title: 'Nobody noticed', do: true, btn: '#trip', ask: 'Click 💥 Trip a chef, and watch their rail.',
+        until: S => { const d = downChef(); return d && d.detect > 0 && S.time - d.downAt >= 3.2 }, at: () => chefAt(downChef()),
+        kitchen: 'A chef is down, but the head chef hasn’t noticed. The rail still “belongs” to them, so nobody cooks it and its tickets pile up.',
+        kafka: 'The coordinator only learns a consumer died when its <b>heartbeats</b> stop for <code>session.timeout.ms</code> (45 seconds by default). Until then nobody reads its partition, so its <b>consumer lag</b> climbs. Lag alerts are usually how teams spot a dead consumer.'},
+      {title: 'Noticed', ask: 'Wait for the head chef to notice.',
+        until: S => S.flags.detected && S.huddle === 0 && settled(), at: () => chefAt(active().find(c => c.rails.length > 1) || S.chefs[0]),
+        kitchen: 'The head chef noticed, called a huddle and gave the abandoned rail to the chef who’s still standing. They start right at its clip.',
+        kafka: 'Session timeout expired → <b>rebalance</b> → the partition gets a new owner, which resumes from the <b>committed offset</b>. Shorter timeouts recover faster but raise more false alarms.'},
+      {title: 'Standing by', do: true, btn: '#hire', ask: 'Hire chefs until there are more chefs than rails.',
+        until: S => active().length > S.stations[0].rails.length && S.huddle === 0 && settled(), at: () => chefAt(active().find(c => !c.rails.length) || S.chefs[0]),
+        kitchen: 'One chef has no rail, so they wait in the staff room. If anyone goes down, they’re ready to take over.',
+        kafka: 'Consumers beyond the partition count sit <b>idle</b>. They aren’t wasted: they’re <b>standbys</b> that pick up partitions after a failure.'},
+      {title: 'Clocking out properly', do: true, btn: '#leave', ask: 'Click 👋 Clock out a chef.',
+        until: S => S.flags.left && S.huddle === 0 && settled(), at: () => chefAt(S.chefs[0]),
+        kitchen: 'The chef finished their dish, moved the clip, told the head chef they were leaving, and the huddle was quick. Nobody had to notice anything, nothing was lost and nothing was cooked twice.',
+        kafka: 'A <b>graceful shutdown</b>: the consumer commits its offsets and sends a <b>LeaveGroup</b> request, so the rebalance starts right away instead of after a session timeout. Always close consumers cleanly.'},
+    ],
+    xray: [
+      ['💓', 'Head chef checking in', 'Heartbeats', 'Consumers send heartbeats; silence means dead.'],
+      ['⏳', 'Time to notice', 'session.timeout.ms', 'How long a dead consumer keeps its partitions.'],
+      ['🧍', 'Spare chef', 'Idle consumer / standby', 'Takes over partitions when someone fails.'],
+      ['👋', 'Clocking out', 'Graceful leave', 'Commit + LeaveGroup → a fast, clean rebalance.'],
+    ],
+  },
+];
+const SOON = [];
+
+// free play: lesson index -1, every knob unlocked, no steps to follow
+const SANDBOX = {
+  free: true, title: 'Free Play', dish: 'Your kitchen, your rules', chip: 'every knob unlocked',
+  story: [
+    'No lesson, no script. Every knob from every lesson is unlocked.',
+    'Hire up to six chefs, open the dessert station, add rails, change the waiter’s key, call in the auditor, flip when the clip moves, trip chefs or clock them out, and watch Kafka react.'],
+  learn: 'Everything at once. Turn on <b>🩻 Kafka X-ray</b> to see the real names, and keep <b>&lt;/&gt; Code</b> open to watch the KafkaJS lines light up as you play.',
+  setup: {stations: ['mains'], chefs: 2, rate: .6, offer: ['desserts'], keys: true, keyBy: 'none', burger: .3},
+  ctl: {rateMax: 3, hire: 6, open: true, rails: 4, keyBy: 'all', audit: true, commit: true, trip: 'now', detect: 3, recover: 6, leave: true},
+  steps: [], xray: [],
+};
+
+// ---------- save ----------
+const SAVE_KEY = 'cafe-kafka-v2';
+const save = {unlocked: 0, won: {}, xray: false, mute: false, speed: .5, code: true};
+try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}) } catch {}
+const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)) } catch {} };
+if (!save.burger) { const w = {}; for (const k in save.won) w[+k >= 5 ? +k + 1 : k] = save.won[k]; save.won = w; save.burger = true; persist() }
+
+// ---------- sound (tiny WebAudio synth, no files) ----------
+let AC = null;
+function snd(k) {
+  if (save.mute) return;
+  try { AC ||= new (window.AudioContext || window.webkitAudioContext)() } catch { return }
+  const t = AC.currentTime;
+  const tone = (f, d, type = 'sine', v = .05, at = 0) => {
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0, t + at); g.gain.linearRampToValueAtTime(v, t + at + .005);
+    g.gain.exponentialRampToValueAtTime(.0001, t + at + d);
+    o.connect(g).connect(AC.destination); o.start(t + at); o.stop(t + at + d + .02);
+  };
+  if (k === 'pin') tone(2400, .04, 'triangle', .018);
+  if (k === 'ding') { tone(1318, .45, 'sine', .04); tone(1976, .3, 'sine', .02) }
+  if (k === 'bell') [0, .2].forEach(a => { tone(1568, 1.2, 'sine', .07, a); tone(2349, .8, 'sine', .03, a); tone(3136, .5, 'sine', .015, a) });
+  if (k === 'bump') tone(110, .18, 'square', .04);
+  if (k === 'hire') { tone(660, .12, 'triangle', .04); tone(880, .18, 'triangle', .04, .1) }
+  if (k === 'goal') { tone(988, .15, 'triangle', .045); tone(1319, .25, 'triangle', .045, .09) }
+  if (k === 'huddle') { tone(392, .25, 'triangle', .03); tone(330, .3, 'triangle', .03, .15) }
+}
+
+// ---------- sim ----------
+let S, G = {}, W = 800, DPR = 1, K = 1, NOW = 0;
+const hits = [];
+const LV = () => S.lvl < 0 ? SANDBOX : LEVELS[S.lvl];
+
+function newChef(i, x = -30, y = 0) {
+  const [e, n] = CREW[i % CREW.length];
+  return {id: i, e, n, x, y, rails: [], job: null, goal: null, last: null, shake: 0, say: null, served: 0};
+}
+const newRail = () => ({tickets: [], clip: 0, ck: 0, b: 0});
+function newStation(key) { return {...STATIONS[key], rr: 0, rails: [newRail()]} }
+
+function load(lvl) {
+  const L = lvl < 0 ? SANDBOX : LEVELS[lvl];
+  S = {
+    lvl, started: false, paused: false, won: false, time: 0, acc: .7, rate: L.setup.rate, huddle: 0, banner: '',
+    stations: L.setup.stations.map(newStation), offer: [...(L.setup.offer || [])],
+    chefs: [], tables: DINERS.map(e => ({e, ask: 0, happy: 0, mood: ''})), waiterKick: 0,
+    flights: [], parts: [], flags: {solo: 0}, coached: {}, drag: null,
+    stats: {served: 0, produced: 0, maxLag: 0, upset: 0, rebalances: 0, by: {}, lost: 0, dup: 0, audited: 0},
+    si: 0, phase: L.free ? 'free' : 'wait', speed: save.speed, nextChef: L.setup.chefs,
+    keys: !!L.setup.keys && L.setup.keyBy !== 'none', keyBy: 'table', burger: L.setup.burger || 0, lastRail: {}, hl: null, aud: {on: false, t: 0, at: null, resumeLag: 0},
+    commit: L.setup.commit || 'plate', commitGap: L.ctl.trip ? .9 : 0, tripArm: false, serial: !!L.setup.serial, lastDone: 0,
+  };
+  for (let i = 1; i < (L.setup.rails || 1); i++) S.stations[0].rails.push(newRail());
+  K = 0; geom(); // K = 0: snap straight to the new lesson's zoom
+  for (let i = 0; i < L.setup.chefs; i++) S.chefs.push(newChef(i, G.clipX - 16, G.st[0].rails[0] + 94));
+  assign();
+  coachQ.length = 0; hideCoach(); $('#lesson').hidden = true; lastCode = '';
+  renderPanel(); renderVeil(); $('#win').hidden = true;
+}
+
+const active = () => S.chefs.filter(c => !c.down && !c.leaving);
+const downChef = () => S.chefs.find(c => c.down);
+function assign() {
+  const rails = [], crew = active();
+  S.stations.forEach((st, si) => st.rails.forEach((_, ri) => rails.push({si, ri})));
+  S.chefs.forEach(c => { c.rails = []; c.goal = null; c.last = null });
+  if (crew.length) rails.forEach((r, i) => crew[i % crew.length].rails.push(r));
+}
+const ownerOf = (si, ri) => S.chefs.find(c => c.rails.some(r => r.si === si && r.ri === ri));
+const lagOf = rail => rail.tickets.length - rail.clip;
+const totalLag = () => S.stations.reduce((a, st) => a + st.rails.reduce((b, r) => b + lagOf(r), 0), 0);
+
+function rebalance(msg, dur = HUDDLE) {
+  S.huddle = dur; S.banner = msg; S.stats.rebalances++;
+  for (const c of S.chefs) {
+    if (c.job) dropJob(c.job);
+    c.job = null; c.goal = null;
+  }
+  snd('huddle'); renderCtls();
+}
+// a dish abandoned mid-way: if the clip already passed it, nobody will ever cook it
+function dropJob(j) {
+  const rail = S.stations[j.si].rails[j.ri], t = j.t;
+  if (t.off < rail.clip && !t.served) {
+    t.state = 'lost'; S.stats.lost++; S.flags.lostT = {si: j.si, ri: j.ri, t};
+    const p = tablePos(t.table, 0); puff(p.x, p.y - 22, '😡', 2, -10);
+  } else t.state = 'wait';
+}
+
+// a stand-in for Kafka's murmur2: same key, same number, every time
+const keyHash = s => [...s].reduce((a, c) => (a * 31 + c.codePointAt(0)) >>> 0, 7);
+const burgerRail = () => keyHash('🍔') % S.stations[0].rails.length;
+function setKey(v) { S.keys = v !== 'none'; if (S.keys) S.keyBy = v; S.flags.keyAt = S.stats.produced; renderCtls() }
+function spawnOrder() {
+  const tot = S.stations.reduce((a, s) => a + s.share, 0);
+  let r = Math.random() * tot, si = 0;
+  for (; si < S.stations.length - 1; si++) if ((r -= S.stations[si].share) <= 0) break;
+  const st = S.stations[si], table = Math.floor(Math.random() * S.tables.length);
+  const e = st.key === 'mains' && Math.random() < S.burger ? '🍔' : st.dishes[Math.floor(Math.random() * st.dishes.length)];
+  let ri = st.rr++ % st.rails.length;
+  if (S.keys) {
+    ri = S.keyBy === 'dish' ? keyHash(e) % st.rails.length : table % st.rails.length;
+    const k = si + ':' + S.keyBy + ':' + (S.keyBy === 'dish' ? e : table);
+    if (S.lastRail[k] !== undefined && S.lastRail[k] !== ri && !S.flags.remap) S.flags.remap = {si, ri, t: null};
+    S.lastRail[k] = ri;
+  }
+  const rail = st.rails[ri];
+  const t = {off: rail.tickets.length, e, table,
+    born: S.time, landed: false, state: 'wait', rx: 0, kick: 0, upset: false};
+  rail.tickets.push(t);
+  if (S.flags.remap && !S.flags.remap.t) S.flags.remap.t = t;
+  codeFlash('send', S.keys ? `key ${S.keyBy === 'dish' ? e : table + 1} → ${st.key}-${ri} @ ${t.off}` : `→ ${st.key}-${ri} @ ${t.off}`);
+  S.flights.push({kind: 'ticket', t, si, ri, from: tablePos(table, -18), t0: S.time, dur: FLY});
+  S.tables[table].ask = 1.2;
+  S.waiterKick = 1;
+  S.stats.produced++;
+}
+
+function finishJob(c) {
+  const {t, si, ri} = c.job, st = S.stations[si];
+  if (t.served) {
+    t.dup = true; S.stats.dup++; S.flags.dupT = {si, ri, t};
+    const p = tablePos(t.table, 0); puff(p.x + 22, p.y - 22, '🤨 ×2', 2, -10);
+  }
+  t.served = true; c.served++;
+  // an older ticket still waiting on a sibling rail: rails don't keep each other in order
+  st.rails.forEach((r, k) => {
+    if (k === ri || S.flags.ooo) return;
+    const u = r.tickets.slice(r.clip).find(u => u.landed && u.state === 'wait' && u.born < t.born);
+    if (u) S.flags.ooo = {si, ri: k, t: u};
+  });
+  S.stats.served++; S.stats.by[st.key] = (S.stats.by[st.key] || 0) + 1;
+  if (st.key === 'desserts' && S.chefs.length === 1) S.flags.solo++;
+  const wait = S.time - t.born;
+  const sp = stovePos(si, ri);
+  S.flights.push({kind: 'plate', e: t.e, table: t.table, wait, from: {x: sp.x, y: sp.y - 6}, t0: S.time, dur: .8});
+  snd('ding'); codeFlash('serve', `table ${t.table + 1}`);
+  // with a gap, the plate is out but the clip hasn't moved yet: the window where a slip causes a repeat
+  if (S.commitGap && S.commit === 'plate') { t.state = 'plated'; c.job.phase = 'commit'; c.job.left = S.commitGap }
+  else commitJob(c);
+}
+function commitJob(c) {
+  const {t, si, ri} = c.job, rail = S.stations[si].rails[ri];
+  t.state = 'done'; rail.clip = Math.max(rail.clip, t.off + 1); rail.ck = 1; S.lastDone = S.time;
+  if (S.commit !== 'grab') codeFlash('commit', `offset ${rail.clip}`);
+  c.job = null;
+}
+
+function step(dt) {
+  S.time += dt;
+  // one order at a time: the next one is placed only after the last is served, so each moment stands alone
+  if (S.serial) { if (S.time > .7 && totalLag() === 0 && !S.chefs.some(c => c.job) && S.time - S.lastDone >= .8) spawnOrder() }
+  else {
+    S.acc += S.rate * dt;
+    while (S.acc >= 1) { S.acc -= 1; spawnOrder() }
+  }
+
+  for (const f of S.flights) {
+    if (S.time - f.t0 < f.dur) continue;
+    f.gone = true;
+    if (f.kind === 'ticket') {
+      f.t.landed = true; f.t.landedAt = S.time; f.t.kick = 1; f.t.rx = ticketX(S.stations[f.si].rails[f.ri], f.t);
+      snd('pin');
+    } else {
+      const tb = S.tables[f.table];
+      tb.happy = 1.4; tb.mood = f.wait < 8 ? '😋' : f.wait < UPSET ? '🙂' : '😤';
+      const p = tablePos(f.table, 0);
+      puff(p.x - 22, p.y, tb.mood, 1.4, -18);
+    }
+  }
+  S.flights = S.flights.filter(f => !f.gone);
+
+  if (S.huddle > 0) {
+    S.huddle -= dt;
+    if (S.huddle <= 0) { S.huddle = 0; assign(); afterAssign(); codeFlash('rebalance', `${active().length} chefs · ${S.stations.reduce((a, st) => a + st.rails.length, 0)} rails`) }
+  }
+
+  // the auditor reads the oldest unread ticket on any rail; kitchen huddles don't stop her
+  if (S.aud.on && (S.aud.t -= dt) <= 0) {
+    let best = null;
+    S.stations.forEach((st, si) => st.rails.forEach((r, ri) => {
+      const t = r.tickets[r.b];
+      if (t && t.landed && (!best || t.born < best.t.born)) best = {si, ri, r, t};
+    }));
+    if (best) { best.r.b++; best.t.seen = NOW; S.aud.at = {si: best.si, ri: best.ri}; S.aud.t = .45; S.stats.audited++; codeFlash('audit', `${S.stations[best.si].key}-${best.ri} @ ${best.r.b - 1}`) }
+    else S.aud.t = .1;
+  }
+
+  // a fallen chef keeps their rails until the head chef notices, then gets back up later
+  for (const c of S.chefs) if (c.down) {
+    if (c.detect > 0) {
+      if ((c.detect -= dt) <= 0) { S.flags.detected = true; codeFlash('session', `${c.n}: no heartbeat`); c.recover = LV().ctl.recover || 5; rebalance(`The head chef noticed ${c.n} is down. Huddle! Reassigning the rail…`) }
+    } else if (S.huddle === 0 && (c.recover -= dt) <= 0) {
+      c.down = false; c.say = {text: 'I’m OK!', until: NOW + 2};
+      rebalance(`${c.n} is back on their feet. Huddle!`);
+    }
+  }
+
+  for (const c of S.chefs) {
+    if (S.drag && S.drag.c === c) continue;
+    const p = chefTarget(c), dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy), v = 280 * dt;
+    c.walking = d > 2;
+    if (d <= v) { c.x = p.x; c.y = p.y } else { c.x += dx / d * v; c.y += dy / d * v }
+    if (c.down || S.huddle > 0) continue;
+    if (c.job) {
+      if (c.job.phase === 'commit') {
+        if (S.tripArm) crash(c);
+        else if ((c.job.left -= dt) <= 0) commitJob(c);
+        continue;
+      }
+      if (S.tripArm && S.commit === 'grab' && c.job.p > .35) { crash(c); continue }
+      c.job.p += dt / c.job.dur;
+      if (!RM && Math.random() < dt * 9) { const sp = stovePos(c.job.si, c.job.ri); S.stations[c.job.si].key === 'desserts' ? sprinkle(sp.x - 26, sp.y - 16) : steam(sp.x, sp.y - 10) }
+      if (c.job.p >= 1) finishJob(c);
+      continue;
+    }
+    if (c.leaving) { c.gone = true; continue }
+    if (!c.rails.length) continue;
+    if (!c.goal) {
+      let best = null;
+      for (const r of c.rails) {
+        const rail = S.stations[r.si].rails[r.ri], t = rail.tickets[rail.clip];
+        if (t && t.landed && t.state === 'wait' && (!S.serial || S.time - t.landedAt >= .9) && (!best || t.born < best.t.born)) best = {r, t};
+      }
+      if (best) {
+        c.goal = best.r;
+      }
+    }
+    if (c.goal && !c.walking) {
+      const rail = S.stations[c.goal.si].rails[c.goal.ri], t = rail.tickets[rail.clip];
+      if (t && t.landed && t.state === 'wait') {
+        t.state = 'cook';
+        c.job = {...c.goal, t, p: 0, dur: 1.7 + Math.random() * 1.1};
+        c.last = c.goal;
+        const key = S.stations[c.goal.si].key + '-' + c.goal.ri;
+        codeFlash('handle', `${key} @ ${t.off} · ${c.n}`); codeFlash('cook', c.n);
+        if (S.commit === 'grab') { rail.clip = t.off + 1; rail.ck = 1; codeFlash('commit', `offset ${rail.clip}`) }
+      }
+      c.goal = null;
+    }
+  }
+
+  const gone = S.chefs.find(c => c.gone);
+  if (gone) {
+    S.chefs = S.chefs.filter(c => c !== gone); S.flags.left = true;
+    puff(gone.x, gone.y - 30, '👋', 1.6, -16);
+    rebalance(`${gone.n} clocked out properly. Quick huddle…`, .8); codeFlash('leave', gone.n);
+  }
+
+  let lag = 0;
+  for (const st of S.stations) for (const rail of st.rails) {
+    lag += lagOf(rail);
+    for (let o = rail.clip; o < rail.tickets.length; o++) {
+      const t = rail.tickets[o];
+      if (!t.upset && S.time - t.born > UPSET) { t.upset = true; S.stats.upset++ }
+    }
+  }
+  S.stats.maxLag = Math.max(S.stats.maxLag, lag);
+
+  for (const p of S.parts) { p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt }
+  S.parts = S.parts.filter(p => p.life > 0);
+}
+
+function afterAssign() {
+  const idle = active().find(c => !c.rails.length);
+  if (idle) {
+    idle.say = {text: 'nothing for me…', until: NOW + 3.5};
+  }
+  const multi = S.chefs.find(c => c.rails.length > 1);
+  if (S.stations.length > 1 && S.chefs.length > 1 && S.chefs.every(c => c.rails.length) && !multi) {
+    S.flags.split = true;
+  }
+}
+
+// ---------- player actions ----------
+function hire() {
+  if (!S.started || S.chefs.length >= (LV().ctl.hire || 1)) return;
+  const c = newChef(S.nextChef++, -30, G.staff ? G.staff.top + 60 : 0);
+  S.chefs.push(c);
+  rebalance(`${c.n} joined the crew. Huddle! The head chef is reassigning rails…`);
+  snd('hire'); renderCtls();
+}
+function openStation() {
+  if (!S.started || !S.offer.length) return;
+  S.stations.push(newStation(S.offer.shift()));
+  rebalance('Dessert station is open. Huddle! The head chef is dealing out the rails…');
+  renderCtls();
+}
+function addRail() {
+  const st = S.stations[0];
+  if (!S.started || st.rails.length >= LV().ctl.rails) return;
+  st.rails.push(newRail()); S.flags.railAt = S.stats.produced;
+  rebalance(`${st.name} has a new rail. Huddle! The head chef is dealing out the rails…`);
+  codeFlash('partitions', `count: ${st.rails.length}`);
+}
+function toggleAud() {
+  if (!S.started) return;
+  S.aud.on = !S.aud.on; S.aud.t = .3;
+  if (S.aud.on) S.aud.resumeLag = audLag();
+  renderCtls();
+}
+function setCommit(v) { S.commit = v; renderCtls() }
+function tripChef() {
+  const crew = active();
+  if (!S.started || crew.length < 2) return;
+  if (LV().ctl.trip === 'worst') S.tripArm = true;
+  else { const c = crew.filter(c => c.rails.length).pop(); if (c) crash(c) }
+  renderCtls();
+}
+function crash(c) {
+  S.tripArm = false;
+  if (c.job) dropJob(c.job);
+  c.job = null; c.goal = null; c.down = true; c.downAt = S.time; c.detect = LV().ctl.detect || .5;
+  c.say = {text: 'whoa—!', until: NOW + 1.5}; c.shake = .6;
+  snd('bump'); renderCtls();
+}
+function clockOut() {
+  const c = active().filter(c => c.rails.length).pop();
+  if (!S.started || !c || active().length < 2) return;
+  c.leaving = true; c.say = {text: 'finishing this one, then I’m off', until: NOW + 2.5};
+  renderCtls();
+}
+function tapTable(i) {
+  S.hl = {table: i, until: NOW + 3.5}; S.flags.tableTap = {i}; snd('pin');
+}
+function togglePause() {
+  if (!S.started) return;
+  S.paused = !S.paused;
+  renderCtls();
+}
+function tapTicket(si, ri, t) {
+  const rail = S.stations[si].rails[ri], who = ownerOf(si, ri)?.n || 'The chef';
+  const x = save.xray ? ` <code>offset ${t.off}</code> vs <code>committed offset ${rail.clip}</code>` : '';
+  const at = () => ({x: t.rx + G.TW / 2, y: G.st[si].rails[ri] + 4});
+  if (t.off < rail.clip) {
+    S.flags.hist = true;
+    if (S.phase === 'free') coach(`Ticket #${t.off} was cooked already, and it’s still on the rail. Nothing gets thrown away; the clip just remembers how far ${who} got.${x}`, at);
+  } else if (t.off === rail.clip) {
+    S.flags.next = true;
+    if (S.phase === 'free') coach(`Yes, #${t.off}! ${who} always takes the first ticket after the clip. Numbers only go up, so the order is fixed.${x}`, at);
+  } else {
+    coach(`Not yet: #${rail.clip} comes first. Chefs never skip ahead; they work left to right from the clip.${x}`, at);
+  }
+}
+function dropChef(c, x, y) {
+  const hit = railAt(x, y);
+  if (!hit || S.huddle > 0) return;
+  const owner = ownerOf(hit.si, hit.ri);
+  if (owner && owner !== c) {
+    S.flags.squeeze = true;
+    c.shake = .6; owner.say = {text: 'Hey, my rail!', until: NOW + 2.2};
+    snd('bump');
+    if (S.phase === 'free') coach('Bounced! Two chefs on one rail would grab the same tickets and cook them twice. The rule is simple: <b>one rail, one chef</b>. Want more hands cooking? You’d need more rails.', () => ({x: owner.x, y: owner.y - 20}));
+  }
+}
+
+// ---------- geometry ----------
+function sceneH(narrow) { // unscaled height; must mirror the stacking in geom()
+  const L = LV(), rails = S.stations.reduce((a, st) => a + st.rails.length, 0);
+  return 144 + S.stations.length * 42 + rails * 118 + (S.offer.length && L.ctl.open ? 62 : 6) + (hasStaff() ? 110 : 0);
+}
+const hasStaff = () => { const L = LV(); return !!(L.ctl.hire || L.setup.chefs > 1) };
+const audLag = () => S.stations.reduce((a, st) => a + st.rails.reduce((b, r) => b + r.tickets.length - r.b, 0), 0);
+// where the auditor's blue clip sits on a rail (clamped to the rail's left end when she's far behind)
+function audX(si, ri) {
+  const r = S.stations[si].rails[ri], t = r.tickets[r.b], last = r.tickets[r.b - 1];
+  const x = t ? ticketX(r, t) - 5 : last ? ticketX(r, last) + G.TW + 5 : G.clipX;
+  return Math.max(G.railL, x);
+}
+const audAt = () => { const a = S.aud.at || {si: 0, ri: 0}; return {x: audX(a.si, a.ri), y: G.st[a.si].rails[a.ri] - 8, h: 36, w: 18} };
+const lastLandedAt = (si, ri) => { const ts = S.stations[si].rails[ri].tickets.filter(t => t.landed); return tkAt(si, ri, ts[ts.length - 1].off) };
+function geom() {
+  const cw = $('#cwrap').clientWidth || 800;
+  // zoom the whole scene to fit the stage height on desktop; phones keep 1:1 and scroll the page
+  const sh = matchMedia('(max-width:900px)').matches ? 0 : $('#scene').clientHeight;
+  const Kt = sh ? Math.max(.55, Math.min(sh / sceneH(cw < 560), Math.max(1, Math.min(1.6, cw / 640)))) : 1;
+  // ease toward a new zoom (a station or rail was added) instead of snapping, and ignore tiny upward wobbles
+  K = !K ? Kt : Kt < K - .002 || Kt > K + .03 ? K + (Kt - K) * .08 : K; // ~half a second at 60fps
+  if (Math.abs(Kt - K) < .002) K = Kt;
+  W = cw / K;
+  const narrow = W < 560;
+  const g = {W, narrow, pad: narrow ? 8 : 14, SLOT: narrow ? 42 : 50, TW: narrow ? 36 : 44, TH: narrow ? 48 : 54};
+  g.dining = {h: 132};
+  let y = g.dining.h + 12;
+  g.st = S.stations.map(st => {
+    const top = y, rails = st.rails.map((_, i) => top + 38 + i * 118);
+    y = top + 38 + st.rails.length * 118 + 4;
+    return {top, h: y - top, rails};
+  });
+  g.offer = S.offer.length && LV().ctl.open ? {top: y + 6, h: 50} : null;
+  if (g.offer) y += 62; else y += 6;
+  g.staff = hasStaff() ? {top: y, h: 104} : null;
+  if (g.staff) y += 110;
+  g.H = y;
+  g.railL = g.pad + 12; g.railR = W - g.pad - 12;
+  g.clipX = g.railL + (narrow ? 1.7 : 2.7) * g.SLOT;
+  g.waiter = {x: W - g.pad - 34, y: 66};
+  const avail = W - 2 * g.pad - 90;
+  g.tables = S.tables.map((_, i) => g.pad + avail * (i + .5) / S.tables.length);
+  G = g;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  if (cv.width !== Math.round(W * K * dpr) || cv.height !== Math.round(g.H * K * dpr)) {
+    DPR = dpr; cv.width = Math.round(W * K * dpr); cv.height = Math.round(g.H * K * dpr); cv.style.height = g.H * K + 'px';
+  }
+}
+const tablePos = (i, dy = 0) => ({x: G.tables[i], y: 64 + dy});
+const stovePos = (si, ri) => ({x: G.clipX + 2 + (G.TW + 44) / 2, y: G.st[si].rails[ri] + 93});
+const clipPos = (si, ri) => ({x: G.clipX, y: G.st[si].rails[ri], h: 34, w: 18});
+const tkAt = (si, ri, off) => { const t = S.stations[si].rails[ri].tickets[off]; return t ? {x: t.rx + G.TW / 2, y: G.st[si].rails[ri] + 4, h: G.TH, w: G.TW + 6} : clipPos(si, ri) };
+// the clip plus every waiting ticket after it on one rail
+const pileAt = (si, ri) => { const r = S.stations[si].rails[ri], t = r.tickets.filter((t, o) => o >= r.clip && t.landed).pop();
+  if (!t) return clipPos(si, ri); const x0 = G.clipX - 12, x1 = t.rx + G.TW + 3; return {x: (x0 + x1) / 2, y: G.st[si].rails[ri] - 2, h: G.TH + 8, w: x1 - x0} };
+// every chef has walked back to where the head chef sent them
+const settled = () => S.chefs.every(c => { const p = chefTarget(c); return Math.hypot(p.x - c.x, p.y - c.y) < 3 });
+const chefAt = c => ({x: c.x, y: c.y - 26, h: 52, w: 52});
+// the station's name, plus its topic tag in X-ray
+const stationAt = si => {
+  const st = S.stations[si];
+  ctx.font = `700 16px ${SANS}`; let w = ctx.measureText(`${st.e} ${st.name}`).width + 16;
+  if (save.xray) { ctx.font = `700 9px ${MONO}`; w += 6 + ctx.measureText(st.rails.length > 1 ? `topic "${st.key}" · ${st.rails.length} partitions` : `topic "${st.key}" · partition ${st.key}-0`).width + 8 }
+  return {x: G.pad + 4 + w / 2, y: G.st[si].top + 6, h: 24, w};
+};
+const lastWaitAt = (si, ri) => { const r = S.stations[si].rails[ri], t = r.tickets[r.tickets.length - 1]; return {x: Math.min(G.railR - 60, ticketX(r, t)) + G.TW / 2, y: G.st[si].rails[ri] + 4, h: G.TH, w: G.TW + 6} };
+const stationSpot = (si, ri) => ({x: G.clipX - 18, y: G.st[si].rails[ri] + 94});
+function chefTarget(c) {
+  if (S.huddle > 0) {
+    const i = S.chefs.indexOf(c);
+    if (G.staff) return {x: G.pad + 92 + i * 40, y: G.staff.top + 62};
+    return {x: G.W / 2 + (i - S.chefs.length / 2) * 40, y: G.st[0].rails[0] + 94};
+  }
+  const r = c.job || c.goal || c.last || c.rails[0];
+  if (r) return stationSpot(r.si, r.ri);
+  const idle = S.chefs.filter(x => !x.rails.length).indexOf(c);
+  return {x: G.W * .45 + idle * 60, y: G.staff ? G.staff.top + 62 : 0};
+}
+function ticketX(rail, t) {
+  const k = t.off - rail.clip;
+  if (k < 0) return G.clipX - 5 - G.TW + (k + 1) * G.SLOT;
+  const lag = lagOf(rail), avail = G.railR - (G.clipX + 6) - G.TW;
+  const slot = lag > 1 ? Math.min(G.SLOT, avail / (lag - 1)) : G.SLOT;
+  return G.clipX + 6 + k * slot;
+}
+function railAt(x, y) {
+  for (let si = 0; si < S.stations.length; si++)
+    for (let ri = 0; ri < S.stations[si].rails.length; ri++) {
+      const ry = G.st[si].rails[ri];
+      if (x > G.pad && x < G.W - G.pad && y > ry - 8 && y < ry + 112) return {si, ri};
+    }
+  return null;
+}
+
+// ---------- particles ----------
+function puff(x, y, text, life, vy, color) { if (!RM) S.parts.push({x, y, vx: 0, vy, life, max: life, text, color}) }
+function sprinkle(x, y) { S.parts.push({x: x + (Math.random() - .5) * 14, y, vx: (Math.random() - .5) * 30, vy: -30 - Math.random() * 20, life: .7, max: .7, dot: ['#FF8FB1', '#FFD166', '#7FD8F0', '#B9F18C'][Math.random() * 4 | 0]}) }
+function steam(x, y) { S.parts.push({x: x + (Math.random() - .5) * 16, y, vx: (Math.random() - .5) * 8, vy: -26, life: 1, max: 1, steam: true}) }
+let confetti = [];
+function burst() {
+  if (RM) return;
+  for (let i = 0; i < 120; i++) confetti.push({x: Math.random() * G.W, y: -20 - Math.random() * 200, vx: (Math.random() - .5) * 60,
+    vy: 120 + Math.random() * 160, r: Math.random() * 6, vr: (Math.random() - .5) * 10, c: [C.brass, C.tomato, C.herb, C.xr, C.paper][i % 5], life: 3.5});
+}
+
+// ---------- drawing ----------
+function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r) }
+function txt(s, x, y, font, color, align = 'left', base = 'alphabetic') {
+  ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base; ctx.fillText(s, x, y);
+}
+function emoji(e, x, y, size) { txt(e, x, y, `${size}px ${EMO}`, '#000', 'center', 'middle') }
+function xlabel(s, x, y, align = 'center') {
+  ctx.font = `700 9px ${MONO}`;
+  const w = ctx.measureText(s).width + 8, x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
+  ctx.fillStyle = 'rgba(15,42,42,.92)'; rr(x0, y - 9, w, 13, 3); ctx.fill();
+  ctx.strokeStyle = 'rgba(95,224,208,.5)'; ctx.lineWidth = 1; ctx.stroke();
+  txt(s, x0 + 4, y, `700 9px ${MONO}`, C.xr);
+}
+function bubble(s, x, y) {
+  ctx.font = `11px ${MONO}`;
+  const w = ctx.measureText(s).width + 14;
+  ctx.fillStyle = C.paper; rr(x - w / 2, y - 22, w, 18, 8); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x - 4, y - 4); ctx.lineTo(x, y + 2); ctx.lineTo(x + 4, y - 4); ctx.fill();
+  txt(s, x, y - 9, `11px ${MONO}`, C.ink, 'center', 'middle');
+}
+
+// tiled walls, drawn once into a repeating pattern
+const PAT = {};
+function tiles(base, line) {
+  const c = document.createElement('canvas'), t = c.getContext('2d');
+  c.width = 56; c.height = 28;
+  t.fillStyle = base; t.fillRect(0, 0, 56, 28);
+  t.strokeStyle = line; t.lineWidth = 1; t.beginPath();
+  t.moveTo(0, .5); t.lineTo(56, .5); t.moveTo(0, 14.5); t.lineTo(56, 14.5);
+  t.moveTo(.5, 0); t.lineTo(.5, 14); t.moveTo(28.5, 14); t.lineTo(28.5, 28); t.stroke();
+  return ctx.createPattern(c, 'repeat');
+}
+function steel(x, y, w, h, r, edge) {
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, '#2C3238'); g.addColorStop(.5, '#22272C'); g.addColorStop(1, '#1B1F23');
+  ctx.fillStyle = g; rr(x, y, w, h, r); ctx.fill();
+  ctx.save(); ctx.clip();
+  ctx.strokeStyle = 'rgba(255,255,255,.025)'; ctx.lineWidth = 1;
+  for (let yy = y + 3, i = 0; yy < y + h; yy += 3, i++) { ctx.globalAlpha = .4 + (i * 7 % 5) / 6; ctx.beginPath(); ctx.moveTo(x, yy); ctx.lineTo(x + w, yy); ctx.stroke() }
+  ctx.restore();
+  ctx.strokeStyle = edge; ctx.lineWidth = 1; rr(x + .5, y + .5, w - 1, h - 1, r); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.beginPath(); ctx.moveTo(x + r, y + 1.5); ctx.lineTo(x + w - r, y + 1.5); ctx.stroke();
+}
+function glowAt(x, y, r, a) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, `rgba(255,150,60,${a})`); g.addColorStop(1, 'rgba(255,120,40,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, 2 * r, 2 * r);
+}
+function lamp(x, y) {
+  ctx.strokeStyle = '#4A535A'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y - 14); ctx.lineTo(x, y - 6); ctx.stroke();
+  const g = ctx.createLinearGradient(x - 11, 0, x + 11, 0);
+  g.addColorStop(0, '#3B444B'); g.addColorStop(.4, '#7D8890'); g.addColorStop(1, '#2F363C');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - 4, y - 7); ctx.lineTo(x + 4, y - 7); ctx.lineTo(x + 11, y + 2); ctx.lineTo(x - 11, y + 2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#FFD7A1'; ctx.shadowColor = '#FF9A4A'; ctx.shadowBlur = 12;
+  ctx.beginPath(); ctx.ellipse(x, y + 2, 8, 2.5, 0, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+}
+
+function draw(rdt) {
+  geom();
+  ctx.setTransform(DPR * K, 0, 0, DPR * K, 0, 0);
+  ctx.clearRect(0, 0, G.W, G.H);
+  hits.length = 0;
+  const X = save.xray;
+
+  PAT.wall ||= tiles('#14171A', 'rgba(255,255,255,.035)');
+  PAT.back ||= tiles('#0E1012', 'rgba(255,255,255,.03)');
+  ctx.fillStyle = PAT.wall; rr(0, 0, G.W, G.H, 16); ctx.fill();
+  // dining room: dark wall, warm floor, a pendant lamp over every table
+  let gr = ctx.createLinearGradient(0, 0, 0, G.dining.h);
+  gr.addColorStop(0, '#231A16'); gr.addColorStop(.55, '#2B201A'); gr.addColorStop(.56, '#3A2A1F'); gr.addColorStop(1, '#2C1F17');
+  ctx.fillStyle = gr; rr(0, 0, G.W, G.dining.h, [16, 16, 0, 0]); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = 1;
+  for (let x = -40; x < G.W; x += 46) { ctx.beginPath(); ctx.moveTo(x, G.dining.h * .56); ctx.lineTo(x + 40, G.dining.h); ctx.stroke() }
+  txt('DINING ROOM', G.pad + 4, 16, `700 9px ${MONO}`, 'rgba(255,214,170,.4)');
+  const pend = S.tables.map(() => ({n: 0, oldest: Infinity}));
+  for (const st of S.stations) for (const rail of st.rails)
+    for (let o = rail.clip; o < rail.tickets.length; o++) { const t = rail.tickets[o], p = pend[t.table]; p.n++; p.oldest = Math.min(p.oldest, t.born) }
+  S.tables.forEach((tb, i) => {
+    const x = G.tables[i];
+    tb.ask = Math.max(0, tb.ask - rdt); tb.happy = Math.max(0, tb.happy - rdt);
+    glowAt(x, 92, 62, .22);
+    ctx.strokeStyle = 'rgba(255,214,170,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x - 30, 8); ctx.stroke();
+    ctx.fillStyle = '#FFD7A1'; ctx.shadowColor = '#FF9A4A'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x - 30, 11, 3, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, 103, 30, 9, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5E3F27'; ctx.beginPath(); ctx.ellipse(x, 96, 27, 11, 0, 0, 7); ctx.fill();
+    gr = ctx.createLinearGradient(x - 24, 0, x + 24, 0); gr.addColorStop(0, '#8A6240'); gr.addColorStop(.5, '#A97B52'); gr.addColorStop(1, '#7E5737');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(x, 94, 23, 8, 0, 0, 7); ctx.fill();
+    if (tb.happy > 0) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, 93, 10, 5, 0, 0, 7); ctx.fill() }
+    const hop = tb.happy > 0 && !RM ? -Math.abs(Math.sin(NOW * 12)) * 4 : 0;
+    emoji(tb.e, x, 64 + hop, G.narrow ? 24 : 28);
+    const p = pend[i];
+    if (p.n) {
+      const w = S.time - p.oldest, mood = w < 7 ? '🙂' : w < UPSET ? '😐' : '😠';
+      const bx = x + 20, by = 32;
+      ctx.fillStyle = w >= UPSET ? '#F3C9BF' : C.paper; rr(bx - 4, by - 11, 38, 20, 10); ctx.fill();
+      emoji(mood, bx + 7, by - 1, 13);
+      txt('×' + p.n, bx + 18, by, `700 10px ${MONO}`, C.ink, 'left', 'middle');
+      if (w >= UPSET && !RM) emoji('💢', x - 16, 44 + Math.sin(NOW * 8) * 2, 12);
+    }
+    txt(`T${i + 1}`, x, 122, `700 9px ${MONO}`, TCOL[i], 'center');
+    hits.push({kind: 'table', i, x: x - 30, y: 36, w: 60, h: 76});
+  });
+  // waiter
+  S.waiterKick = Math.max(0, S.waiterKick - rdt * 3);
+  emoji('🤵', G.waiter.x, G.waiter.y - S.waiterKick * 6, 30);
+  txt('WAITER', G.waiter.x, G.waiter.y + 28, `700 9px ${MONO}`, 'rgba(255,214,170,.55)', 'center');
+  if (X) xlabel('producer', G.waiter.x, G.waiter.y + 42);
+  // the pass
+  gr = ctx.createLinearGradient(0, G.dining.h, 0, G.dining.h + 9);
+  gr.addColorStop(0, '#E4EAEE'); gr.addColorStop(.35, '#A9B4BB'); gr.addColorStop(1, '#56616A');
+  ctx.fillStyle = gr; ctx.fillRect(0, G.dining.h, G.W, 9);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, G.dining.h + 9, G.W, 3);
+
+  // stations
+  S.stations.forEach((st, si) => {
+    const g = G.st[si];
+    steel(G.pad, g.top, G.W - 2 * G.pad, g.h, 14, X ? 'rgba(95,224,208,.45)' : '#3C454D');
+    txt(`${st.e} ${st.name}`, G.pad + 12, g.top + 23, `700 16px ${SANS}`, '#F2EEE6');
+    g.rails.forEach(y => {
+      const x0 = G.clipX + G.TW + 70, x1 = G.railR - 100, n = Math.max(1, Math.floor((x1 - x0) / 150));
+      for (let i = 0; i <= n && x1 > x0; i++) { const lx = x0 + (x1 - x0) * i / n; glowAt(lx, y + 34, 78, .17); lamp(lx, y - 8) }
+    });
+    if (X) {
+      ctx.font = `700 15px ${SANS}`;
+      xlabel(st.rails.length > 1 ? `topic "${st.key}" · ${st.rails.length} partitions` : `topic "${st.key}" · partition ${st.key}-0`, G.pad + 22 + ctx.measureText(`${st.e} ${st.name}`).width, g.top + 20, 'left');
+    }
+    st.rails.forEach((rail, ri) => drawRail(si, ri, rail, g.rails[ri], rdt));
+  });
+
+  if (G.offer) {
+    const o = G.offer, d = STATIONS[S.offer[0]];
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; rr(G.pad, o.top, G.W - 2 * G.pad, o.h, 14); ctx.fill();
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = '#4A545C'; ctx.lineWidth = 1.5;
+    rr(G.pad, o.top, G.W - 2 * G.pad, o.h, 14); ctx.stroke(); ctx.setLineDash([]);
+    const pulse = S.started && !RM ? .6 + .4 * Math.sin(NOW * 3) : 1;
+    ctx.globalAlpha = pulse;
+    txt(`${d.e} ${d.name} station: closed`, G.pad + 14, o.top + 30, `700 14px ${SANS}`, C.paper);
+    ctx.globalAlpha = 1;
+    txt(S.started ? 'TAP TO OPEN ▸' : '', G.W - G.pad - 14, o.top + 30, `700 10px ${MONO}`, '#FFB547', 'right');
+    hits.push({kind: 'offer', x: G.pad, y: o.top, w: G.W - 2 * G.pad, h: o.h});
+  }
+
+  if (G.staff) {
+    const s = G.staff;
+    ctx.fillStyle = PAT.back; ctx.strokeStyle = X ? 'rgba(95,224,208,.45)' : '#2F363C'; ctx.lineWidth = 1;
+    rr(G.pad, s.top, G.W - 2 * G.pad, s.h, 14); ctx.fill(); ctx.stroke();
+    txt('STAFF ROOM', G.pad + 12, s.top + 17, `700 9px ${MONO}`, 'rgba(233,229,220,.4)');
+    for (let i = 0; i < 3; i++) {
+      const lx = G.W - G.pad - 34 - i * 30;
+      ctx.fillStyle = '#20262B'; rr(lx, s.top + 10, 26, 60, 3); ctx.fill();
+      ctx.fillStyle = '#2C343A'; for (let v = 0; v < 3; v++) ctx.fillRect(lx + 5, s.top + 16 + v * 4, 16, 1.5);
+      ctx.fillStyle = '#6F7880'; ctx.fillRect(lx + 20, s.top + 38, 2, 8);
+    }
+    if (X) xlabel('consumer group "kitchen"', G.pad + 92, s.top + 15, 'left');
+    emoji('👨‍🍳', G.pad + 40, s.top + 60, 30);
+    emoji('📋', G.pad + 54, s.top + 70, 15);
+    txt('HEAD CHEF', G.pad + 40, s.top + 92, `700 9px ${MONO}`, 'rgba(233,229,220,.55)', 'center');
+    if (X) xlabel('coordinator', G.pad + 40, s.top + 104 - 1);
+    ctx.fillStyle = '#6B4D33'; rr(G.W * .4, s.top + 78, G.W * .6 - G.pad - 110, 7, 3); ctx.fill();
+    ctx.fillStyle = '#3E2C1D'; ctx.fillRect(G.W * .4 + 8, s.top + 85, 4, 10); ctx.fillRect(G.W - G.pad - 122, s.top + 85, 4, 10);
+    if (S.huddle > 0 && !RM) emoji('💬', G.pad + 64, s.top + 36 + Math.sin(NOW * 6) * 2, 16);
+  }
+
+  // chefs
+  for (const c of S.chefs) {
+    let x = c.x, y = c.y;
+    if (S.drag && S.drag.c === c) continue;
+    c.shake = Math.max(0, c.shake - rdt);
+    if (c.shake) x += Math.sin(NOW * 60) * 5 * c.shake;
+    if (c.walking && !RM) y += -Math.abs(Math.sin(NOW * 14)) * 3;
+    if (c.job && !RM) x += Math.sin(NOW * 9) * 1.2;
+    if (c.down) ctx.globalAlpha = .45;
+    emoji(c.e, x, y, 30);
+    ctx.globalAlpha = 1;
+    if (c.down) emoji('💫', x + 12, y - 22 + (RM ? 0 : Math.sin(NOW * 5) * 2), 14);
+    const atStove = c.rails.length && !c.walking && S.huddle === 0;
+    if (atStove) {
+      txt(c.n, x - 22, y + 4, `700 10px ${MONO}`, C.paper, 'right', 'middle');
+      if (X) xlabel('consumer', x - 22, y + 18, 'right');
+    } else {
+      txt(c.n, x, y + 26, `700 10px ${MONO}`, C.paper, 'center');
+      if (X && G.staff && y > G.staff.top) xlabel(c.rails.length ? 'consumer' : 'idle consumer', x, y + 39);
+    }
+    if (!c.rails.length && S.huddle === 0 && !c.walking && !c.down) {
+      if (!RM) txt('z', x + 16, y - 16 - (NOW * 8 % 8), `700 ${10 + (NOW * 2 % 1) * 4}px ${MONO}`, C.mut);
+      hits.push({kind: 'chef', c, x: x - 20, y: y - 20, w: 40, h: 40});
+    }
+    if (c.say && c.say.until > NOW) bubble(c.say.text, x, y - 18);
+  }
+
+  // flights
+  for (const f of S.flights) {
+    const k = Math.min(1, (S.time - f.t0) / f.dur), e = 1 - (1 - k) * (1 - k);
+    const to = f.kind === 'ticket'
+      ? {x: ticketX(S.stations[f.si].rails[f.ri], f.t) + G.TW / 2, y: G.st[f.si].rails[f.ri] + 40}
+      : tablePos(f.table, 30);
+    const mx = (f.from.x + to.x) / 2, my = Math.min(f.from.y, to.y) - 50;
+    const x = (1 - e) * (1 - e) * f.from.x + 2 * (1 - e) * e * mx + e * e * to.x;
+    const y = (1 - e) * (1 - e) * f.from.y + 2 * (1 - e) * e * my + e * e * to.y;
+    ctx.save(); ctx.translate(x, y);
+    if (f.kind === 'ticket') {
+      ctx.rotate((1 - k) * 2.4);
+      ctx.fillStyle = '#FCFBF7'; ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 6;
+      rr(-12, -15, 24, 30, 2); ctx.fill(); ctx.shadowBlur = 0;
+      emoji(f.t.e, 0, 2, 13);
+    } else {
+      ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(0,0,0,.4)'; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.ellipse(0, 4, 15, 7, 0, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+      emoji(f.e, 0, -2, 18);
+    }
+    ctx.restore();
+  }
+
+  for (const p of S.parts) {
+    const a = Math.max(0, p.life / p.max);
+    ctx.globalAlpha = p.steam ? a * .35 : Math.min(1, a * 2);
+    if (p.steam) { ctx.fillStyle = '#E7EEF2'; ctx.beginPath(); ctx.arc(p.x, p.y, 4 + (1 - a) * 7, 0, 7); ctx.fill() }
+    else if (p.dot) { p.vy += 80 * rdt; ctx.fillStyle = p.dot; rr(p.x - 2.5, p.y - 1, 5, 2.5, 1); ctx.fill() }
+    else if (p.color) txt(p.text, p.x, p.y, `700 12px ${MONO}`, p.color, 'center', 'middle');
+    else emoji(p.text, p.x, p.y, 20);
+    ctx.globalAlpha = 1;
+  }
+
+  if (S.drag) {
+    const {c, x, y} = S.drag, hit = railAt(x, y);
+    if (hit) {
+      const taken = ownerOf(hit.si, hit.ri);
+      ctx.fillStyle = taken ? 'rgba(228,87,61,.16)' : 'rgba(127,176,105,.16)';
+      const ry = G.st[hit.si].rails[hit.ri];
+      rr(G.pad + 4, ry - 6, G.W - 2 * G.pad - 8, 114, 10); ctx.fill();
+      if (taken) txt(`${taken.n}’s rail`, G.W - G.pad - 16, ry + 76, `700 11px ${MONO}`, C.tomato, 'right');
+    }
+    ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 14;
+    emoji(c.e, x, y, 38); ctx.shadowBlur = 0;
+  }
+
+  confetti = confetti.filter(p => (p.life -= rdt) > 0);
+  for (const p of confetti) {
+    p.x += p.vx * rdt; p.y += p.vy * rdt; p.r += p.vr * rdt;
+    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-4, -2, 8, 4); ctx.restore();
+  }
+}
+
+function ticketPath() {
+  const w = G.TW, h = G.TH;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h - 3);
+  for (let x = w, up = false; x > 0; x -= 4, up = !up) ctx.lineTo(Math.max(0, x - 4), up ? h - 3 : h);
+  ctx.closePath();
+}
+// mains cook on a two-burner stove
+function drawStove(sx, sy, sw, sh, cook) {
+  let sg = ctx.createLinearGradient(0, sy, 0, sy + sh);
+  sg.addColorStop(0, '#16191C'); sg.addColorStop(1, '#08090A');
+  ctx.fillStyle = sg; rr(sx, sy, sw, sh, 6); ctx.fill();
+  ctx.strokeStyle = '#7D8890'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,.06)'; rr(sx + 3, sy + 2, sw - 6, 4, 2); ctx.fill();
+  for (const bx of [sx + 18, sx + sw - 18]) {
+    if (cook) {
+      const rg = ctx.createRadialGradient(bx, sy + 13, 1, bx, sy + 13, 12);
+      rg.addColorStop(0, 'rgba(255,140,40,.95)'); rg.addColorStop(1, 'rgba(255,80,20,0)');
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(bx, sy + 13, 12, 0, 7); ctx.fill();
+    }
+    ctx.strokeStyle = cook ? '#FF8A3D' : '#2F363C'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, sy + 13, 7, 0, 7); ctx.stroke();
+  }
+  if (cook) {
+    const px = sx + 18, jig = RM ? 0 : Math.sin(NOW * 16) * 1.5;
+    ctx.fillStyle = '#2B2B2B'; ctx.beginPath(); ctx.arc(px + jig, sy + 10, 11, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#2B2B2B'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(px + 10 + jig, sy + 12); ctx.lineTo(px + 24 + jig, sy + 18); ctx.stroke();
+    emoji(cook.job.t.e, px + jig, sy + 8 - (RM ? 0 : Math.abs(Math.sin(NOW * 8)) * 4), 15);
+  }
+}
+// desserts are made on a marble counter with a blender
+function drawPastry(sx, sy, sw, sh, cook) {
+  const sg = ctx.createLinearGradient(0, sy, 0, sy + sh);
+  sg.addColorStop(0, '#EDE8DF'); sg.addColorStop(1, '#BDB5A8');
+  ctx.fillStyle = sg; rr(sx, sy + 8, sw, sh - 8, 6); ctx.fill();
+  ctx.strokeStyle = '#8C857A'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.strokeStyle = 'rgba(120,110,100,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(sx + 8, sy + 14); ctx.quadraticCurveTo(sx + sw / 2, sy + 22, sx + sw - 12, sy + 13); ctx.stroke();
+  // blender: base, glass jar, lid
+  const bx = sx + 22, shake = cook && !RM ? Math.sin(NOW * 40) * .8 : 0;
+  ctx.fillStyle = '#2B2F33'; rr(bx - 10, sy + 10, 20, 9, 3); ctx.fill();
+  ctx.fillStyle = cook ? '#FF8FB1' : '#5B646B'; ctx.beginPath(); ctx.arc(bx, sy + 14.5, 2, 0, 7); ctx.fill();
+  ctx.save(); ctx.translate(shake, 0);
+  ctx.beginPath(); ctx.moveTo(bx - 9, sy - 12); ctx.lineTo(bx + 9, sy - 12); ctx.lineTo(bx + 7, sy + 10); ctx.lineTo(bx - 7, sy + 10); ctx.closePath();
+  ctx.fillStyle = 'rgba(220,240,250,.22)'; ctx.fill();
+  if (cook) {
+    ctx.save(); ctx.clip();
+    const lvl = sy + 10 - 18 * Math.min(1, .35 + cook.job.p);
+    ctx.fillStyle = 'rgba(255,170,200,.75)'; ctx.fillRect(bx - 10, lvl, 20, sy + 10 - lvl);
+    const a = RM ? 0 : NOW * 14; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(bx - 6 * Math.cos(a), sy + 7); ctx.lineTo(bx + 6 * Math.cos(a), sy + 7); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.strokeStyle = 'rgba(230,245,250,.8)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.fillStyle = '#2B2F33'; rr(bx - 10, sy - 15, 20, 4, 2); ctx.fill();
+  ctx.restore();
+  // the dessert being made waits on the counter
+  if (cook) emoji(cook.job.t.e, sx + sw - 20, sy + 6 - (RM ? 0 : Math.abs(Math.sin(NOW * 6)) * 2), 16);
+}
+function drawRail(si, ri, rail, y, rdt) {
+  const X = save.xray, lag = lagOf(rail);
+  const cook = S.chefs.find(c => c.job && c.job.si === si && c.job.ri === ri);
+  const sx = G.clipX + 2, sw = G.TW + 44, sy = y + 80, sh = 26;
+  if (S.stations[si].key === 'desserts') drawPastry(sx, sy, sw, sh, cook);
+  else drawStove(sx, sy, sw, sh, cook);
+  if (cook) {
+    // progress sits under the cooktop so it never covers a burner
+    ctx.fillStyle = '#2A3036'; rr(sx + 4, sy + sh + 4, sw - 8, 4, 2); ctx.fill();
+    ctx.fillStyle = '#FFB547'; ctx.shadowColor = '#FF9A4A'; ctx.shadowBlur = 8;
+    rr(sx + 4, sy + sh + 4, (sw - 8) * Math.min(1, cook.job.p), 4, 2); ctx.fill(); ctx.shadowBlur = 0;
+  }
+  // bar
+  const gr = ctx.createLinearGradient(0, y + 7, 0, y + 15);
+  gr.addColorStop(0, '#F1F5F7'); gr.addColorStop(.4, '#AEB9C0'); gr.addColorStop(1, '#4F5961');
+  ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 4; ctx.shadowOffsetY = 2;
+  ctx.fillStyle = gr; rr(G.railL - 6, y + 7, G.railR - G.railL + 12, 8, 4); ctx.fill();
+  ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  if (lag > 0) {
+    const tail = rail.tickets[rail.tickets.length - 1];
+    const x2 = Math.min(G.railR, (tail.landed ? tail.rx : ticketX(rail, tail)) + G.TW);
+    ctx.fillStyle = lag >= 8 ? 'rgba(228,87,61,.8)' : 'rgba(217,164,65,.7)';
+    rr(G.clipX, y + 8, Math.max(0, x2 - G.clipX), 6, 3); ctx.fill();
+  }
+  if (S.stations[si].rails.length > 1) {
+    if (X) xlabel(G.narrow ? `p${ri}` : `partition ${ri}`, G.railL, y + 1, 'left');
+    else txt(`RAIL ${ri + 1}`, G.railL, y + 2, `700 9px ${MONO}`, '#9AA4AC');
+  }
+  const owner = ownerOf(si, ri);
+  if (owner?.down) txt(X ? '⚠ PARTITION STALLED' : '⚠ UNATTENDED', sx + sw + 10, sy + 17, `700 10px ${MONO}`, '#FF5E4D', 'left', 'middle');
+  const lagTxt = X ? `consumer lag ${lag}` : `⏳ ${lag} waiting`;
+  txt(lagTxt, G.railR, y + 1, `700 10px ${MONO}`, lag >= 8 ? '#FF5E4D' : X ? C.xr : '#9AA4AC', 'right');
+  // tickets
+  const k = 1 - Math.exp(-rdt * 9);
+  for (let o = Math.max(0, rail.clip - 5); o < rail.tickets.length; o++) {
+    const t = rail.tickets[o];
+    if (!t.landed) continue;
+    t.rx += (ticketX(rail, t) - t.rx) * k;
+    t.kick *= Math.exp(-rdt * 2.5);
+    const x = t.rx;
+    let a = 1;
+    if (t.off < rail.clip && t.state !== 'cook') a = Math.max(0, Math.min(1, (x - G.railL + 10) / (G.SLOT * 1.3))) * (t.state === 'lost' ? .9 : .62);
+    if (a <= 0.02) continue;
+    const rot = RM ? 0 : Math.sin(NOW * 10 + t.off) * .22 * t.kick + Math.sin(NOW * 1.3 + t.off * 1.7) * .012;
+    const top = y + 12 - (t.state === 'cook' ? 3 : 0);
+    ctx.save(); ctx.globalAlpha = a;
+    ctx.translate(x + G.TW / 2, top); ctx.rotate(rot); ctx.translate(-G.TW / 2, 0);
+    if (t.state === 'cook') { ctx.shadowColor = 'rgba(217,164,65,.9)'; ctx.shadowBlur = 14 }
+    else { ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2 }
+    const late = t.state === 'wait' && S.time - t.born > UPSET;
+    const served = t.state === 'done' || t.state === 'plated';
+    ctx.fillStyle = served ? '#CFCAC0' : t.state === 'lost' ? '#EBC4BA' : late ? '#FBDCD3' : '#FCFBF7';
+    ticketPath(); ctx.fill();
+    ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+    if (t.state === 'cook') { ctx.strokeStyle = '#FFB547'; ctx.lineWidth = 2.5; ticketPath(); ctx.stroke() }
+    if (S.keys && S.keyBy === 'table') { ctx.fillStyle = TCOL[t.table]; ctx.fillRect(0, 0, G.TW, 5) }
+    if (S.hl && S.hl.table === t.table && NOW < S.hl.until) {
+      ctx.strokeStyle = TCOL[t.table]; ctx.lineWidth = 3.5; ctx.shadowColor = TCOL[t.table]; ctx.shadowBlur = 14;
+      ticketPath(); ctx.stroke(); ctx.shadowBlur = 0;
+    }
+    if (t.dup) { ctx.strokeStyle = '#9B6BD6'; ctx.lineWidth = 2.5; ticketPath(); ctx.stroke() }
+    ctx.fillStyle = '#8C959C'; ctx.fillRect(G.TW / 2 - 7, -3, 14, 5);
+    txt('#' + t.off, 4, 15, `700 ${G.narrow ? 10 : 11}px ${MONO}`, '#1D1B18');
+    ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(3, 20.5); ctx.lineTo(G.TW - 3, 20.5); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle = TCOL[t.table]; ctx.beginPath(); ctx.arc(G.TW - 7, 10, 3.5, 0, 7); ctx.fill();
+    emoji(t.e, G.TW / 2, G.TH / 2 + 8, G.narrow ? 17 : 20);
+    if (served) txt(t.dup ? '×2' : '✓', G.TW - 4, G.TH - 4, `700 13px ${MONO}`, t.dup ? '#7A4BB8' : '#4E8A3A', 'right');
+    if (t.state === 'lost') txt('✗', G.TW - 4, G.TH - 4, `700 15px ${MONO}`, '#C0392B', 'right');
+    if (t.seen && NOW - t.seen < .5) { ctx.fillStyle = 'rgba(91,141,184,.35)'; ticketPath(); ctx.fill() }
+    ctx.restore();
+    hits.push({kind: 'ticket', x, y: top, w: G.TW, h: G.TH, si, ri, t});
+  }
+  // the clip
+  rail.ck = Math.max(0, rail.ck - rdt * 3);
+  const s = 1 + rail.ck * .35;
+  ctx.save(); ctx.translate(G.clipX, y + 11); ctx.scale(s, s);
+  if (X) { ctx.shadowColor = C.xr; ctx.shadowBlur = 10 } else { ctx.shadowColor = 'rgba(217,164,65,.7)'; ctx.shadowBlur = 8 }
+  const cg = ctx.createLinearGradient(-5, 0, 5, 0);
+  cg.addColorStop(0, '#F3CD78'); cg.addColorStop(.5, C.brass); cg.addColorStop(1, '#9C7426');
+  ctx.fillStyle = cg; rr(-5, -11, 10, 34, 3); ctx.fill(); ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(-2.5, -8, 1.5, 26);
+  ctx.restore();
+  if (X) xlabel(`committed offset ${rail.clip}`, G.clipX, y + 2);
+  // the auditor's own (blue) clip
+  if (LV().ctl.audit) {
+    const bx = audX(si, ri), far = bx <= G.railL && rail.b < rail.clip - 5;
+    ctx.fillStyle = '#5B8DB8'; ctx.shadowColor = '#6FA8C9'; ctx.shadowBlur = 8;
+    rr(bx - 3, y + 2, 6, 30, 2); ctx.fill(); ctx.shadowBlur = 0;
+    if (far) txt(`◀ ${rail.clip - rail.b} behind`, bx + 8, y + 40, `700 9px ${MONO}`, '#8FB8DC');
+    if (S.aud.on && S.aud.at && S.aud.at.si === si && S.aud.at.ri === ri) emoji('🕵️', bx, y - 10, 18);
+    if (X) xlabel(`group "audit" @ ${rail.b}`, bx, y + 74);
+  }
+}
+
+// ---------- coach bubbles ----------
+const coachQ = [];
+let coachCur = null;
+function coach(html, anchor, key) {
+  if (key) { if (S.coached[key]) return; S.coached[key] = 1 }
+  if (coachCur && !key) { coachCur.left = 0 }
+  coachQ.push({html, anchor});
+}
+function hideCoach() { coachCur = null; $('#coach').hidden = true }
+function updateCoach(rdt) {
+  if (coachCur && (coachCur.left -= rdt) <= 0) hideCoach();
+  if (!coachCur && coachQ.length && S.phase !== 'explain') {
+    coachCur = coachQ.shift();
+    coachCur.left = Math.max(5, coachCur.html.length / 22);
+    $('#ctext').innerHTML = coachCur.html;
+    $('#cwho').textContent = save.xray ? '🩻 kitchen notes' : '🧑‍🍳 kitchen notes';
+    $('#coach').classList.toggle('xr', save.xray);
+    $('#coach').hidden = false;
+  }
+  if (!coachCur) return;
+  const el = $('#coach'), a0 = coachCur.anchor(), a = {x: a0.x * K, y: a0.y * K}, w = 250;
+  const left = Math.max(6, Math.min(G.W * K - w - 6, a.x - w / 2));
+  const below = a.y - el.offsetHeight - 14 < 0; // prefer above: the action happens below the anchor
+  el.style.left = left + 'px';
+  el.style.top = (below ? a.y + 14 : a.y - el.offsetHeight - 14) + 'px';
+  const ar = $('#arrow');
+  ar.style.left = Math.max(10, Math.min(w - 22, a.x - left - 6)) + 'px';
+  ar.style.top = below ? '-6px' : ''; ar.style.bottom = below ? '' : '-6px';
+}
+$('#coach').onclick = () => coachCur && (coachCur.left = 0);
+
+// ---------- lesson: run until a step's event, freeze, explain, continue ----------
+const STEP = () => LV().steps[S.si];
+function startStep() {
+  S.phase = 'wait'; S.paused = !!STEP().paused; S.stepT = S.time; STEP().start?.(S); focusCode();
+  lastGoals = ''; renderSteps(); renderCtls(); hudT = 0;
+}
+function lessonTick() {
+  // let at least a moment of kitchen play out between two explanations
+  if (!S.started || S.phase !== 'wait' || (!STEP().paused && S.time - S.stepT < .8) || !STEP().until(S)) return;
+  S.phase = 'explain'; hideCoach(); snd('goal'); hudT = 0; renderCtls(); focusCode();
+  const s = STEP(), n = LV().steps.length, el = $('#lesson');
+  el.innerHTML = `<span class="arrow" id="larrow"></span><span class="who"><span>Café Kafka · lesson ${S.lvl + 1}</span><span>step ${S.si + 1}/${n}</span></span><h5>${s.title}</h5>
+    <div class="kit"><b>🍳 In the kitchen</b>${s.kitchen}</div>
+    <div class="kaf"><b>⚙️ In Kafka</b>${s.kafka}</div>
+    <button class="btn gold" id="lnext">${S.si + 1 < n ? 'Got it, continue →' : 'Finish the lesson →'}</button>`;
+  el.classList.remove('docked'); el.style.position = ''; el.hidden = false;
+  $('#lnext').onclick = nextStep;
+  requestAnimationFrame(() => { placeLesson(); el.scrollIntoView({block: 'nearest'}); $('#lnext')?.focus({preventScroll: true}) });
+}
+function nextStep() {
+  if (S.phase !== 'explain') return;
+  $('#lesson').hidden = true;
+  if (++S.si < LV().steps.length) return startStep();
+  S.phase = 'free'; S.paused = false; S.won = true;
+  save.won[S.lvl] = true; save.unlocked = Math.max(save.unlocked, Math.min(LEVELS.length - 1, S.lvl + 1)); persist();
+  lastGoals = ''; renderSteps(); renderPills(); renderCtls();
+  snd('bell'); burst(); renderWin();
+}
+// put the card beside what it explains (right, left, above, below), never on top of it
+function placeLesson() {
+  const el = $('#lesson');
+  if (el.hidden || S.phase !== 'explain') return;
+  if (el.classList.contains('docked')) return void dockLesson(el); // once docked, stay put for this step
+  const a0 = [STEP().at()].flat()[0] || {x: G.W / 2, y: G.dining.h}, ax = a0.x * K, cy = (a0.y + (a0.h || 0) / 2) * K;
+  // the card may use the whole visible stage, even below a short canvas, but never makes it scroll
+  const rx = ((a0.w || 40) / 2 + 10) * K, ry = ((a0.h || 40) / 2 + 10) * K, gap = 14, CW = G.W * K, CH = Math.max(G.H * K, $('#scene').clientHeight);
+  const w = Math.min(360, CW - 12);
+  el.style.width = w + 'px';
+  const H = el.offsetHeight, fx = x => Math.max(6, Math.min(CW - w - 6, x)), sideTop = Math.max(6, Math.min(CH - H - 6, cy - 70));
+  const spots = [
+    {side: 'right', left: ax + rx + gap, top: sideTop},
+    {side: 'left', left: ax - rx - gap - w, top: sideTop},
+    {side: 'above', left: fx(ax - w / 2), top: cy - ry - gap - H},
+    {side: 'below', left: fx(ax - w / 2), top: cy + ry + gap},
+  ];
+  // no clean spot: squeeze each one inside the stage and take the one covering the least of the target
+  const clamp = p => ({...p, left: Math.max(6, Math.min(CW - w - 6, p.left)), top: Math.max(6, Math.min(CH - H - 6, p.top))});
+  const cover = p => Math.max(0, Math.min(p.left + w, ax + rx) - Math.max(p.left, ax - rx)) * Math.max(0, Math.min(p.top + H, cy + ry) - Math.max(p.top, cy - ry));
+  const p = spots.find(p => p.left >= 6 && p.left + w <= CW - 6 && p.top >= 6 && p.top + H <= CH - 6);
+  // cramped kitchen on desktop: the highlight already marks the target, so park the card over the (frozen) clipboard
+  if (!p && dockLesson(el)) return;
+  placeAt(el, p || spots.map(clamp).reduce((a, b) => cover(b) < cover(a) ? b : a), w, H, ax, cy);
+}
+function dockLesson(el) {
+  if (matchMedia('(max-width:900px)').matches) return false;
+  const r = $('#panel').getBoundingClientRect();
+  el.classList.add('docked'); el.style.position = 'fixed'; el.style.width = r.width - 16 + 'px';
+  el.style.left = r.left + 8 + 'px'; el.style.top = r.top + Math.max(8, (r.height - el.offsetHeight) / 2) + 'px';
+  return true;
+}
+function placeAt(el, p, w, H, ax, cy) {
+  el.style.left = p.left + 'px'; el.style.top = p.top + 'px';
+  const ar = $('#larrow'), st = ar.style;
+  st.left = st.right = st.top = st.bottom = '';
+  if (p.side === 'right' || p.side === 'left') {
+    st.top = Math.max(10, Math.min(H - 22, cy - p.top - 6)) + 'px';
+    st[p.side === 'right' ? 'left' : 'right'] = '-6px';
+  } else {
+    st.left = Math.max(10, Math.min(w - 22, ax - p.left - 6)) + 'px';
+    st[p.side === 'above' ? 'bottom' : 'top'] = '-6px';
+  }
+}
+let dimA = 0;
+function drawFocus() {
+  if (S.phase !== 'explain') { dimA = 0; return }
+  const pulse = RM ? 1 : .75 + .25 * Math.sin(NOW * 5), col = save.xray ? '95,224,208' : '255,181,71';
+  const as = [STEP().at()].flat().filter(Boolean), p = 5;
+  // blur and dim the kitchen around the highlighted thing(s), so the eye goes to it and the card
+  dimA = RM ? 1 : Math.min(1, dimA + .08);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, 0, G.W, G.H);
+  for (const a of as) { const w = a.w || 40, h = a.h || 40; ctx.roundRect(a.x - w / 2 - p, a.y - p, w + 2 * p, h + 2 * p, 9) }
+  ctx.clip('evenodd');
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = dimA; ctx.filter = `blur(${2.5 * DPR * K}px)`; ctx.drawImage(cv, 0, 0); ctx.restore();
+  ctx.fillStyle = `rgba(8,10,12,${.55 * dimA})`; ctx.fillRect(0, 0, G.W, G.H);
+  ctx.restore();
+  for (const a of as) {
+    const w = a.w || 40, h = a.h || 40;
+    ctx.save();
+    ctx.shadowColor = `rgba(${col},${.9 * pulse})`; ctx.shadowBlur = 26 * pulse;
+    ctx.fillStyle = `rgba(${col},${.12 * pulse})`; ctx.strokeStyle = `rgb(${col})`; ctx.lineWidth = 3;
+    rr(a.x - w / 2 - p, a.y - p, w + 2 * p, h + 2 * p, 9); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ---------- panel / HUD ----------
+function renderPanel() {
+  const L = LV();
+  $('#chip').textContent = L.free ? `Free play · ${L.chip}` : `Lesson ${S.lvl + 1} of ${LEVELS.length} · ${L.chip}`;
+  $('#panel').classList.toggle('free', !!L.free);
+  $('#title').textContent = L.title;
+  $('#story').innerHTML = L.story.map(p => `<p>${p}</p>`).join('');
+  lastGoals = ''; renderSteps(); renderCtls(); renderPills();
+}
+let lastGoals = '';
+function renderSteps() {
+  const html = LV().steps.map((s, i) => {
+    const st = S.won || i < S.si ? 'done' : i === S.si && S.started ? 'cur' : '';
+    return `<li class="${st}"><span class="box">${st === 'done' ? '✓' : st === 'cur' ? '▶' : ''}</span><span class="gt">${s.title}</span></li>`;
+  }).join('');
+  if (html !== lastGoals) { $('#goals').innerHTML = html; lastGoals = html }
+}
+function renderCtls() {
+  const L = LV(), c = L.ctl;
+  const ends = ['🧍', '👨‍👩‍👧‍👦'];
+  let h = '';
+  if (S.won && S.lvl < LEVELS.length - 1) h += `<button class="btn gold" id="next">Next lesson → ${LEVELS[S.lvl + 1].title}</button>`;
+  if (!S.serial) h += `<div class="knob" id="rateK"><label for="rate"><span>${save.xray ? 'Producer rate' : 'Crowd'}</span><b id="rateV">${S.rate.toFixed(1)} orders/s</b></label>
+    <input id="rate" type="range" min="0" max="${c.rateMax}" step="0.1" value="${S.rate}"><div class="ends"><span>${ends[0]}</span><span>${ends[1]}</span></div></div>`;
+  if (c.hire) h += `<button class="btn" id="hire" ${!S.started || S.chefs.length >= c.hire ? 'disabled' : ''}>＋ Hire a chef<small>${S.chefs.length}/${c.hire} on staff</small></button>`;
+  if (c.open && S.offer.length) h += `<button class="btn gold" id="open" ${S.started ? '' : 'disabled'}>🍰 Open the dessert station</button>`;
+  const on = S.started, nr = S.stations[0].rails.length, crew = active();
+  if (c.rails) h += `<button class="btn" id="addrail" ${on && nr < c.rails ? '' : 'disabled'}>＋ Add a rail to Mains<small>${nr}/${c.rails} · can’t undo</small></button>`;
+  if (c.audit) h += `<button class="btn ${S.aud.on ? 'ghost' : ''}" id="aud" ${on ? '' : 'disabled'}>${S.aud.on ? '🏠 Send the auditor home' : '🕵️ Call in the auditor'}</button>`;
+  if (c.keyBy) h += `<div class="knob" id="keyK"><label><span>${save.xray ? 'Message key' : 'Waiter’s key'}</span></label><div class="seg" id="keyBy">${[...(c.keyBy === 'all' ? [['none', '🔁 None']] : []), ['table', '🔢 Table'], ['dish', '🍔 Dish']]
+    .map(([v, l]) => `<button data-v="${v}" class="${(S.keys ? S.keyBy : 'none') === v ? 'on' : ''}" ${on ? '' : 'disabled'}>${l}</button>`).join('')}</div></div>`;
+  if (c.commit) h += `<div class="knob" id="commitK"><label><span>Move the clip</span></label><div class="seg" id="commit">${[['grab', '🤖 auto (on grab)'], ['plate', '✋ after plating']]
+    .map(([v, l]) => `<button data-v="${v}" class="${S.commit === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
+  if (c.trip) h += `<button class="btn" id="trip" ${on && !S.tripArm && crew.length > 1 ? '' : 'disabled'}>💥 ${S.tripArm ? 'Waiting for the worst moment…' : c.trip === 'worst' ? 'Trip the chef<small>at the worst moment</small>' : 'Trip a chef'}</button>`;
+  if (c.leave) h += `<button class="btn" id="leave" ${on && crew.length > 1 ? '' : 'disabled'}>👋 Clock out a chef<small>the proper way</small></button>`;
+  h += `<div class="row trow"><div class="seg" id="speed" aria-label="Speed">${[[.5, '🐢 Slow'], [1, '🐇 Normal']]
+    .map(([v, l]) => `<button data-v="${v}" class="${S.speed === v ? 'on' : ''}">${l}</button>`).join('')}</div>
+    <button class="btn ghost ib" id="pause" ${S.started ? '' : 'disabled'} title="${S.paused ? 'Resume' : 'Pause'} (Space)">${S.paused ? '▶' : '⏸'}</button>
+    <button class="btn ghost ib" id="restart" title="Restart this lesson">↺</button></div>`;
+  $('#ctls').innerHTML = h;
+  if ($('#rate')) $('#rate').oninput = e => { S.rate = +e.target.value; $('#rateV').textContent = S.rate.toFixed(1) + ' orders/s' };
+  if ($('#hire')) $('#hire').onclick = hire;
+  if ($('#open')) $('#open').onclick = openStation;
+  if ($('#next')) $('#next').onclick = () => load(S.lvl + 1);
+  if ($('#addrail')) $('#addrail').onclick = addRail;
+  if ($('#aud')) $('#aud').onclick = toggleAud;
+  if ($('#trip')) $('#trip').onclick = tripChef;
+  if ($('#leave')) $('#leave').onclick = clockOut;
+  $('#commit')?.querySelectorAll('button').forEach(b => b.onclick = () => setCommit(b.dataset.v));
+  $('#keyBy')?.querySelectorAll('button').forEach(b => b.onclick = () => setKey(b.dataset.v));
+  $('#speed').querySelectorAll('button').forEach(b => b.onclick = () => { S.speed = save.speed = +b.dataset.v; persist(); renderCtls() });
+  $('#pause').onclick = togglePause;
+  $('#restart').onclick = () => load(S.lvl);
+  const g = S.phase === 'wait' && STEP().btn;
+  if (g) $({'#rate': '#rateK', '#commit': '#commitK', '#keyBy': '#keyK'}[g] || g)?.classList.add('glow');
+}
+function renderPills() {
+  const h = LEVELS.map((L, i) => `<button class="pill ${i === S.lvl ? 'on' : ''} ${save.won[i] ? 'won' : ''}" data-l="${i}" title="${L.title}">${i + 1}</button>`).join('')
+    + SOON.map((t, i) => `<button class="pill" disabled title="Coming next: ${t}">${i + 4}</button>`).join('')
+    + `<button class="pill freep ${S.lvl < 0 ? 'on' : ''}" data-l="-1" title="Free play: every knob unlocked">🎛 Free</button>`;
+  $('#pills').innerHTML = h;
+  $('#pills').querySelectorAll('[data-l]').forEach(b => b.onclick = () => load(+b.dataset.l));
+  $('#xray').title = 'Show the real Kafka names on everything (X)';
+  $('#xray').classList.toggle('xon', save.xray);
+}
+let hudT = 0;
+function updateHud(rdt) {
+  if ((hudT -= rdt) > 0) return;
+  hudT = .2;
+  const lag = totalLag(), X = save.xray, st = $('#status');
+  let cls = '', msg;
+  if (!S.started) msg = 'Kitchen closed. Ring the bell to open.';
+  else if (S.huddle > 0 && S.phase !== 'explain') { cls = 'huddle'; msg = X ? '⏸ REBALANCE: partitions revoked and re-dealt · every consumer paused' : '🗣️ ' + S.banner }
+  else if (S.phase === 'explain') { cls = 'ask'; msg = '⏸ Frozen so you can read. Continue when you’re ready.' }
+  else if (S.chefs.some(c => c.down && c.detect > 0)) {
+    const d = S.chefs.find(c => c.down && c.detect > 0); cls = 'alert';
+    msg = X ? `💥 consumer ${d.n}: no heartbeats · its partitions are stalled until the session times out` : `💥 ${d.n} is down and the head chef hasn’t noticed yet. Their rail is stalled.`;
+  }
+  else if (S.phase === 'wait') { cls = STEP().do ? 'do' : 'ask'; msg = (STEP().do ? '👉 ' : '👀 ') + STEP().ask }
+  else if (S.paused) msg = '⏸ Paused. Tap tickets to inspect them · Space to resume';
+  else msg = X ? `Free play · ${S.stats.served} processed · consumer lag ${lag}` : `Free play · ${S.stats.served} served · ${lag} waiting`;
+  st.className = 'status ' + cls + (X ? ' xr' : '');
+  st.textContent = msg;
+  const c = LV().ctl;
+  renderCode();
+  $('#score').innerHTML = `<div>served<b>${S.stats.served}</b></div><div class="${lag >= 8 ? 'hot' : ''}">${X ? 'lag' : 'waiting'}<b>${lag}</b></div>`
+    + (c.audit ? `<div>${X ? 'audit lag' : 'unread'}<b>${audLag()}</b></div>` : '')
+    + (c.trip ? `<div class="${S.stats.lost ? 'hot' : ''}">lost<b>${S.stats.lost}</b></div><div class="${S.stats.dup ? 'hot' : ''}">twice<b>${S.stats.dup}</b></div>` : '');
+  renderSteps();
+}
+
+// lesson 1 opens with the cast: every kitchen role and its Kafka name
+const CAST = [
+  ['🤵', 'Waiter', 'writes each order on a ticket', 'Producer'],
+  ['🧾', 'Ticket', 'one order', 'Message'],
+  ['🥩', 'Station (Mains)', 'where one kind of order goes', 'Topic'],
+  ['🛤️', 'Rail', 'tickets hang here in a line', 'Partition'],
+  ['#️⃣', 'Ticket number', '0, 1, 2… never changes', 'Offset'],
+  ['📎', 'Brass clip', '“done up to here”', 'Committed offset'],
+  ['🧑‍🍳', 'Chef', 'reads tickets and cooks', 'Consumer'],
+  ['👥', 'Kitchen crew', 'chefs sharing the work', 'Consumer group'],
+];
+let castShown = false;
+function renderVeil() {
+  const v = $('#veil');
+  v.hidden = S.started;
+  if (S.started) return;
+  if (S.lvl === 0 && !castShown) {
+    v.innerHTML = `<div class="card intro crew"><div class="mise">Before we open</div><h3>Meet the crew</h3>
+      <p class="castp">Everyone in this kitchen has a real Kafka name. No need to memorize it: the kitchen explains each one when it shows up, and <b>🩻 Kafka X-ray</b> writes the names on everything.</p>
+      <div class="cast">${CAST.map(([e, k, d, x]) => `<div class="cr"><span class="ce">${e}</span><span class="ck">${k}<small>${d}</small></span><span class="cx">${x}</span></div>`).join('')}</div>
+      <p class="castn">With a single rail, the rail is the whole topic. You’ll add more rails in lesson 4.</p>
+      <button class="bell" id="cast">Next: tonight’s story →</button></div>`;
+    $('#cast').onclick = () => { castShown = true; renderVeil() };
+    setTimeout(() => $('#cast')?.focus(), 50);
+    return;
+  }
+  v.innerHTML = `<div class="card intro"><div class="mise">${LV().free ? 'Free play · no steps, no script' : `Lesson ${S.lvl + 1} · ${LV().steps.length} short steps`}</div><h3>${LV().title}</h3><div class="dish">🍽 Tonight: ${LV().dish}</div>
+    <div class="tale">${LV().story.map(p => `<p>${p}</p>`).join('')}</div>
+    <div class="learn"><b class="lh">${LV().free ? '🩻 Tip' : '🩻 In Kafka words, you’ll learn'}</b>${LV().learn}</div>
+    <button class="bell" id="go">🔔 Open the kitchen</button></div>`;
+  $('#go').onclick = () => { S.started = true; $('#storyd').open = false; snd('bell'); renderVeil(); if (LV().free) renderCtls(); else startStep() };
+  setTimeout(() => $('#go')?.focus(), 50);
+}
+function renderWin() {
+  const L = LV(), w = $('#win'), last = S.lvl === LEVELS.length - 1;
+  w.innerHTML = `<div class="card win"><div class="mise">✓ Lesson ${S.lvl + 1} complete · cheat sheet</div>
+    <h3>${L.dish}, in Kafka words</h3>
+    <p>Everything you just saw, side by side. The <b>🩻 Kafka X-ray</b> button (top right) writes these names right on the kitchen.</p>
+    <div class="xrows">${L.xray.map(([e, k, v, d]) => `<div class="k"><span>${e}</span>${k}</div><div class="v"><b>${v}</b><div>${d}</div></div>`).join('')}</div>
+    ${L.teaser ? `<div class="soon">👀 ${L.teaser}</div>` : ''}
+    <div class="acts"><button class="btn ghost" id="wf">Stay and play with the knobs</button>
+    ${last ? '' : `<button class="btn gold" id="wn">Next lesson →</button>`}</div></div>`;
+  w.hidden = false;
+  w.querySelector('.card').scrollTop = 0;
+  $('#wf').onclick = () => { w.hidden = true };
+  if ($('#wn')) $('#wn').onclick = () => { w.hidden = true; load(S.lvl + 1) };
+  ($('#wn') || $('#wf')).focus({preventScroll: true});
+}
+function setXray(on) {
+  save.xray = on; persist();
+  renderPills(); renderCtls(); hudT = 0;
+  if (on) coach('X-ray on: every kitchen thing now shows its <b>Kafka name</b> in teal. Press <code>X</code> to flip back.', () => ({x: G.W / 2, y: G.dining.h + 10}), 'xr' + S.lvl);
+}
+
+// ---------- input ----------
+const pt = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / K, y: (e.clientY - r.top) / K} };
+const hitAt = (x, y) => { for (let i = hits.length - 1; i >= 0; i--) { const h = hits[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h } return null };
+cv.addEventListener('pointerdown', e => {
+  if (!S.started) return;
+  const {x, y} = pt(e), h = hitAt(x, y);
+  if (!h) return;
+  if (h.kind === 'chef') { S.drag = {c: h.c, x, y}; cv.setPointerCapture(e.pointerId) }
+  else if (h.kind === 'ticket') tapTicket(h.si, h.ri, h.t);
+  else if (h.kind === 'offer') openStation();
+  else if (h.kind === 'table') tapTable(h.i);
+});
+cv.addEventListener('pointermove', e => {
+  const {x, y} = pt(e);
+  if (S.drag) { S.drag.x = x; S.drag.y = y; return }
+  cv.style.cursor = S.started && hitAt(x, y) ? (hitAt(x, y).kind === 'chef' ? 'grab' : 'pointer') : 'default';
+});
+const endDrag = e => {
+  if (!S.drag) return;
+  const {c, x, y} = S.drag; S.drag = null;
+  c.x = x; c.y = y; dropChef(c, x, y);
+};
+cv.addEventListener('pointerup', endDrag);
+cv.addEventListener('pointercancel', () => { S.drag = null });
+addEventListener('keydown', e => {
+  if (onHome()) return;
+  if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+  if (S.phase === 'explain' && (e.code === 'Space' || e.key === 'Enter')) { if (e.target.tagName !== 'BUTTON') { e.preventDefault(); nextStep() } return }
+  if (e.code === 'Space' && S.started && $('#win').hidden) { e.preventDefault(); togglePause() }
+  if (e.key.toLowerCase() === 'x') setXray(!save.xray);
+});
+$('#xray').onclick = () => setXray(!save.xray);
+const sndBtn = () => $('#snd').textContent = save.mute ? '🔇' : '🔊';
+$('#snd').onclick = () => { save.mute = !save.mute; persist(); sndBtn() };
+sndBtn();
+
+// ---------- front door ----------
+const onHome = () => $('.app').classList.contains('on-home');
+const resumeAt = () => { for (let i = 0; i < LEVELS.length; i++) if (!save.won[i]) return i; return 0 };
+function showHome(on) {
+  $('.app').classList.toggle('on-home', on);
+  if (on) { renderHome(); $('#home').scrollTop = 0; scrollTo(0, 0) } else hudT = 0;
+}
+function enter(lvl) { showHome(false); load(lvl); scrollTo(0, 0) } // show the stage first so the zoom measures its real height
+function renderHome() {
+  const any = Object.keys(save.won).length, k = resumeAt();
+  $('#hstart').textContent = any ? `🔔 Continue: ${LEVELS[k].title}` : '🔔 Start service';
+  $('#hstart').onclick = () => enter(k);
+}
+$('.logo').onclick = () => showHome(true);
+$('#hfree').onclick = () => enter(-1);
+$('.logo').title = 'Back to the front door';
+
+// the little live kitchen on the front page: one rail, one chef, the clip
+const D = {tks: [], clip: 0, next: 0, cook: null, t: 0, rest: 0, kx: false, last: null};
+const DISH = ['🍕', '🥩', '🍝', '🥘', '🍔'];
+const dGeo = () => { const w = $('#dstage').clientWidth, narrow = w < 560; return {w, clipX: narrow ? 108 : 170, slot: narrow ? 50 : 56} };
+function dNote() {
+  const e = D.last;
+  if (!e) return;
+  const k = {
+    add: [`The waiter clips <b>ticket #${e.n}</b> to the end of the rail.`, `The producer appends a <b>message at offset ${e.n}</b> to the end of the topic.`],
+    cook: [`Marco takes <b>#${e.n}</b>, the first ticket after the clip.`, `The consumer reads <b>offset ${e.n}</b>, the next one after its committed offset.`],
+    done: [`Served! The clip moves to <b>#${e.n + 1}</b>. Ticket #${e.n} stays on the rail.`, `Processed, so the consumer <b>commits offset ${e.n + 1}</b>. The message stays in the log.`],
+  }[e.kind];
+  if (D.note !== k[D.kx ? 1 : 0]) $('#dnote').innerHTML = D.note = k[D.kx ? 1 : 0];
+}
+function dWords(kx) {
+  D.kx = kx;
+  $('.demo').classList.toggle('kx', kx);
+  $('#wk').classList.toggle('on', !kx); $('#wx').classList.toggle('on', kx);
+  document.querySelectorAll('.demo .cap').forEach(c => c.textContent = c.dataset[kx ? 'x' : 'k']);
+  dNote();
+}
+// under the hood: the same kitchen as KafkaJS code, lit line by line as it runs
+const DCODE = [
+  ['waiter.js', 'producer', [
+    ["await waiter.send({ topic: 'mains',", 'send'],
+    ['  messages: [{ value: order }] })', 'send'],
+  ]],
+  ['chef.js', 'consumer', [
+    ["const chef = kafka.consumer({ groupId: 'kitchen' })"],
+    ["await chef.subscribe({ topics: ['mains'] })"],
+    ['await chef.run({ eachMessage: async ({ message }) => {', 'handle'],
+    ['  const order = JSON.parse(message.value)', 'handle'],
+    ['  await order.cook()', 'cook'],
+    ['  await order.serve()', 'serve'],
+    ['}})  // handler finished → offset committed', 'commit'],
+  ]],
+];
+function dHood(on) {
+  D.hood = on;
+  if (on && !$('#dcode').innerHTML) $('#dcode').innerHTML = DCODE.map(([name, role, lines]) => `<div class="file"><div class="fname">${name}<span>${role}</span></div>${lines.map(([t, tags], i) =>
+    `<div class="ln"${tags ? ` data-tag="${tags}"` : ''}><i>${i + 1}</i><code>${hl(t)}</code></div>`).join('')}</div>`).join('');
+  $('.demo').classList.toggle('hood', on);
+  $('#hood').setAttribute('aria-checked', on);
+  if (on) { dWords(true); if (D.cook) dEvent('cook', D.cook.t.n) }
+}
+const DMODES = [() => { dHood(false); dWords(false) }, () => { dHood(false); dWords(true) }, () => dHood(true)];
+function dAuto(dt) {
+  if (!D.auto || D.hover || (D.mt = (D.mt || 0) + dt) < 7) return;
+  D.mt = 0; D.mode = ((D.mode || 0) + 1) % DMODES.length; DMODES[D.mode]();
+}
+const dStop = f => () => { D.auto = false; f() };
+D.auto = true;
+$('.demo').onmouseenter = () => D.hover = true;
+$('.demo').onmouseleave = () => D.hover = false;
+$('#hood').onclick = dStop(() => dHood(!D.hood));
+function dEvent(kind, n) {
+  if (!D.hood) return;
+  const cook = $('#dcode [data-tag~="cook"]');
+  if (kind === 'add') flashIn($('#dcode'), 'send', `→ offset ${n}`);
+  if (kind === 'cook') { flashIn($('#dcode'), 'handle', `offset ${n}`); cook.classList.add('live'); cook.dataset.live = `cooking #${n}` }
+  if (kind === 'done') { cook.classList.remove('live'); flashIn($('#dcode'), 'serve'); flashIn($('#dcode'), 'commit', `commit ${n + 1}`) }
+}
+$('#wk').onclick = dStop(() => { dHood(false); dWords(false) });
+$('#wx').onclick = dStop(() => { dHood(false); dWords(true) });
+function dLayout() {
+  const g = dGeo();
+  $('.dclip').style.left = g.clipX - 5 + 'px';
+  $('.dchef').style.left = g.clipX - 104 + 'px';
+  $('#dstove').style.left = g.clipX - 40 + 'px';
+  $('.tcap').style.left = g.clipX + 76 + 'px';
+  for (const t of D.tks) t.el.style.transform = `translateX(${g.clipX + (t.n - D.clip) * g.slot + (t.n >= D.clip ? 10 : -4)}px)`;
+}
+function dTick(dt) {
+  const g = dGeo();
+  D.t -= dt; D.rest -= dt;
+  const lag = D.tks.filter(t => t.n >= D.clip).length;
+  if (D.t <= 0 && lag < Math.floor((g.w - g.clipX - 70) / g.slot)) {
+    D.t = 1.3 + Math.random() * 1.2;
+    const el = document.createElement('div');
+    el.className = 'dtk new'; el.innerHTML = `#${D.next}<span>${DISH[D.next % DISH.length]}</span>`;
+    el.style.transform = `translateX(${g.w + 30}px)`;
+    $('#dtks').appendChild(el);
+    D.tks.push({n: D.next, el});
+    el.offsetWidth; el.classList.remove('new');
+    D.last = {kind: 'add', n: D.next++}; dEvent('add', D.last.n);
+    $('.dwaiter').classList.add('kick'); setTimeout(() => $('.dwaiter').classList.remove('kick'), 200);
+  }
+  if (!D.cook && D.rest <= 0) {
+    const t = D.tks.find(t => t.n === D.clip);
+    if (t) { D.cook = {t, left: 2.4}; t.el.classList.add('cook'); $('#dstove').classList.add('on'); $('#dpan').textContent = t.el.querySelector('span').textContent; D.last = {kind: 'cook', n: t.n}; dEvent('cook', t.n) }
+  } else if (D.cook && (D.cook.left -= dt) <= 0) {
+    const {t} = D.cook;
+    t.el.classList.replace('cook', 'done'); D.clip++; D.cook = null; D.rest = .6;
+    $('#dstove').classList.remove('on'); $('#dpan').textContent = '';
+    $('.dclip').classList.add('kick'); setTimeout(() => $('.dclip').classList.remove('kick'), 250);
+    D.last = {kind: 'done', n: t.n}; dEvent('done', t.n);
+    for (const o of D.tks.filter(o => o.n < D.clip - 3)) { o.el.classList.add('gone'); setTimeout(() => o.el.remove(), 700) }
+    D.tks = D.tks.filter(o => o.n >= D.clip - 3);
+  }
+  dAuto(dt); dLayout(); dNote();
+}
+dWords(false);
+
+// ---------- behind the kitchen: the Node.js (KafkaJS) code, lit up as the kitchen runs it ----------
+// each line: [text, tags (space-separated, lit by codeFlash), act (click to do it)]
+function codeFiles() {
+  const c = LV().ctl, topics = S.stations.map(st => `'${st.key}'`).join(', '), n = active().length;
+  const files = [];
+  files.push(['waiter.js', 'producer', [
+    ['const waiter = kafka.producer()'],
+    ['await waiter.connect()'],
+    [''],
+    ['async function takeOrder(order) {'],
+    ['  await waiter.send({', 'send'],
+    [S.stations.length > 1 ? "    topic: order.isDessert ? 'desserts' : 'mains'," : "    topic: 'mains',", 'send'],
+    [S.keys ? `    messages: [{ key: order.${S.keyBy}, value: order }],` : '    messages: [{ value: order }],', S.keys ? 'send key' : 'send'],
+    ['  })'],
+    ['}'],
+  ]]);
+  if (c.rails) files.push(['manager.js', 'admin', [
+    ['// the ＋ Add a rail button'],
+    ['await admin.createPartitions({', 'partitions', 'rails'],
+    [`  topicPartitions: [{ topic: 'mains', count: ${S.stations[0].rails.length} }],`, 'partitions', 'rails'],
+    ['})'],
+  ]]);
+  const chef = [[`// ${n} chef${n === 1 ? '' : 's'} run this = ${n} consumer${n === 1 ? '' : 's'} in 'kitchen'`]];
+  if (c.trip === 'now') chef.push(
+    ['const chef = kafka.consumer({'],
+    ["  groupId: 'kitchen',"],
+    ['  sessionTimeout: 45000,  // silent this long = dead', 'session'],
+    ['  heartbeatInterval: 3000,  // “still here!”', 'session'],
+    ['})'],
+  );
+  else chef.push(["const chef = kafka.consumer({ groupId: 'kitchen' })"]);
+  chef.push(
+    ['await chef.connect()'],
+    [`await chef.subscribe({ topics: [${topics}] })`],
+    [''],
+    ['chef.on(chef.events.GROUP_JOIN, ({ payload }) => {', 'rebalance'],
+    ['  // huddle over: here are my rails', 'rebalance'],
+    ['})'],
+    [''],
+  );
+  if (S.commit === 'grab') chef.push(
+    ['await chef.run({'],
+    ['  autoCommit: true,   // ← click to flip', 'commit-mode', 'commit'],
+    ['  eachMessage: async ({ message }) => {', 'handle'],
+    ['    kitchenQueue.push(JSON.parse(message.value))', 'handle'],
+    ['  },  // returns right away → offset committed now!', 'commit'],
+    ['})'],
+    [''],
+    ['kitchenQueue.process(async order => {'],
+    ['  await order.cook()', 'cook'],
+    ['  await order.serve()', 'serve'],
+    ['})'],
+  );
+  else if (c.commit) chef.push(
+    ['await chef.run({'],
+    ['  autoCommit: false,   // ← click to flip', 'commit-mode', 'commit'],
+    ['  eachMessage: async ({ topic, partition, message }) => {', 'handle'],
+    ['    const order = JSON.parse(message.value)', 'handle'],
+    ['    await order.cook()', 'cook'],
+    ['    await order.serve()', 'serve'],
+    ['    await chef.commitOffsets([{ topic, partition,', 'commit'],
+    ['      offset: String(Number(message.offset) + 1) }])', 'commit'],
+    ['  },'],
+    ['})'],
+  );
+  else chef.push(
+    ['await chef.run({'],
+    ['  eachMessage: async ({ partition, message }) => {', 'handle'],
+    ['    const order = JSON.parse(message.value)', 'handle'],
+    ['    await order.cook()', 'cook'],
+    ['    await order.serve()', 'serve'],
+    ['  },  // handler finished → offset committed', 'commit'],
+    ['})'],
+  );
+  if (c.leave) chef.push(
+    [''],
+    ['// 👋 clocking out properly'],
+    ["process.on('SIGTERM', async () => {"],
+    ['  await chef.disconnect()  // commit + LeaveGroup', 'leave'],
+    ['})'],
+  );
+  files.push(['chef.js', 'consumer', chef]);
+  if (c.audit) files.push(['auditor.js', 'consumer · another group', [
+    [`// ${S.aud.on ? 'running' : 'stopped: her offsets stay saved in Kafka'}`],
+    ["const auditor = kafka.consumer({ groupId: 'billing' })"],
+    ["await auditor.subscribe({"],
+    ["  topics: ['mains'], fromBeginning: true })"],
+    ['await auditor.run({'],
+    ['  eachMessage: async ({ message }) => {', 'audit'],
+    ['    await books.record(JSON.parse(message.value))', 'audit'],
+    ['  },'],
+    ['})'],
+  ]]);
+  return files;
+}
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// tiny highlighter: comments, strings, keywords, numbers, method calls
+function hl(line) {
+  const i = line.indexOf('//'), code = i < 0 ? line : line.slice(0, i), note = i < 0 ? '' : line.slice(i);
+  const out = esc(code).replace(/('[^']*')|\b(const|await|async|return|true|false)\b|\b(\d+)\b|\.(\w+)(?=\()/g,
+    (m, str, kw, num, fn) => str ? `<span class="s">${str}</span>` : kw ? `<span class="k">${kw}</span>` : num ? `<span class="n">${num}</span>` : `.<span class="f">${fn}</span>`);
+  return out + (note ? `<span class="c">${esc(note)}</span>` : '');
+}
+let lastCode = '';
+function renderCode() {
+  if (!save.code) return;
+  const html = codeFiles().map(([name, role, lines]) => `<div class="file"><div class="fname">${name}<span>${role}</span></div>${lines.map(([t, tags, act], i) =>
+    `<div class="ln${act ? ' act' : ''}"${tags ? ` data-tag="${tags}"` : ''}${act ? ` data-act="${act}"` : ''}><i>${i + 1}</i><code>${hl(t) || ' '}</code></div>`).join('')}</div>`).join('');
+  if (html === lastCode) return;
+  $('#codefiles').innerHTML = lastCode = html;
+  $('#codefiles').querySelectorAll('[data-act]').forEach(el => el.onclick = () => {
+    if (!S.started) return;
+    if (el.dataset.act === 'commit') setCommit(S.commit === 'grab' ? 'plate' : 'grab');
+    if (el.dataset.act === 'rails') addRail();
+  });
+  fitCode(); focusCode();
+}
+// shrink the code font until every file fits the panel without scrolling
+function fitCode() {
+  const el = $('#codep');
+  if (!save.code || !el.clientHeight) return;
+  let f = 11.5; el.style.fontSize = f + 'px';
+  while ((el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth) && f > 8) el.style.fontSize = (f -= .5) + 'px';
+}
+new ResizeObserver(() => requestAnimationFrame(fitCode)).observe($('#codep'));
+function codeFlash(tag, badge) {
+  if (!save.code) return;
+  renderCode();
+  flashIn($('#codefiles'), tag, badge);
+}
+function flashIn(root, tag, badge) {
+  root.querySelectorAll(`[data-tag~="${tag}"]`).forEach((el, i) => {
+    el.classList.remove('hot'); void el.offsetWidth; el.classList.add('hot');
+    el.dataset.badge = i === 0 && badge ? badge : '';
+  });
+}
+// while a step is frozen, keep the lines it talks about lit
+const CODE_FOCUS = {
+  'An order comes in': 'send', 'A chef picks it up': 'handle cook', 'The clip moves': 'commit', 'The whole loop': 'send handle cook serve commit',
+  'Hire help?': 'rebalance', 'A second station': 'send', 'The waiter picks the rail': 'send', 'Huddle!': 'rebalance', 'One station each': 'rebalance',
+  'A second rail': 'partitions rebalance', 'Taking turns': 'send', 'Rails only get added': 'partitions',
+  'Same table, same rail': 'key', 'Another rail': 'partitions', 'A table moved': 'key',
+  'Key by dish': 'key', 'One busy rail': 'key', 'More rails won’t help': 'partitions key', 'Back to tables': 'key',
+  'A second reader': 'audit', 'Everyone gets everything': 'audit handle',
+  'Clip first, cook later': 'commit-mode commit', 'A vanished order': 'commit cook', 'Clip after plating': 'commit-mode commit', 'Two plates, one order': 'serve commit',
+  'Nobody noticed': 'session', 'Noticed': 'session rebalance', 'Clocking out properly': 'leave',
+};
+function focusCode() {
+  if (!save.code) return;
+  const tags = S.phase === 'explain' ? (CODE_FOCUS[STEP().title] || '').split(' ').filter(Boolean) : [];
+  $('#codefiles').querySelectorAll('.ln').forEach(el => el.classList.toggle('focus', tags.some(t => (el.dataset.tag || '').split(' ').includes(t))));
+  $('#codefiles').querySelector('.focus')?.scrollIntoView({block: 'nearest'});
+}
+function setCode(on) {
+  save.code = on; persist();
+  $('#codebtn').classList.toggle('xon', on);
+  $('#split').classList.toggle('coded', on);
+  lastCode = ''; renderCode(); fitCode();
+}
+$('#codebtn').onclick = () => setCode(!save.code);
+
+// ---------- loop ----------
+let last = performance.now();
+function frame(now) {
+  const rdt = Math.min(.1, (now - last) / 1000);
+  last = now; NOW = now / 1000;
+  if (onHome()) { dTick(rdt); requestAnimationFrame(frame); return }
+  if (S.started && !S.paused && S.phase !== 'explain' && $('#win').hidden) step(rdt * S.speed);
+  draw(rdt); drawFocus();
+  lessonTick(); placeLesson();
+  updateCoach(rdt);
+  updateHud(rdt);
+  requestAnimationFrame(frame);
+}
+load(resumeAt());
+setCode(save.code);
+showHome(true);
+document.fonts?.ready.then(() => { lastGoals = '' });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

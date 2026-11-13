@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Yellowtail&display=block" rel="stylesheet">
+<style>
+html,body{margin:0;width:512px;height:512px;overflow:hidden;background:transparent}
+.tile{position:absolute;inset:0;border-radius:112px;overflow:hidden;
+  background:radial-gradient(380px 300px at 50% 18%,rgba(255,138,61,.38),transparent 72%),#0F1113;
+  display:grid;place-items:center}
+.k{font-family:'Yellowtail',cursive;font-size:400px;line-height:1;color:#FFE6DA;margin:0 0 30px 4px;
+  text-shadow:0 0 8px #FFB08F,0 0 26px #FF5E3A,0 0 60px rgba(255,70,30,.85)}
+</style></head>
+<body><div class="tile"><div class="k">K</div></div><script>
+const q=new URLSearchParams(location.search),n=+(q.get('s')||512);
+document.documentElement.style.cssText=document.body.style.cssText='width:'+n+'px;height:'+n+'px';
+document.querySelector('.tile').style.cssText='transform:scale('+(n/512)+');transform-origin:0 0;width:512px;height:512px;inset:auto'+(q.get('sq')?';border-radius:0':'');
+</script></body></html>

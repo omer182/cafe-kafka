@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@700&family=Yellowtail&display=block" rel="stylesheet">
+<style>
+html,body{margin:0;width:1200px;height:630px;overflow:hidden}
+body{position:relative;color:#E9E5DC;font-family:'Space Grotesk',sans-serif;
+  background:
+    radial-gradient(900px 460px at 50% -60px,rgba(255,138,61,.30),transparent 70%),
+    linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px) 0 0/56px 28px,
+    linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px) 0 0/56px 28px,
+    #0F1113}
+.wrap{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 80px}
+.row{display:flex;align-items:center;gap:28px}
+.neon{font-family:'Yellowtail',cursive;font-size:150px;line-height:1.15;color:#FFE6DA;padding:0 8px 10px;
+  text-shadow:0 0 6px #FFB08F,0 0 22px #FF5E3A,0 0 52px rgba(255,70,30,.8),0 0 96px rgba(255,70,30,.4)}
+.open{font:700 26px 'Space Mono',monospace;letter-spacing:.2em;color:#FF6F86;border:3px solid #FF4D6D;border-radius:8px;padding:6px 14px 6px 18px;
+  text-shadow:0 0 10px #FF4D6D;box-shadow:0 0 20px rgba(255,77,109,.55),inset 0 0 12px rgba(255,77,109,.35);transform:rotate(-4deg)}
+.sub{margin-top:18px;font-weight:700;font-size:46px;letter-spacing:-.02em;color:#F6F2EA;line-height:1.15}
+.sub b{color:#FFB547}
+.tag{margin-top:26px;font:700 21px 'Space Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#7D868E}
+.foot{position:absolute;left:0;right:0;bottom:0;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;
+  border-top:1px solid #262B30;background:rgba(22,25,28,.85);font:700 20px 'Space Mono',monospace;letter-spacing:.08em;color:#7D868E}
+.foot .url{color:#D9A441}
+.dots{display:flex;gap:10px}.dots i{width:14px;height:14px;border-radius:50%;display:block}
+</style></head>
+<body>
+<div class="wrap">
+  <div class="row"><div class="neon">Café Kafka</div><div class="open">OPEN</div></div>
+  <div class="sub">Learn <b>Apache Kafka</b> by running a kitchen</div>
+  <div class="tag">Take orders · hire chefs · survive the Friday rush</div>
+</div>
+<div class="foot">
+  <span class="url">kafka.omersher.com</span>
+  <span class="dots"><i style="background:#E4573D"></i><i style="background:#5B8DB8"></i><i style="background:#7FB069"></i><i style="background:#C9A0DC"></i></span>
+  <span>No Kafka knowledge needed</span>
+</div>
+</body></html>
