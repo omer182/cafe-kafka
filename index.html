@@ -536,8 +536,8 @@ canvas{border-radius:0}
 .rcap{right:150px}
 .dwaiter .sp{height:62px;width:auto;display:block;transition:transform .2s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 .dwaiter.kick .sp{transform:translateY(-6px)}
-.dtk .fd{width:38px;height:auto;display:block;margin:-4px auto 0}
-.dstove .fd{width:34px;height:auto;display:block}
+.dtk .fd{width:38px;height:34px;object-fit:contain;display:block;margin:-4px auto 0}
+.dstove .fd{width:34px;height:30px;object-fit:contain;display:block}
 </style>
 </head>
 <body>
@@ -1590,7 +1590,7 @@ function foodSprite(e) {
 const foodHTML = e => FOOD[e] ? `<img class="fd" src="cast/food/food-${FOOD[e]}.webp" alt="${e}" onerror="this.replaceWith(this.alt)">` : e;
 function emoji(e, x, y, size) {
   const im = foodSprite(e);
-  if (im) { const w = size * 1.5, h = w * im.naturalHeight / im.naturalWidth; ctx.drawImage(im, x - w / 2, y - h / 2, w, h); return }
+  if (im) { const k = size * 1.5 / Math.max(im.naturalWidth, im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; ctx.drawImage(im, x - w / 2, y - h / 2, w, h); return }
   txt(e, x, y, `${size}px ${EMO}`, '#000', 'center', 'middle');
 }
 function xlabel(s, x, y, align = 'center') {

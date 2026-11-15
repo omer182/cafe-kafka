@@ -85,9 +85,44 @@
   }
  },
  "food": {
+  "food-burger": {
+   "file": "food/food-burger.webp",
+   "h": 275,
+   "w": 256
+  },
+  "food-cake": {
+   "file": "food/food-cake.webp",
+   "h": 232,
+   "w": 256
+  },
+  "food-cupcake": {
+   "file": "food/food-cupcake.webp",
+   "h": 338,
+   "w": 256
+  },
+  "food-flan": {
+   "file": "food/food-flan.webp",
+   "h": 200,
+   "w": 256
+  },
+  "food-paella": {
+   "file": "food/food-paella.webp",
+   "h": 188,
+   "w": 256
+  },
   "food-pizza": {
    "file": "food/food-pizza.webp",
    "h": 202,
+   "w": 256
+  },
+  "food-steak": {
+   "file": "food/food-steak.webp",
+   "h": 194,
+   "w": 256
+  },
+  "food-sundae": {
+   "file": "food/food-sundae.webp",
+   "h": 282,
    "w": 256
   }
  },
