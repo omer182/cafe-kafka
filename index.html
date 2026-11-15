@@ -906,7 +906,8 @@ function drawChef(c, x, y, size) {
   if (!im) { emoji(c.e, x, y, size); return null }
   const h = size * (pose === 'chibi-down' ? 1.9 : 2.4), w = im.naturalWidth / im.naturalHeight * h;
   const foot = y + size * .55;
-  ctx.drawImage(im, x - w / 2, foot - h, w, h);
+  const dx = pose === 'chibi-down' ? w * .22 : 0;             // lying sprites are wide: keep the name label clear
+  ctx.drawImage(im, x - w / 2 + dx, foot - h, w, h);
   c.hasDown = pose === 'chibi-down' && im === castSprite(c.n, 'chibi-down');
   return foot - h;
 }

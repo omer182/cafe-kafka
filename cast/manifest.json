@@ -15,6 +15,21 @@
    "h": 822,
    "w": 900
   },
+  "chibi-bye": {
+   "file": "marco/chibi-bye.webp",
+   "h": 320,
+   "w": 184
+  },
+  "chibi-cook": {
+   "file": "marco/chibi-cook.webp",
+   "h": 320,
+   "w": 236
+  },
+  "chibi-down": {
+   "file": "marco/chibi-down.webp",
+   "h": 320,
+   "w": 463
+  },
   "chibi-idle": {
    "file": "marco/chibi-idle.webp",
    "h": 320,
