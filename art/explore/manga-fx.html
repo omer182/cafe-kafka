@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<title>Manga FX prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Dela+Gothic+One&family=Space+Mono:wght@700&display=block" rel="stylesheet">
+<style>
+html,body{margin:0;background:#0F1113}
+canvas{display:block;width:960px;height:540px}
+</style></head><body>
+<canvas id="cv" width="960" height="540"></canvas>
+<img id="yuki" src="../sprites/yuki-portrait.png" style="display:none">
+<img id="yukiFull" src="../sprites/yuki.png" style="display:none">
+<script>
+// "First dish served" beat, manga style. ?t=1.2 freezes at that time (for screenshots).
+const cv = document.getElementById('cv'), x = cv.getContext('2d');
+const W = 960, H = 540, LOOP = 3.4;
+const FREEZE = new URLSearchParams(location.search).get('t');
+const INK = '#14110F', PAPER = '#FBF7EE', TOMATO = '#E4573D', AMBER = '#FFB547';
+const ease = {out: t => 1 - (1 - t) ** 3, back: t => 1 + 2.7 * (t - 1) ** 3 + 1.7 * (t - 1) ** 2};
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const RAYS = Array.from({length: 120}, () => [rnd(), rnd(), rnd()]);
+const SPEED = Array.from({length: 46}, () => [rnd(), rnd(), rnd()]);
+
+// --- backgrounds ---
+function kitchen() {
+  x.fillStyle = '#1B1E22'; x.fillRect(0, 0, W, H);
+  x.fillStyle = '#23272B'; x.fillRect(0, 380, W, H - 380);          // counter
+  x.strokeStyle = '#C9CFD4'; x.lineWidth = 4; x.beginPath(); x.moveTo(40, 300); x.lineTo(920, 300); x.stroke(); // the pass rail
+  x.fillStyle = '#3A2F25'; x.fillRect(620, 330, 240, 22);            // table 2
+  x.fillStyle = '#7D868E'; x.font = '700 12px "Space Mono"'; x.fillText('TABLE 2', 705, 372);
+}
+function halftone(cx, cy, r, color, alpha) {                          // screentone dots, bigger near the centre
+  x.save(); x.globalAlpha = alpha; x.fillStyle = color;
+  for (let gy = 0; gy < H; gy += 12) for (let gx = (gy / 12 % 2) * 6; gx < W; gx += 12) {
+    const d = Math.hypot(gx - cx, gy - cy) / r, s = 4.6 * (1 - d);
+    if (s > 0.4) { x.beginPath(); x.arc(gx, gy, s, 0, 7); x.fill() }
+  }
+  x.restore();
+}
+function focusLines(cx, cy, inner, alpha, color = INK) {            // 集中線: rays converging on the hit
+  x.save(); x.globalAlpha = alpha; x.fillStyle = color;
+  for (const [a, w, l] of RAYS) {
+    const ang = a * Math.PI * 2, r0 = inner * (0.85 + l * 0.6), r1 = 900, hw = 0.004 + w * 0.012;
+    x.beginPath();
+    x.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0);
+    x.lineTo(cx + Math.cos(ang - hw) * r1, cy + Math.sin(ang - hw) * r1);
+    x.lineTo(cx + Math.cos(ang + hw) * r1, cy + Math.sin(ang + hw) * r1);
+    x.fill();
+  }
+  x.restore();
+}
+function speedLines(y0, y1, alpha, dir = 1) {                         // horizontal motion lines
+  x.save(); x.globalAlpha = alpha; x.fillStyle = PAPER;
+  for (const [a, b, c] of SPEED) {
+    const y = y0 + a * (y1 - y0), len = 120 + b * 380, xs = (c * 1.4 - 0.2) * W;
+    x.beginPath(); x.moveTo(xs, y); x.lineTo(xs + len * dir, y - 1.2); x.lineTo(xs + len * dir, y + 1.2); x.fill();
+  }
+  x.restore();
+}
+
+// --- lettering ---
+function burst(cx, cy, rx, ry, spikes, fill, stroke, k) {            // jagged sound-effect balloon
+  x.save(); x.translate(cx, cy); x.scale(k, k); x.beginPath();
+  for (let i = 0; i <= spikes * 2; i++) {
+    const a = i / (spikes * 2) * Math.PI * 2, o = i % 2 ? 0.72 + (i * 37 % 7) / 40 : 1.05 + (i * 13 % 5) / 30;
+    x.lineTo(Math.cos(a) * rx * o, Math.sin(a) * ry * o);
+  }
+  x.closePath(); x.fillStyle = fill; x.fill(); x.lineWidth = 5; x.strokeStyle = stroke; x.lineJoin = 'miter'; x.stroke(); x.restore();
+}
+function sfx(text, cx, cy, size, rot, k, font = 'Dela Gothic One', fill = PAPER, tone = true) {
+  x.save(); x.translate(cx, cy); x.rotate(rot); x.scale(k, k * 1.08);
+  x.font = `${size}px "${font}"`; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.lineJoin = 'round'; x.lineWidth = size * 0.22; x.strokeStyle = INK; x.strokeText(text, 0, 0);   // fat ink outline
+  x.fillStyle = fill; x.fillText(text, 0, 0);
+  if (tone) {                                                         // screentone inside the letters
+    x.globalCompositeOperation = 'source-atop';
+    x.fillStyle = 'rgba(20,17,15,.35)';
+    for (let gy = -size; gy < size; gy += 7) for (let gx = -size * 2; gx < size * 2; gx += 7) { x.beginPath(); x.arc(gx + (gy / 7 % 2) * 3.5, gy, 1.5, 0, 7); x.fill() }
+  }
+  x.restore();
+}
+function speech(text, cx, cy, w, h, tail) {
+  x.save(); x.fillStyle = '#fff'; x.strokeStyle = INK; x.lineWidth = 3.5;
+  const bx = cx + w * 0.12, by = cy - h * 0.38;
+  x.beginPath(); x.moveTo(bx - 14, by + 6); x.lineTo(cx + tail[0], cy + tail[1]); x.lineTo(bx + 14, by + 6); x.closePath(); x.fill(); x.stroke();
+  x.beginPath(); x.ellipse(cx, cy, w / 2, h / 2, 0, 0, 7); x.fill(); x.stroke();
+  x.fillStyle = INK; x.font = '30px Bangers'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  text.split('\n').forEach((l, i, a) => x.fillText(l, cx, cy + (i - (a.length - 1) / 2) * 30));
+  x.restore();
+}
+
+// --- props ---
+function plate(px, py, s = 1) {
+  x.save(); x.translate(px, py); x.scale(s, s);
+  x.fillStyle = '#fff'; x.strokeStyle = INK; x.lineWidth = 3;
+  x.beginPath(); x.ellipse(0, 0, 46, 15, 0, 0, 7); x.fill(); x.stroke();
+  x.fillStyle = '#F2C46B'; x.beginPath(); x.ellipse(0, -8, 28, 13, 0, 0, 7); x.fill(); x.stroke();     // noodles
+  x.strokeStyle = '#C98E3A'; x.lineWidth = 2; for (let i = -2; i <= 2; i++) { x.beginPath(); x.moveTo(-18 + i * 3, -6); x.quadraticCurveTo(i * 6, -20, 18 + i * 3, -8); x.stroke() }
+  x.fillStyle = '#7FB069'; x.strokeStyle = INK; x.lineWidth = 2; for (const [a, b] of [[-10, -14], [8, -12], [0, -4]]) { x.beginPath(); x.arc(a, b, 4.5, 0, 7); x.fill(); x.stroke() }
+  x.restore();
+}
+function steam(px, py, t) {
+  x.save(); x.strokeStyle = 'rgba(251,247,238,.8)'; x.lineWidth = 3; x.lineCap = 'round';
+  for (let i = -1; i <= 1; i++) { x.beginPath(); for (let k = 0; k < 20; k++) { const yy = py - k * 3, xx = px + i * 14 + Math.sin(k * .5 + t * 9 + i) * 4; k ? x.lineTo(xx, yy) : x.moveTo(xx, yy) } x.stroke() }
+  x.restore();
+}
+
+// --- character cut-in panel (diagonal strip, like an anime game special move) ---
+function cutIn(k) {
+  if (k <= 0) return;
+  const slide = (1 - ease.out(Math.min(1, k * 1.6))) * 1100 + (k > 0.85 ? ease.out((k - 0.85) / 0.15) * -1100 : 0);
+  x.save(); x.translate(slide, 0);
+  const y0 = 92, hh = 210, sk = 60;
+  x.beginPath(); x.moveTo(0, y0 + sk); x.lineTo(W, y0); x.lineTo(W, y0 + hh); x.lineTo(0, y0 + hh + sk); x.closePath();
+  x.fillStyle = INK; x.fill();
+  x.save(); x.clip();
+  x.fillStyle = TOMATO; x.fillRect(0, 0, W, H);
+  halftone(640, y0 + hh / 2, 520, '#B83A2C', 1);
+  speedLines(y0, y0 + hh + sk, 0.75, -1);
+  const img = document.getElementById('yuki');
+  if (img.complete) x.drawImage(img, 0, 120, 768, 560, 470, y0 - 20, 420, 306);
+  x.restore();
+  x.lineWidth = 8; x.strokeStyle = PAPER; x.stroke();
+  x.fillStyle = PAPER; x.font = '64px Bangers'; x.textBaseline = 'alphabetic';
+  x.save(); x.translate(70, y0 + 150); x.rotate(-0.06);
+  x.lineWidth = 10; x.strokeStyle = INK; x.strokeText('ORDER UP!', 0, 0); x.fillText('ORDER UP!', 0, 0);
+  x.font = '700 15px "Space Mono"'; x.fillStyle = AMBER; x.fillText('CHEF YUKI · MAINS RAIL · OFFSET #0', 4, 34);
+  x.restore();
+  x.restore();
+}
+
+function frame(t) {
+  // camera shake right after the hit
+  const hit = 0.62, shake = t > hit && t < hit + 0.32 ? (1 - seg(t, hit, hit + 0.32)) * 14 : 0;
+  x.save(); x.translate((rnd() - .5) * shake, (rnd() - .5) * shake);
+  kitchen();
+
+  // 1. the dish flies down the pass
+  const fly = ease.out(seg(t, 0, hit));
+  const px = 80 + fly * 660, py = 318 - Math.sin(fly * Math.PI) * 30;
+  if (t < hit) {
+    speedLines(250, 360, 0.55 * seg(t, 0, .15));
+    x.save(); x.globalAlpha = .25; for (let i = 1; i < 5; i++) plate(px - i * 26, py, 1); x.restore();  // smear
+  }
+  // 2. impact: inverted ink flash, focus lines, halftone, burst, katakana
+  const imp = seg(t, hit, hit + 1.3);
+  if (t >= hit && t < hit + 0.09) { x.fillStyle = PAPER; x.fillRect(-20, -20, W + 40, H + 40); focusLines(740, 330, 60, 1) }
+  else if (t >= hit) {
+    halftone(740, 330, 420, '#2E3338', 0.9 * (1 - imp));
+    focusLines(740, 330, 70 + imp * 40, 0.9 * (1 - imp), PAPER);
+  }
+  plate(t < hit ? px : 740, t < hit ? py : 330, t >= hit && t < hit + 0.12 ? 1.25 : 1);
+  if (t > hit + 0.1) steam(740, 300, t);
+  if (t >= hit && t < hit + 1.5) {
+    const k = ease.back(seg(t, hit, hit + 0.16)) * (1 - seg(t, hit + 1.25, hit + 1.5));
+    burst(700, 195, 150, 84, 13, '#fff', INK, k);
+    x.save(); x.translate(700, 198); x.scale(k, k); x.rotate(-0.05);
+    x.font = '74px Bangers'; x.fillStyle = INK; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('SERVED!', 0, 0); x.restore();
+    sfx('ドン!!', 380, 130, 120, -0.22, ease.back(seg(t, hit + 0.05, hit + 0.22)) * (1 - seg(t, hit + 1.25, hit + 1.5)));
+    sfx('ジュウ', 850, 430, 46, 0.18, ease.back(seg(t, hit + 0.25, hit + 0.45)) * (1 - seg(t, hit + 1.25, hit + 1.5)), 'Dela Gothic One', AMBER, false);
+  }
+  x.restore();
+
+  // 3. chef cut-in
+  cutIn(seg(t, 1.75, 3.25));
+  // diner reaction while the cut-in plays
+  if (t > 2.0 && t < 3.15) speech('SO GOOD!!', 210, 445, 180, 78, [70, -60]);
+}
+
+function loop(now) {
+  const t = FREEZE !== null ? +FREEZE : (now / 1000) % LOOP;
+  seed = 7 + Math.floor(t * 30);
+  frame(t);
+  if (FREEZE === null) requestAnimationFrame(loop);
+}
+Promise.all(['74px Bangers', '120px "Dela Gothic One"', '700 15px "Space Mono"'].map(f => document.fonts.load(f, 'SERVEDドンジュウ!')))
+  .then(() => { window.READY = true; requestAnimationFrame(loop) });
+</script>
+</body></html>
