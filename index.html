@@ -26,7 +26,7 @@
 <meta name="twitter:description" content="Learn Apache Kafka by running a restaurant kitchen. Take orders, hire chefs and survive the Friday rush. Every move maps to a real Kafka idea. No Kafka knowledge needed.">
 <meta name="twitter:image" content="https://kafka.omersher.com/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Yellowtail&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Yellowtail&family=Bangers&family=Dela+Gothic+One&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0F1113; --board2:#16191C; --line:#262B30; --steel:#3A4148;
@@ -405,6 +405,129 @@ canvas{display:block;width:100%;touch-action:none;border-radius:16px}
   .xrows .k{white-space:normal}
   .card{padding:18px}
 }
+
+/* ================= MANGA THEME =================
+   The page is a manga page: newsprint paper, ink-bordered panels with hard
+   offset shadows, screentone dots, focus lines, speech bubbles, comic lettering.
+   Everything below overrides the original look; delete this block to roll back. */
+:root{
+  --paper:#FBF7EE; --news:#F1E9DA; --ink:#1A1614; --ink2:#5E554A; --tone:rgba(26,22,20,.13);
+  --amber:#FFB547; --tomato:#E4573D; --herb:#6DAF52; --xr:#2FB3A3;
+  --title:'Dela Gothic One',var(--sans); --sfx:'Bangers',var(--sans);
+  --line3:3px solid var(--ink); --pop:5px 5px 0 var(--ink); --pop-s:3px 3px 0 var(--ink);
+}
+html,body{color:var(--ink);
+  background:
+    radial-gradient(circle,var(--tone) 1px,transparent 1.5px) 0 0/9px 9px,
+    var(--news)}
+:focus-visible{outline:3px solid var(--tomato);outline-offset:2px}
+
+/* header = black title band, the neon sign still glows on it */
+.hdr{background:var(--ink);border-bottom:4px solid var(--ink);box-shadow:0 4px 0 var(--tomato)}
+.tag{color:#BDB3A3;font-family:var(--sfx);font-size:15px;letter-spacing:.06em}
+.pill{border:2.5px solid #F1E9DA;background:var(--ink);color:#F1E9DA;border-radius:50%;font:20px/1 var(--sfx);letter-spacing:0}
+.pill:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+.pill.on{background:var(--tomato);border-color:#fff;color:#fff;box-shadow:3px 3px 0 #fff}
+.pill.won:not(.on){color:#9BD77F;border-color:#9BD77F}
+.pill.freep{border-radius:999px;font:17px/1 var(--sfx);letter-spacing:.04em}
+.tool{border:2.5px solid #F1E9DA;background:var(--ink);color:#F1E9DA;border-radius:6px;font:16px/1 var(--sfx);letter-spacing:.05em;padding:7px 13px}
+.tool:hover:not(:disabled){border-color:var(--amber);color:var(--amber)}
+.tool.xon{background:var(--xr);border-color:#fff;color:#fff;box-shadow:3px 3px 0 #fff}
+
+/* lesson panel = a manga page with caption boxes */
+.panel{background:var(--paper);border:var(--line3);border-radius:4px;box-shadow:var(--pop);padding-top:20px}
+.panel::before,.panel::after{display:none}
+.chip{display:inline-block;align-self:flex-start;background:var(--ink);color:#fff;border:none;padding:5px 9px 4px;font:13px/1 var(--sfx);letter-spacing:.1em}
+.panel h2{font:26px/1.12 var(--title);letter-spacing:0;margin:12px 0 4px}
+.panel h4{border-top:none;padding-top:0;margin:16px 0 8px;font:15px/1 var(--sfx);letter-spacing:.08em;color:var(--ink);
+  display:flex;align-items:center;gap:8px}
+.panel h4::after{content:'';flex:1;height:3px;background:var(--ink)}
+.storyd summary{font:14px var(--sfx);letter-spacing:.08em;color:var(--ink2)}
+.goals .box{border:2.5px solid var(--ink);border-radius:3px}
+.goals li.done .box{background:var(--herb);border-color:var(--ink)}
+.goals li.cur .box{border-color:var(--ink);background:var(--amber);color:var(--ink)}
+.knob label{font:15px var(--sfx);letter-spacing:.06em;color:var(--ink)}
+.knob input{accent-color:var(--tomato)}
+
+/* buttons = ink-bordered panels that pop */
+.btn{border:2.5px solid var(--ink);border-radius:6px;background:#fff;color:var(--ink);box-shadow:var(--pop-s);transition:transform .08s,box-shadow .08s}
+.btn:hover:not(:disabled){transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.gold{background:var(--amber);color:var(--ink);box-shadow:var(--pop-s)}
+.btn.ghost{background:transparent;border-style:dashed;box-shadow:none}
+.btn.xr{background:var(--xr);color:#fff}
+.btn small{opacity:.7}
+.glow{animation:inkglow 1s ease-in-out infinite}
+@keyframes inkglow{50%{box-shadow:0 0 0 4px var(--tomato),6px 6px 0 var(--ink)}}
+.seg{background:#fff;border:2.5px solid var(--ink);border-radius:6px;padding:2px}
+.seg button{color:var(--ink2);border-radius:3px}
+.seg button.on{background:var(--ink);color:#fff;box-shadow:none}
+.cm{background:#fff;border:2px solid var(--ink);border-radius:6px}
+.cm.down{background:#FFD9D0}
+.cm button{border:2px solid var(--ink);background:#fff;border-radius:4px}
+
+/* counters = little stat panels with SFX numbers */
+.score div{background:#fff;border:2.5px solid var(--ink);border-radius:4px;box-shadow:var(--pop-s);color:var(--ink2);font:12px var(--sfx);letter-spacing:.08em}
+.score b{font:30px/1.05 var(--sfx);color:var(--ink);text-shadow:none;letter-spacing:.02em}
+.score .hot b{color:var(--tomato);text-shadow:none}
+
+/* the KDS ticker = a narration caption box */
+.status{background:#fff;color:var(--ink);border:var(--line3);border-radius:4px;box-shadow:var(--pop-s);font:700 13.5px/1.35 var(--sans)}
+.status::before{background:var(--ink);color:#fff;border-radius:2px;font:14px/1 var(--sfx);letter-spacing:.1em;padding:6px 8px 5px}
+.status.ask{color:var(--ink);text-shadow:none}
+.status.ask::before{background:var(--tomato);box-shadow:none}
+.status.do{background:var(--amber);border-color:var(--ink);color:var(--ink);box-shadow:var(--pop-s);animation:inkpulse 1.4s ease-in-out infinite}
+.status.do::before{background:var(--ink);color:var(--amber);font-size:15px}
+@keyframes inkpulse{50%{box-shadow:6px 6px 0 var(--ink)}}
+.status.huddle{border-color:var(--ink);background:repeating-linear-gradient(-45deg,var(--amber) 0 14px,#fff 14px 28px);background-size:40px 40px}
+.status.alert{background:var(--tomato);border-color:var(--ink);color:#fff}
+.status.alert::before{background:var(--ink);color:#fff}
+
+/* the kitchen = the big panel on the page */
+.scene{border-radius:0}
+.cwrap{border:var(--line3);border-radius:4px;box-shadow:var(--pop);background:var(--ink)}
+canvas{border-radius:0}
+.codep{border:var(--line3);border-radius:4px;box-shadow:var(--pop)}
+
+/* coach tips + lesson cards = speech bubbles */
+.coach{background:#fff;border:var(--line3);border-left:var(--line3);border-radius:18px;box-shadow:var(--pop-s)}
+.coach .arrow{background:var(--ink);width:14px;height:14px}
+.coach .who{font:13px var(--sfx);letter-spacing:.08em;color:var(--tomato)}
+.lesson{background:#fff;border-radius:18px;border:var(--line3)}
+.lesson::before,.lesson::after{display:none}
+.lesson .arrow{background:var(--ink)}
+.lesson .who{border-bottom:2.5px solid var(--ink)}
+.lesson h5{font:18px/1.2 var(--title)}
+.lesson .kaf{background:#0F2A2A;border:2.5px solid var(--ink);border-radius:8px}
+
+/* modal cards = a splash page over focus lines */
+.veil{background:
+  radial-gradient(closest-side,rgba(241,233,218,.9) 30%,transparent 100%),
+  repeating-conic-gradient(from 0deg at 50% 50%,rgba(26,22,20,.32) 0deg 1deg,transparent 1deg 6deg),
+  rgba(241,233,218,.78);backdrop-filter:blur(1.5px)}
+.card{background:var(--paper);border:var(--line3);border-radius:4px;box-shadow:8px 8px 0 var(--ink)}
+.card::before{display:none}
+.card .mise{display:inline-block;background:var(--ink);color:#fff;padding:5px 9px 4px;font:14px/1 var(--sfx);letter-spacing:.1em}
+.card h3,.card.intro h3{font-family:var(--title);font-weight:400;letter-spacing:0}
+.card .dish{font:16px var(--sfx);letter-spacing:.08em;color:var(--tomato)}
+.card .learn{border:2.5px solid var(--ink);border-radius:8px;box-shadow:var(--pop-s)}
+.bell{background:var(--amber);color:var(--ink);border:3px solid var(--ink);border-radius:8px;box-shadow:var(--pop);
+  font:24px/1 var(--sfx);letter-spacing:.06em;padding:14px 30px 12px}
+.bell:hover{transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)}
+.bell:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.card.intro .bell{font-size:28px}
+
+/* front door = an anime title card: black splash panel with white focus lines */
+.hero{position:relative;max-width:none;margin:0;border-bottom:4px solid var(--ink);
+  background:
+    radial-gradient(closest-side at 50% 34%,rgba(255,90,50,.22),transparent 75%),
+    repeating-conic-gradient(from 0deg at 50% 30%,rgba(255,255,255,.07) 0deg 1.2deg,transparent 1.2deg 5deg),
+    var(--ink)}
+.hero h1{font:clamp(24px,3.4vw,40px)/1.15 var(--title);letter-spacing:0;color:#fff}
+.hero .sub{color:#D6CCBB}
+.ghost2{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:8px;box-shadow:5px 5px 0 #fff;font:22px/1 var(--sfx);letter-spacing:.06em;padding:14px 24px 12px}
+.ghost2:hover{border-color:var(--ink);transform:translate(-1px,-1px)}
+.demo{border:3px solid #fff;border-radius:6px;box-shadow:8px 8px 0 var(--tomato)}
 </style>
 </head>
 <body>
