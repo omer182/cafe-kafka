@@ -1115,7 +1115,7 @@ function drawFX() {
 }
 
 // ---------- cast art: anime sprites per character, emoji until their art exists ----------
-const ART = {Marco: 'cast/marco/', Yuki: 'cast/yuki/', Kofi: 'cast/kofi/', Waiter: 'cast/waiter/',
+const ART = {Marco: 'cast/marco/', Yuki: 'cast/yuki/', Kofi: 'cast/kofi/', Waiter: 'cast/waiter/', HeadChef: 'cast/headchef/',
   Diner1: 'cast/diner1/', Diner2: 'cast/diner2/', Diner3: 'cast/diner3/', Diner4: 'cast/diner4/'};
 const castImg = {};
 function castSprite(name, pose) {
@@ -1179,6 +1179,7 @@ const totalLag = () => S.stations.reduce((a, st) => a + st.rails.reduce((b, r) =
 
 function rebalance(msg, dur = HUDDLE) {
   S.huddle = dur; S.banner = msg; S.stats.rebalances++;
+  fx('cutin', {who: 'HeadChef', pose: 'bust-happy', title: 'HUDDLE!', sub: 'HEAD CHEF · REBALANCE · REASSIGNING RAILS', color: '#2F2A24', dark: '#14110F', dur: 1.5});
   if (G.staff) fx('sfx', {text: 'ゴゴゴゴ', x: G.pad + 110, y: G.staff.top + 40, size: 26, rot: -.08, fill: '#B9A6FF', rise: 6, dur: Math.min(2.4, dur + .4)});
   for (const c of S.chefs) {
     if (c.job) dropJob(c.job);
@@ -1754,13 +1755,14 @@ function draw(rdt) {
       ctx.fillStyle = '#6F7880'; ctx.fillRect(lx + 20, s.top + 38, 2, 8);
     }
     if (X) xlabel('consumer group "kitchen"', G.pad + 92, s.top + 15, 'left');
-    emoji('👨‍🍳', G.pad + 40, s.top + 60, 30);
-    emoji('📋', G.pad + 54, s.top + 70, 15);
+    const him = castSprite('HeadChef', S.huddle > 0 ? 'chibi-huddle' : 'chibi-idle') || castSprite('HeadChef', 'chibi-idle');
+    if (him) { const h = 74, w = him.naturalWidth / him.naturalHeight * h; ctx.drawImage(him, G.pad + 40 - w / 2, s.top + 82 - h, w, h) }
+    else { emoji('👨‍🍳', G.pad + 40, s.top + 60, 30); emoji('📋', G.pad + 54, s.top + 70, 15) }
     txt('HEAD CHEF', G.pad + 40, s.top + 92, `700 9px ${MONO}`, 'rgba(233,229,220,.55)', 'center');
     if (X) xlabel('coordinator', G.pad + 40, s.top + 104 - 1);
     ctx.fillStyle = '#6B4D33'; rr(G.W * .4, s.top + 78, G.W * .6 - G.pad - 110, 7, 3); ctx.fill();
     ctx.fillStyle = '#3E2C1D'; ctx.fillRect(G.W * .4 + 8, s.top + 85, 4, 10); ctx.fillRect(G.W - G.pad - 122, s.top + 85, 4, 10);
-    if (S.huddle > 0 && !RM) emoji('💬', G.pad + 64, s.top + 36 + Math.sin(NOW * 6) * 2, 16);
+    if (S.huddle > 0 && !RM && !him) emoji('💬', G.pad + 64, s.top + 36 + Math.sin(NOW * 6) * 2, 16);
   }
 
   // chefs

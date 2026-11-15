@@ -131,6 +131,28 @@
    "w": 256
   }
  },
+ "headchef": {
+  "bust-happy": {
+   "file": "headchef/bust-happy.webp",
+   "h": 818,
+   "w": 900
+  },
+  "chibi-huddle": {
+   "file": "headchef/chibi-huddle.webp",
+   "h": 320,
+   "w": 175
+  },
+  "chibi-idle": {
+   "file": "headchef/chibi-idle.webp",
+   "h": 320,
+   "w": 148
+  },
+  "sheet": {
+   "file": "headchef/sheet.webp",
+   "h": 1024,
+   "w": 1535
+  }
+ },
  "kofi": {
   "bust-fired": {
    "file": "kofi/bust-fired.webp",
