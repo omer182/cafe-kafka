@@ -1623,7 +1623,20 @@ function tiles(base, line) {
   t.moveTo(.5, 0); t.lineTo(.5, 14); t.moveTo(28.5, 14); t.lineTo(28.5, 28); t.stroke();
   return ctx.createPattern(c, 'repeat');
 }
+// painted anime backgrounds (cast/bg/*.webp); the flat drawn look stays as a fallback until they load
+const BG = {};
+for (const n of ['kitchen', 'dining']) { const im = new Image(); im.onload = () => { BG[n] = im }; im.src = `cast/bg/${n}.webp` }
+function drawCover(im, x, y, w, h, ay = .5) {                // like CSS object-fit: cover, anchored at ay vertically
+  const k = Math.max(w / im.naturalWidth, h / im.naturalHeight), iw = im.naturalWidth * k, ih = im.naturalHeight * k;
+  ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  ctx.drawImage(im, x + (w - iw) / 2, y + (h - ih) * ay, iw, ih); ctx.restore();
+}
 function steel(x, y, w, h, r, edge) {
+  if (BG.kitchen) {                                          // over the painted kitchen: a smoky glass panel instead of brushed steel
+    ctx.fillStyle = 'rgba(12,10,9,.52)'; rr(x, y, w, h, r); ctx.fill();
+    ctx.strokeStyle = edge; ctx.lineWidth = 1; rr(x + .5, y + .5, w - 1, h - 1, r); ctx.stroke();
+    return;
+  }
   const g = ctx.createLinearGradient(0, y, 0, y + h);
   g.addColorStop(0, '#2C3238'); g.addColorStop(.5, '#22272C'); g.addColorStop(1, '#1B1F23');
   ctx.fillStyle = g; rr(x, y, w, h, r); ctx.fill();
@@ -1658,6 +1671,10 @@ function draw(rdt) {
   PAT.wall ||= tiles('#14171A', 'rgba(255,255,255,.035)');
   PAT.back ||= tiles('#0E1012', 'rgba(255,255,255,.03)');
   ctx.fillStyle = PAT.wall; rr(0, 0, G.W, G.H, 16); ctx.fill();
+  if (BG.kitchen) {
+    drawCover(BG.kitchen, 0, G.dining.h, G.W, G.H - G.dining.h, .35);
+    ctx.fillStyle = 'rgba(14,11,9,.35)'; ctx.fillRect(0, G.dining.h, G.W, G.H - G.dining.h);
+  }
   // dining room: dark wall, warm floor, a pendant lamp over every table
   let gr = ctx.createLinearGradient(0, 0, 0, G.dining.h);
   gr.addColorStop(0, '#231A16'); gr.addColorStop(.55, '#2B201A'); gr.addColorStop(.56, '#3A2A1F'); gr.addColorStop(1, '#2C1F17');
@@ -1724,7 +1741,7 @@ function draw(rdt) {
     txt(`${st.e} ${st.name}`, G.pad + 12, g.top + 23, `700 16px ${SANS}`, '#F2EEE6');
     g.rails.forEach(y => {
       const x0 = G.clipX + G.TW + 70, x1 = G.railR - 100, n = Math.max(1, Math.floor((x1 - x0) / 150));
-      for (let i = 0; i <= n && x1 > x0; i++) { const lx = x0 + (x1 - x0) * i / n; glowAt(lx, y + 34, 78, .17); lamp(lx, y - 8) }
+      if (!BG.kitchen) for (let i = 0; i <= n && x1 > x0; i++) { const lx = x0 + (x1 - x0) * i / n; glowAt(lx, y + 34, 78, .17); lamp(lx, y - 8) }
     });
     if (X) {
       ctx.font = `700 15px ${SANS}`;
@@ -1748,7 +1765,7 @@ function draw(rdt) {
 
   if (G.staff) {
     const s = G.staff;
-    ctx.fillStyle = PAT.back; ctx.strokeStyle = X ? 'rgba(95,224,208,.45)' : '#2F363C'; ctx.lineWidth = 1;
+    ctx.fillStyle = BG.kitchen ? 'rgba(12,10,9,.58)' : PAT.back; ctx.strokeStyle = X ? 'rgba(95,224,208,.45)' : '#2F363C'; ctx.lineWidth = 1;
     rr(G.pad, s.top, G.W - 2 * G.pad, s.h, 14); ctx.fill(); ctx.stroke();
     txt('STAFF ROOM', G.pad + 12, s.top + 17, `700 9px ${MONO}`, 'rgba(233,229,220,.4)');
     for (let i = 0; i < 3; i++) {
