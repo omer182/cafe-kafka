@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@700&display=block" rel="stylesheet">
+<style>
+html,body{margin:0;width:1200px;background:#0F1113;color:#E9E5DC;font-family:'Space Grotesk',sans-serif}
+.row{display:flex;align-items:center;gap:28px;padding:22px 32px;border-bottom:1px solid #262B30}
+.lab{width:190px;flex:none}
+.lab b{display:block;font-size:30px;color:#FFB547}
+.lab span{font:700 12px 'Space Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#7D868E}
+.big{display:flex;gap:18px}
+.big svg,.big canvas{width:190px;height:190px;background:#16191C;border-radius:14px}
+.small{display:flex;flex-direction:column;gap:10px;margin-left:8px}
+.small div{display:flex;gap:10px;align-items:center}
+.small svg,.small canvas{width:44px;height:44px}
+.small .s2 svg,.small .s2 canvas{width:30px;height:30px}
+canvas{image-rendering:pixelated}
+</style></head><body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="b1"/>
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="b2"/>
+      <feMerge><feMergeNode in="b2"/><feMergeNode in="b1"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- ============ A. NEON TUBE ============ -->
+    <g id="a-chef" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+      <g stroke="#FFE6DA" stroke-width="2.6">
+        <!-- toque -->
+        <path d="M37 40 C29 40 27 29 35 27 C35 18 45 15 49 21 C53 15 64 17 63 26 C71 27 71 39 63 40"/>
+        <path d="M37 40 L63 40 L62 46 L38 46 Z"/>
+        <!-- head -->
+        <circle cx="50" cy="56" r="9.5"/>
+        <!-- body -->
+        <path d="M33 92 C32 77 39 70 50 70 C61 70 68 77 67 92"/>
+      </g>
+      <!-- face -->
+      <g stroke="#FFE6DA" stroke-width="2.2"><path d="M46 55 l0 .1 M54 55 l0 .1"/><path d="M46.5 60 q3.5 2.6 7 0"/></g>
+      <!-- team neckerchief -->
+      <path d="M43 68 L50 76 L57 68" stroke="#FF5E4D" stroke-width="2.8"/>
+      <!-- buttons -->
+      <g stroke="#FFB547" stroke-width="3"><path d="M45 80 l0 .1 M55 80 l0 .1 M45 87 l0 .1 M55 87 l0 .1"/></g>
+      <!-- pan -->
+      <g stroke="#5FE0D0" stroke-width="2.6"><path d="M67 80 L77 74"/><ellipse cx="85" cy="70" rx="9" ry="4.5" transform="rotate(-25 85 70)"/></g>
+      <g stroke="#FFB547" stroke-width="2"><path d="M82 60 q2 -4 0 -7 M88 58 q2 -4 0 -7"/></g>
+    </g>
+
+    <g id="a-waiter" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+      <g stroke="#FFB547" stroke-width="2.6">
+        <!-- slicked hair + head -->
+        <circle cx="46" cy="40" r="10"/>
+        <path d="M36 37 C38 27 52 26 56 35 C50 31 43 31 36 37"/>
+        <!-- tailcoat -->
+        <path d="M30 94 C30 72 36 56 46 56 C56 56 62 72 62 94"/>
+        <path d="M38 60 L46 80 L54 60"/>
+      </g>
+      <!-- handlebar moustache + eyes -->
+      <g stroke="#FFE6DA" stroke-width="2.2"><path d="M42 40 l0 .1 M50 40 l0 .1"/><path d="M39 46 q3 -3 7 -1 q4 -2 7 1 q-1 3 -3 1"/><path d="M39 46 q1 3 3 1"/></g>
+      <!-- bow tie -->
+      <path d="M41 56 L46 59 L41 62 Z M51 56 L46 59 L51 62 Z" stroke="#FF5E4D" stroke-width="2.4"/>
+      <!-- arm up with tray + cloche -->
+      <g stroke="#5FE0D0" stroke-width="2.6"><path d="M60 64 L72 48"/><path d="M60 46 L88 46"/><path d="M63 46 C63 34 85 34 85 46"/><path d="M74 36 l0 -2"/></g>
+      <!-- towel over arm -->
+      <path d="M32 72 L28 84 L36 84" stroke="#FFE6DA" stroke-width="2.2"/>
+    </g>
+
+    <g id="a-burger" fill="none" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)">
+      <path d="M24 50 C24 30 76 30 76 50 Z" stroke="#FFB547" stroke-width="2.8"/>
+      <g stroke="#FFE6DA" stroke-width="2.6"><path d="M40 40 l1 -1 M50 37 l1 -1 M60 40 l1 -1 M45 45 l1 -1 M56 45 l1 -1"/></g>
+      <path d="M22 56 q4 -4 8 0 t8 0 t8 0 t8 0 t8 0 t8 0 t8 0" stroke="#6DBF55" stroke-width="2.6"/>
+      <path d="M24 63 L76 63" stroke="#FF5E4D" stroke-width="5"/>
+      <path d="M30 68 L50 74 L70 68" stroke="#FFD15C" stroke-width="2.4"/>
+      <path d="M24 74 C24 82 76 82 76 74 Z" stroke="#FFB547" stroke-width="2.8"/>
+    </g>
+
+    <!-- ============ B. MID-CENTURY POSTER ============ -->
+    <g id="b-chef">
+      <!-- tall pleated toque -->
+      <path d="M38 8 C38 2 62 2 62 8 L60 32 L40 32 Z" fill="#F6F2EA"/>
+      <path d="M45 6 L46 32 M50 5 L50 32 M55 6 L54 32" stroke="#D8D0C2" stroke-width="1.4"/>
+      <rect x="39" y="30" width="22" height="5" rx="1.5" fill="#E7DFD0"/>
+      <!-- face -->
+      <path d="M41 35 L59 35 L58 48 Q50 54 42 48 Z" fill="#E8B48C"/>
+      <circle cx="46" cy="41" r="1.6" fill="#1D1B18"/><circle cx="54" cy="41" r="1.6" fill="#1D1B18"/>
+      <path d="M44 46 Q50 44 56 46 Q53 48 50 46.5 Q47 48 44 46 Z" fill="#1D1B18"/>
+      <!-- neckerchief -->
+      <path d="M42 51 L58 51 L50 60 Z" fill="#E4573D"/>
+      <!-- jacket: tall trapezoid -->
+      <path d="M38 53 L62 53 L70 96 L30 96 Z" fill="#F6F2EA"/>
+      <path d="M50 60 L50 96" stroke="#D8D0C2" stroke-width="1.2"/>
+      <g fill="#1D1B18"><circle cx="45" cy="66" r="1.5"/><circle cx="55" cy="66" r="1.5"/><circle cx="45" cy="76" r="1.5"/><circle cx="55" cy="76" r="1.5"/><circle cx="45" cy="86" r="1.5"/><circle cx="55" cy="86" r="1.5"/></g>
+      <!-- arm with ladle -->
+      <path d="M62 56 L76 70 L72 74 L60 62 Z" fill="#E7DFD0"/>
+      <rect x="77" y="38" width="3" height="36" rx="1.5" fill="#D9A441" transform="rotate(12 78 56)"/>
+      <path d="M77 36 a6 6 0 0 0 12 0 Z" fill="#D9A441" transform="rotate(12 83 36)"/>
+    </g>
+
+    <g id="b-waiter">
+      <!-- hair -->
+      <path d="M38 22 Q38 8 50 8 Q62 8 62 22 L62 18 Q54 12 44 18 L38 26 Z" fill="#1D1B18"/>
+      <!-- face (long) -->
+      <path d="M39 18 Q50 12 61 18 L60 36 Q50 44 40 36 Z" fill="#E0A97E"/>
+      <circle cx="45" cy="25" r="1.6" fill="#1D1B18"/><circle cx="55" cy="25" r="1.6" fill="#1D1B18"/>
+      <!-- handlebar moustache -->
+      <path d="M41 33 Q45 29 50 31 Q55 29 59 33 Q62 31 61 28 Q63 34 57 34 Q53 32 50 33 Q47 32 43 34 Q37 34 39 28 Q38 31 41 33 Z" fill="#1D1B18"/>
+      <!-- collar + bow tie -->
+      <path d="M42 41 L58 41 L56 47 L44 47 Z" fill="#FFFFFF"/>
+      <path d="M43 42 L50 45 L43 48 Z M57 42 L50 45 L57 48 Z" fill="#E4573D"/>
+      <!-- tailcoat -->
+      <path d="M36 46 L64 46 L68 80 L62 98 L56 82 L44 82 L38 98 L32 80 Z" fill="#23272B"/>
+      <path d="M44 47 L50 72 L56 47 Z" fill="#FFFFFF"/>
+      <g fill="#D9A441"><circle cx="50" cy="56" r="1.2"/><circle cx="50" cy="63" r="1.2"/></g>
+      <!-- towel -->
+      <path d="M32 58 L38 58 L37 76 L31 74 Z" fill="#F6F2EA"/>
+      <!-- arm up holding tray -->
+      <path d="M64 50 L76 40 L79 44 L66 56 Z" fill="#23272B"/>
+      <rect x="64" y="34" width="30" height="3" rx="1.5" fill="#D9A441"/>
+      <path d="M67 34 Q79 16 91 34 Z" fill="#C9CFD4"/>
+      <circle cx="79" cy="22" r="2" fill="#D9A441"/>
+    </g>
+
+    <g id="b-burger">
+      <ellipse cx="50" cy="80" rx="40" ry="8" fill="#F6F2EA"/>
+      <path d="M24 72 L76 72 Q76 80 50 80 Q24 80 24 72 Z" fill="#D98B3A"/>
+      <rect x="20" y="62" width="60" height="10" rx="5" fill="#5A3221"/>
+      <path d="M22 62 L78 62 L72 68 L66 62 L60 68 L54 62 L48 68 L42 62 L36 68 L30 62 L24 68 Z" fill="#FFD15C"/>
+      <path d="M20 58 Q26 52 32 58 Q38 52 44 58 Q50 52 56 58 Q62 52 68 58 Q74 52 80 58 L80 62 L20 62 Z" fill="#7FB069"/>
+      <path d="M22 56 Q22 26 50 26 Q78 26 78 56 Z" fill="#E09A48"/>
+      <path d="M30 44 Q34 32 46 30" stroke="#F2B970" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <g fill="#FFF3D6"><ellipse cx="40" cy="38" rx="2.2" ry="1.2" transform="rotate(-20 40 38)"/><ellipse cx="52" cy="34" rx="2.2" ry="1.2"/><ellipse cx="62" cy="40" rx="2.2" ry="1.2" transform="rotate(20 62 40)"/><ellipse cx="47" cy="45" rx="2.2" ry="1.2"/><ellipse cx="58" cy="48" rx="2.2" ry="1.2" transform="rotate(10 58 48)"/></g>
+    </g>
+  </defs>
+</svg>
+
+<div class="row" id="rowA">
+  <div class="lab"><b>A · Neon tube</b><span>outlines that glow like the sign</span></div>
+  <div class="big">
+    <svg viewBox="0 0 100 100"><use href="#a-chef"/></svg>
+    <svg viewBox="0 0 100 100"><use href="#a-waiter"/></svg>
+    <svg viewBox="0 0 100 100"><use href="#a-burger"/></svg>
+  </div>
+  <div class="small">
+    <div><svg viewBox="0 0 100 100"><use href="#a-chef"/></svg><svg viewBox="0 0 100 100"><use href="#a-waiter"/></svg><svg viewBox="0 0 100 100"><use href="#a-burger"/></svg></div>
+    <div class="s2"><svg viewBox="0 0 100 100"><use href="#a-chef"/></svg><svg viewBox="0 0 100 100"><use href="#a-waiter"/></svg><svg viewBox="0 0 100 100"><use href="#a-burger"/></svg></div>
+  </div>
+</div>
+
+<div class="row" id="rowB">
+  <div class="lab"><b>B · Poster</b><span>flat, tall, Prague-café elegant</span></div>
+  <div class="big">
+    <svg viewBox="0 0 100 100"><use href="#b-chef"/></svg>
+    <svg viewBox="0 0 100 100"><use href="#b-waiter"/></svg>
+    <svg viewBox="0 0 100 100"><use href="#b-burger"/></svg>
+  </div>
+  <div class="small">
+    <div><svg viewBox="0 0 100 100"><use href="#b-chef"/></svg><svg viewBox="0 0 100 100"><use href="#b-waiter"/></svg><svg viewBox="0 0 100 100"><use href="#b-burger"/></svg></div>
+    <div class="s2"><svg viewBox="0 0 100 100"><use href="#b-chef"/></svg><svg viewBox="0 0 100 100"><use href="#b-waiter"/></svg><svg viewBox="0 0 100 100"><use href="#b-burger"/></svg></div>
+  </div>
+</div>
+
+<div class="row" id="rowC">
+  <div class="lab"><b>C · Pixel</b><span>24×24 game sprites, fixed palette</span></div>
+  <div class="big"><canvas data-s="chef"></canvas><canvas data-s="waiter"></canvas><canvas data-s="burger"></canvas></div>
+  <div class="small">
+    <div><canvas data-s="chef"></canvas><canvas data-s="waiter"></canvas><canvas data-s="burger"></canvas></div>
+    <div class="s2"><canvas data-s="chef"></canvas><canvas data-s="waiter"></canvas><canvas data-s="burger"></canvas></div>
+  </div>
+</div>
+
+<script>
+// Pixel sprites: one character per pixel, '.' is transparent.
+const PAL = {k:'#1D1B18', w:'#F6F2EA', g:'#C9C1B2', s:'#E8B48C', S:'#C98E66', r:'#E4573D', R:'#A8322A',
+  y:'#FFD15C', b:'#D98B3A', B:'#8E5424', p:'#5A3221', l:'#7FB069', t:'#23272B', T:'#3A4148', a:'#D9A441', c:'#C9CFD4', C:'#8E979E', e:'#FFE6DA'};
+const SPR = {
+chef: [
+'........................',
+'.........wwwww..........',
+'.......wwwwwwwww........',
+'......wwwwwgwwwww.......',
+'......wwgwwwwwgww.......',
+'.......wwwwwwwww........',
+'.......gwgwgwgwg........',
+'.......wwwwwwwww........',
+'.......sssssssss........',
+'.......skssssksS........',
+'.......sssssssss........',
+'.......ssskkkssS........',
+'........sssssss.........',
+'.......rrrrrrrrr........',
+'......wwwrrrrrwww.......',
+'.....wwwwwrrrwwwwwa.....',
+'.....wwkwwwwwwkwwsa.....',
+'.....wwwwwwwwwwwwwa.....',
+'.....swkwwwwwwkww.a.....',
+'......wwwwwwwwwww.aa....',
+'......wwwwwwwwwww.......',
+'.......ttt...ttt........',
+'.......ttt...ttt........',
+'......tttt...tttt.......'],
+waiter: [
+'........................',
+'..............aaaaaaa...',
+'.............caccccccca.',
+'............cccccccccc..',
+'.......ttttt..cccccccc..',
+'......ttttttt.aaaaaaaaa.',
+'......tssssst.......s...',
+'......sksssks......ss...',
+'......sssssss.....ss....',
+'.....kkksssskkk..tt.....',
+'.....k.kkkkkk.k.tt......',
+'.......sssssss.tt.......',
+'.......wrrwrrw.t........',
+'.....ttwwrrrwwttt.......',
+'.....tttwwwwwtttt.......',
+'....ttttwwawwtttt.......',
+'....wtttwwwwwttt........',
+'....wwtttwwawttt........',
+'....wwttttwwtttt........',
+'....w.ttttttttttt.......',
+'......tttt.ttttttt......',
+'......ttt...ttt..tt.....',
+'......kkk...kkk.........',
+'.....kkkk...kkkk........'],
+burger: [
+'........................',
+'........................',
+'........................',
+'.........bbbbbb.........',
+'......bbbbbbbbbbbb......',
+'.....bbbwbbbbbwbbbb.....',
+'....bbbbbbbbwbbbbbbb....',
+'...bbbwbbbbbbbbbwbbbb...',
+'...bbbbbbbwbbbbbbbbbb...',
+'...BBBBBBBBBBBBBBBBBB...',
+'..llllllllllllllllllll..',
+'..l.ll.llllll.lll.ll.l..',
+'..rrrrrrrrrrrrrrrrrrrr..',
+'..yyyyyyyyyyyyyyyyyyyy..',
+'...y.yyyy.yyyyy.yyy.y...',
+'..pppppppppppppppppppp..',
+'..pppppppppppppppppppp..',
+'...BBBBBBBBBBBBBBBBBB...',
+'...bbbbbbbbbbbbbbbbbb...',
+'....bbbbbbbbbbbbbbbb....',
+'.....BBBBBBBBBBBBBB.....',
+'..wwwwwwwwwwwwwwwwwwww..',
+'...gggggggggggggggggg...',
+'........................']};
+for (const cv of document.querySelectorAll('canvas[data-s]')) {
+  const rows = SPR[cv.dataset.s]; cv.width = cv.height = 24; const x = cv.getContext('2d');
+  rows.forEach((r, j) => [...r].forEach((ch, i) => { if (PAL[ch]) { x.fillStyle = PAL[ch]; x.fillRect(i, j, 1, 1) } }));
+}
+</script>
+</body></html>

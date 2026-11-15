@@ -1,0 +1,4 @@
+# Big downloaded inputs (fetch again with art/vrm/fetch.sh)
+art/vrm/*.vrm
+art/vrm/*.zip
+art/blender/addon.zip

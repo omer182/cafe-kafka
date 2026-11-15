@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@700&display=block" rel="stylesheet">
+<style>
+html,body{margin:0;width:1200px;background:#0F1113;color:#E9E5DC;font-family:'Space Grotesk',sans-serif}
+.row{display:flex;align-items:center;gap:22px;padding:22px 28px}
+.big{display:flex;gap:16px}
+.big svg{width:220px;height:220px;background:#16191C;border-radius:14px}
+.small{display:flex;flex-direction:column;gap:10px;padding:18px 28px 26px;border-top:1px solid #262B30}
+.small div{display:flex;gap:14px;align-items:center}
+.small .s1 svg{width:56px;height:56px}
+.small .s2 svg{width:36px;height:36px}
+.lab{font:700 12px 'Space Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:#7D868E;margin-bottom:4px}
+h1{margin:0;padding:22px 28px 0;font-size:30px;color:#FFB547}
+</style></head><body>
+<h1>D · Anime chibi</h1>
+<div class="row"><div class="big" id="big"></div></div>
+<div class="small"><div class="lab">at game sizes (56px, 36px)</div><div class="s1" id="s1"></div><div class="s2" id="s2"></div></div>
+
+<script>
+const OL = '#2B2330';                 // outline ink
+const sw = 'stroke="' + OL + '" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"';
+const SKIN = {base: '#FFE3CC', shade: '#F4BFA0'};
+
+// Glossy anime eyes: white, gradient iris, pupil, two highlights, heavy upper lash.
+function eyes(iris, id, look = 0) {
+  let s = `<defs><linearGradient id="ir${id}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="${OL}"/><stop offset=".45" stop-color="${iris[0]}"/><stop offset="1" stop-color="${iris[1]}"/></linearGradient></defs>`;
+  for (const [cx, side] of [[41, -1], [59, 1]]) {
+    const x = cx + look;
+    s += `<ellipse cx="${cx}" cy="44" rx="5.2" ry="6.6" fill="#fff"/>
+      <ellipse cx="${x}" cy="44.6" rx="4.3" ry="5.9" fill="url(#ir${id})"/>
+      <ellipse cx="${x}" cy="45.4" rx="2" ry="3" fill="${OL}"/>
+      <circle cx="${x - 1.6}" cy="42" r="1.9" fill="#fff"/>
+      <circle cx="${x + 1.6}" cy="47.6" r="0.9" fill="#fff"/>
+      <path d="M${cx - 6} ${39.6 + (side < 0 ? 0.6 : -0.4)} Q${cx} ${35.2} ${cx + 6} ${39.6 + (side < 0 ? -0.4 : 0.6)}" fill="none" stroke="${OL}" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M${cx + side * 5.6} ${39.4} l${side * 1.6} -1.4" stroke="${OL}" stroke-width="1.4" stroke-linecap="round"/>`;
+  }
+  return s;
+}
+const blush = `<g fill="#FF8FA0" opacity=".55"><ellipse cx="35.5" cy="52" rx="4" ry="2"/><ellipse cx="64.5" cy="52" rx="4" ry="2"/></g>
+  <g stroke="#FF6F86" stroke-width=".7" opacity=".7"><path d="M33.5 52.6 l1.2 -1.6 M35.6 52.6 l1.2 -1.6 M62.4 52.6 l1.2 -1.6 M64.5 52.6 l1.2 -1.6"/></g>`;
+const face = `<path d="M30 38 C30 27 70 27 70 38 C70 51 61 60 50 61.5 C39 60 30 51 30 38 Z" fill="${SKIN.base}" ${sw}/>
+  <path d="M30.5 36 C32 30 68 30 69.5 36 L69 41 C60 37 40 37 31 41 Z" fill="${SKIN.shade}" opacity=".85"/>`;
+const smile = `<path d="M46.2 53.4 Q50 57.6 53.8 53.4 Q50 54.6 46.2 53.4 Z" fill="#C2454F" stroke="${OL}" stroke-width=".9" stroke-linejoin="round"/>`;
+const neck = `<rect x="45.5" y="58" width="9" height="5" fill="${SKIN.shade}" ${sw}/>`;
+const legs = (pants, shoe) => `<g ${sw}><rect x="41" y="91" width="7.5" height="6" fill="${pants}"/><rect x="51.5" y="91" width="7.5" height="6" fill="${pants}"/>
+  <path d="M39.5 97 h10 v2.5 h-10 Z M50.5 97 h10 v2.5 h-10 Z" fill="${shoe}"/></g>`;
+const hand = (x, y) => `<circle cx="${x}" cy="${y}" r="3.6" fill="${SKIN.base}" ${sw}/>`;
+const sparkle = (x, y, r, c = '#FFF3C4') => `<path d="M${x} ${y - r} Q${x + r * .18} ${y - r * .18} ${x + r} ${y} Q${x + r * .18} ${y + r * .18} ${x} ${y + r} Q${x - r * .18} ${y + r * .18} ${x - r} ${y} Q${x - r * .18} ${y - r * .18} ${x} ${y - r} Z" fill="${c}"/>`;
+
+function chef(scarf = '#E4573D', hair = ['#B57A3C', '#E0AE68'], iris = ['#2F6B3A', '#8FD27A'], id = 'c') {
+  return `<svg viewBox="0 0 100 100">${eyes(iris, id).split('</defs>')[0]}</defs>
+  ${legs('#3A4148', OL)}
+  <!-- jacket -->
+  <path d="M34 93 L34.5 72 C35 65 41 61.5 50 61.5 C59 61.5 65 65 65.5 72 L66 93 Z" fill="#FBF8F2" ${sw}/>
+  <path d="M58 63 C63 65 65 68 65.5 72 L66 93 L59 93 Z" fill="#DCD5C8"/>
+  <path d="M34 93 L34.5 72 C35 65 41 61.5 50 61.5 C59 61.5 65 65 65.5 72 L66 93 Z" fill="none" ${sw}/>
+  <path d="M50 62 L50 93" stroke="#C8323A" stroke-width="1.4"/>
+  <!-- navy apron with straps -->
+  <path d="M41 64 L41 70 M59 64 L59 70" stroke="#2C3550" stroke-width="2"/>
+  <path d="M40 70 L60 70 L62 94 L38 94 Z" fill="#2C3550" ${sw}/>
+  <path d="M55 70 L60 70 L62 94 L56 94 Z" fill="#1E2538"/>
+  <path d="M40 70 L60 70 L62 94 L38 94 Z" fill="none" ${sw}/>
+  <rect x="45" y="78" width="10" height="6" rx="1" fill="none" stroke="#45507A" stroke-width="1"/>
+  <!-- left arm: thumbs up -->
+  <path d="M35 68 C29 70 26 76 27 82 L33 82 C33 77 34 74 36 72 Z" fill="#FBF8F2" ${sw}/>
+  ${hand(29.5, 84)}<path d="M28.6 81 l0 -4.4" stroke="${OL}" stroke-width="3.8" stroke-linecap="round"/><path d="M28.6 81 l0 -4.4" stroke="${SKIN.base}" stroke-width="2" stroke-linecap="round"/>
+  <!-- right arm + ladle -->
+  <path d="M83 58 L72 85" stroke="${OL}" stroke-width="3.6" stroke-linecap="round"/><path d="M83 58 L72 85" stroke="#D9A441" stroke-width="2" stroke-linecap="round"/>
+  <path d="M77 55 a6.5 6.5 0 0 0 12.5 3.6 Z" fill="#E8C070" ${sw}/>
+  <path d="M65 68 C71 70 74 76 73 82 L67.5 82 C67.5 77 66 74 64 72 Z" fill="#FBF8F2" ${sw}/>
+  ${hand(71, 84)}
+  <!-- scarf -->
+  <path d="M40 62 L60 62 L57 68 L50 65.5 L43 68 Z" fill="${scarf}" ${sw}/>
+  <path d="M47 65.5 L53 65.5 L51.5 74 L50 72.5 L48.5 74 Z" fill="${scarf}" ${sw}/>
+  ${neck}
+  <!-- back hair -->
+  <path d="M27 44 C25 26 36 17 50 17 C64 17 75 26 73 44 L69.5 52 L69 36 L31 36 L30.5 52 Z" fill="${hair[0]}" ${sw}/>
+  ${face}${eyes(iris, id).split('</defs>')[1]}${blush}${smile}
+  <!-- bangs -->
+  <path d="M30 38 C29 24 39 18 50 18 C61 18 71 24 70 38 L72.5 45 L66.5 33 L65 40.5 L60 29 L57 38.5 L51 27 L47 39 L43 28.5 L38 39.5 L35.5 32 L33.5 41 L27.5 45 Z" fill="${hair[0]}" ${sw}/>
+  <path d="M26.5 33 L21 30 L27.5 27 Z M73.5 33 L79 30 L72.5 27 Z" fill="${hair[0]}" ${sw}/>
+  <path d="M38 24 C42 21 47 20 51 20.5 C46 22 42 24 39.5 27 Z" fill="${hair[1]}"/>
+  <!-- toque -->
+  <path d="M31 17 C22 16 22 4.5 31 5.5 C32 -0.5 45 -1.5 50 3.5 C55 -1.5 68 -0.5 69 5.5 C78 4.5 78 16 69 17 Z" fill="#FFFFFF" ${sw}/>
+  <path d="M62 6 C68 6 72 9 72 13 C70 15 66 16 62 16 C64 13 64 9 62 6 Z" fill="#E4E0D8"/>
+  <path d="M41 4 C44 2 47 3 48 5" fill="none" stroke="#E4E0D8" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M31 17 C22 16 22 4.5 31 5.5 C32 -0.5 45 -1.5 50 3.5 C55 -1.5 68 -0.5 69 5.5 C78 4.5 78 16 69 17 Z" fill="none" ${sw}/>
+  <rect x="31" y="14.5" width="38" height="7" rx="2.2" fill="#F1EDE6" ${sw}/>
+  <path d="M33 16.5 h30" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/>
+  </svg>`;
+}
+
+function waiter() {
+  const hair = ['#2A2F45', '#4E5A80'], iris = ['#2E4C6E', '#7FB8E0'], id = 'w';
+  return `<svg viewBox="0 0 100 100">${eyes(iris, id, 0.6).split('</defs>')[0]}</defs>
+  ${legs('#1E2126', OL)}
+  <!-- tailcoat -->
+  <path d="M33.5 93 L34.5 71 C35 64.5 41 61 50 61 C59 61 65 64.5 65.5 71 L66.5 93 L56 93 L50 80 L44 93 Z" fill="#23272B" ${sw}/>
+  <path d="M43.5 61.5 L50 80 L56.5 61.5 Z" fill="#FFFFFF" ${sw}/>
+  <g fill="#D9A441" stroke="${OL}" stroke-width=".6"><circle cx="50" cy="69" r="1.2"/><circle cx="50" cy="74.5" r="1.2"/></g>
+  <path d="M57 63 C62 65 64.5 67.5 65.3 71 L66.3 93 L60 93 Z" fill="#363C44"/>
+  <!-- left arm with towel -->
+  <path d="M35 67 C30 70 28 76 29 82 L34.5 82 C34.5 77 35 74 37 72 Z" fill="#23272B" ${sw}/>
+  ${hand(31.5, 84)}
+  <path d="M27 78 L36 78 L35 92 L31.5 89 L28 92 Z" fill="#FBF8F2" ${sw}/>
+  <!-- right arm raised: tray + cloche -->
+  <path d="M64 66 C70 63 74.5 57 75.5 51 L70.5 49.5 C69 55 66.5 58 62.5 61 Z" fill="#23272B" ${sw}/>
+  ${hand(73.5, 47.5)}
+  <ellipse cx="75" cy="44.5" rx="15" ry="2.6" fill="#D9A441" ${sw}/>
+  <path d="M62.5 43.5 C62.5 31 87.5 31 87.5 43.5 Z" fill="#C9D1D8" ${sw}/>
+  <path d="M65.5 41 C66 35 70 33 73 32.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+  <path d="M80 34 C84 36 86 39 86.5 43 L82 43 Z" fill="#9AA6B1"/>
+  <circle cx="75" cy="31.6" r="1.8" fill="#D9A441" ${sw}/>
+  ${sparkle(90, 30, 3.2)}${sparkle(60, 33, 2)}
+  <!-- bow tie -->
+  <path d="M43.5 61 L50 63.8 L43.5 66.6 Z M56.5 61 L50 63.8 L56.5 66.6 Z" fill="#E4573D" ${sw}/>
+  <circle cx="50" cy="63.8" r="1.5" fill="#B83A2C" ${sw}/>
+  ${neck}
+  <!-- back hair -->
+  <path d="M27.5 42 C25.5 25 36 17 50 17 C64 17 74.5 25 72.5 42 L69 46 L69 35 L31 35 L31 46 Z" fill="${hair[0]}" ${sw}/>
+  ${face}${eyes(iris, id, 0.6).split('</defs>')[1]}${blush}
+  <!-- confident smile -->
+  <path d="M46.5 54.2 Q50.5 56.6 54 53.2" fill="none" stroke="${OL}" stroke-width="1.3" stroke-linecap="round"/>
+  <!-- side-swept bangs + ahoge -->
+  <path d="M30 37 C28 22 40 16 52 16.5 C64 17 72 24 70 38 L67 31 C61 33 52 30.5 46 24.5 C43 31 37 34 30 37 Z" fill="${hair[0]}" ${sw}/>
+  <path d="M50 18.5 C56 18.5 62 21 65 25 C60 23 55 22 50 22 Z" fill="${hair[1]}"/>
+  <path d="M51.5 17 C49 9.5 55 5 61 7.5 C56.5 8.5 54.5 12 54.5 17 Z" fill="${hair[0]}" ${sw}/>
+  </svg>`;
+}
+
+function diner() {
+  const hair = ['#E86A8E', '#FFA3BC'], iris = ['#6E3B8C', '#D79BF0'], id = 'd';
+  return `<svg viewBox="0 0 100 100">${eyes(iris, id, -0.5).split('</defs>')[0]}</defs>
+  <!-- twin buns behind -->
+  <circle cx="27" cy="22" r="8" fill="${hair[0]}" ${sw}/><circle cx="73" cy="22" r="8" fill="${hair[0]}" ${sw}/>
+  <path d="M23 19 C25 16 28 15.5 30.5 17" fill="none" stroke="${hair[1]}" stroke-width="1.8" stroke-linecap="round"/>
+  ${legs('#3A4F7A', '#E4573D')}
+  <!-- sweater -->
+  <path d="M34 93 L34.5 72 C35 65 41 61.5 50 61.5 C59 61.5 65 65 65.5 72 L66 93 Z" fill="#7FB069" ${sw}/>
+  <path d="M58 63 C63 65 65 68 65.5 72 L66 93 L59 93 Z" fill="#5F9150"/>
+  <path d="M34 93 L34.5 72 C35 65 41 61.5 50 61.5 C59 61.5 65 65 65.5 72 L66 93 Z" fill="none" ${sw}/>
+  <path d="M42 62 Q50 67 58 62" fill="#FBF8F2" ${sw}/>
+  <!-- arms holding fork & knife up, excited -->
+  <path d="M35 68 C29 66 26 60 26 55 L31.5 54 C32 58 34 62 37 64 Z" fill="#7FB069" ${sw}/>
+  <path d="M65 68 C71 66 74 60 74 55 L68.5 54 C68 58 66 62 63 64 Z" fill="#7FB069" ${sw}/>
+  <path d="M28.5 52 L28.5 38 M26.5 38 v4 M28.5 38 v4 M30.5 38 v4" stroke="#C9D1D8" stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M71.5 52 L71.5 38 Q74 41 71.5 46" stroke="#C9D1D8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+  ${hand(28.8, 53.5)}${hand(71.2, 53.5)}
+  ${neck}
+  <path d="M27 46 C25 26 36 17 50 17 C64 17 75 26 73 46 L70 56 L69 36 L31 36 L30 56 Z" fill="${hair[0]}" ${sw}/>
+  ${face}${eyes(iris, id, -0.5).split('</defs>')[1]}${blush}
+  <!-- big happy open mouth -->
+  <path d="M45 52.6 Q50 59.5 55 52.6 Z" fill="#C2454F" stroke="${OL}" stroke-width=".9" stroke-linejoin="round"/>
+  <path d="M47.3 56 Q50 57.6 52.7 56 Q50 55 47.3 56 Z" fill="#FF8FA0"/>
+  <!-- blunt bangs -->
+  <path d="M30 38 C29 23 39 17.5 50 17.5 C61 17.5 71 23 70 38 C66 34 66 33 64 31 L61 36 L57 31 L53 35.5 L50 30.5 L47 35.5 L43 31 L39 36 L36 31 C34 33 33 35 30 38 Z" fill="${hair[0]}" ${sw}/>
+  <path d="M37 23.5 C41 20.5 46 19.6 50 20 C45 21.6 41 23.6 38.5 26.5 Z" fill="${hair[1]}"/>
+  ${sparkle(84, 30, 3.4, '#FFD15C')}${sparkle(16, 34, 2.4, '#FFD15C')}
+  </svg>`;
+}
+
+function burger() {
+  return `<svg viewBox="0 0 100 100">
+  <ellipse cx="50" cy="84" rx="40" ry="8.5" fill="#FBF8F2" ${sw}/>
+  <ellipse cx="50" cy="84" rx="32" ry="5.5" fill="none" stroke="#D9A441" stroke-width="1.3"/>
+  <!-- bottom bun -->
+  <path d="M23 72 L77 72 Q77 83 50 83 Q23 83 23 72 Z" fill="#E59A4C" ${sw}/>
+  <path d="M60 80 Q72 79 76 74 L77 72 L66 72 Z" fill="#C67A33"/>
+  <!-- patty -->
+  <rect x="19.5" y="62" width="61" height="11" rx="5.5" fill="#6A3B25" ${sw}/>
+  <path d="M26 65 h14 M46 66 h10 M62 65 h10" stroke="#8E5434" stroke-width="1.6" stroke-linecap="round"/>
+  <!-- cheese drip -->
+  <path d="M22 61 L78 61 L76 64 L71 64 L70 70 Q68.5 72 67 70 L66 64 L54 64 L53 67.5 Q51.5 69.5 50 67.5 L49 64 L34 64 L33 71 Q31.2 73 29.5 71 L28.5 64 L24 64 Z" fill="#FFC93A" ${sw}/>
+  <!-- tomato -->
+  <rect x="22" y="56.5" width="56" height="5.5" rx="2.7" fill="#E4573D" ${sw}/>
+  <!-- lettuce -->
+  <path d="M19 56 Q23 51 27 56 Q31 51 35 56 Q39 51 43 56 Q47 51 51 56 Q55 51 59 56 Q63 51 67 56 Q71 51 75 56 Q79 51 81 56 L81 58 L19 58 Z" fill="#8BC86A" ${sw}/>
+  <!-- top bun -->
+  <path d="M21 54 Q21 24 50 24 Q79 24 79 54 Z" fill="#F0A552" ${sw}/>
+  <path d="M62 27.5 Q79 34 79 54 L66 54 Q70 40 62 27.5 Z" fill="#CF8234"/>
+  <path d="M21 54 Q21 24 50 24 Q79 24 79 54 Z" fill="none" ${sw}/>
+  <path d="M29 44 Q32 31 45 28.5" fill="none" stroke="#FFE2B0" stroke-width="3.4" stroke-linecap="round"/>
+  <g fill="#FFF6E2" stroke="${OL}" stroke-width=".6">
+    <ellipse cx="42" cy="37" rx="2.4" ry="1.3" transform="rotate(-25 42 37)"/><ellipse cx="53" cy="32" rx="2.4" ry="1.3" transform="rotate(5 53 32)"/>
+    <ellipse cx="63" cy="38" rx="2.4" ry="1.3" transform="rotate(25 63 38)"/><ellipse cx="48" cy="45" rx="2.4" ry="1.3"/><ellipse cx="59" cy="47" rx="2.4" ry="1.3" transform="rotate(15 59 47)"/></g>
+  ${sparkle(82, 26, 4.2)}${sparkle(18, 36, 2.8)}${sparkle(76, 16, 2)}
+  </svg>`;
+}
+
+const all = [chef(), waiter(), diner(), burger()];
+// a second chef with a different team colour, hair and eyes, to show how variants work
+const chef2 = chef('#5B8DB8', ['#1F1F2A', '#3E4258'], ['#2C3A2E', '#7FB069'], 'c2');
+document.getElementById('big').innerHTML = all.join('');
+document.getElementById('s1').innerHTML = [...all, chef2].join('');
+document.getElementById('s2').innerHTML = [...all, chef2].join('');
+</script>
+</body></html>
