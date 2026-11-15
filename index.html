@@ -1014,6 +1014,97 @@ let S, G = {}, W = 800, DPR = 1, K = 1, NOW = 0;
 const hits = [];
 const LV = () => S.lvl < 0 ? SANDBOX : LEVELS[S.lvl];
 
+
+// ---------- manga moments: impact frames, cut-ins and sound-effect lettering ----------
+// Timed on real time (NOW), so they still play while a lesson step has the kitchen frozen.
+let FX = [];
+const FXINK = '#14110F', FXPAPER = '#FBF7EE';
+if (document.fonts) ['48px Bangers', '48px "Dela Gothic One"'].forEach(f => document.fonts.load(f, 'SERVEDORDERUPCHEFDOWN!ドンガーンゴムカッ'));
+const fxRand = (() => { let v = 7; return () => (v = (v * 16807) % 2147483647) / 2147483647 })();
+const FXRAYS = Array.from({length: 96}, () => [fxRand(), fxRand(), fxRand()]);
+const FXLINES = Array.from({length: 34}, () => [fxRand(), fxRand(), fxRand()]);
+const fxOut = k => 1 - (1 - k) ** 3, fxBack = k => 1 + 2.7 * (k - 1) ** 3 + 1.7 * (k - 1) ** 2, fxSeg = (k, a, b) => Math.max(0, Math.min(1, (k - a) / (b - a)));
+function fx(kind, o) {
+  if (RM && kind !== 'sfx') return;                      // reduced motion: lettering only, no flashes or slides
+  if (kind === 'cutin') FX = FX.filter(f => f.kind !== 'cutin');
+  FX.push({kind, t0: NOW, ...o});
+}
+function fxServe(x, y, chef, big) {
+  if (!big) return fx('sfx', {text: 'SERVED!', x, y: y - 46, size: 17, rot: -.12, font: 'Bangers', fill: '#fff', dur: .8});
+  fx('impact', {x, y: y - 10, text: 'SERVED!', jp: 'ドン!!', dur: 1.35});
+  if (chef) setTimeout(() => fx('cutin', {who: chef, pose: 'bust-happy', title: 'ORDER UP!', sub: `CHEF ${chef.toUpperCase()} · DISH SERVED`, color: '#E4573D', dark: '#B83A2C', dur: 1.7}), 650);
+}
+function fxBurst(cx, cy, rx, ry, k) {
+  ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k); ctx.beginPath();
+  for (let i = 0; i <= 26; i++) {
+    const a = i / 26 * Math.PI * 2, o = i % 2 ? .7 + (i * 37 % 7) / 40 : 1.05 + (i * 13 % 5) / 30;
+    ctx.lineTo(Math.cos(a) * rx * o, Math.sin(a) * ry * o);
+  }
+  ctx.closePath(); ctx.fillStyle = '#fff'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = FXINK; ctx.lineJoin = 'miter'; ctx.stroke(); ctx.restore();
+}
+function fxText(text, x, y, size, rot, k, font, fill) {
+  if (k <= 0) return;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(k, k * 1.06);
+  ctx.font = `${size}px "${font}"`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.lineWidth = size * .22; ctx.strokeStyle = FXINK; ctx.strokeText(text, 0, 0);
+  ctx.fillStyle = fill; ctx.fillText(text, 0, 0); ctx.restore();
+}
+function fxRays(cx, cy, inner, alpha, color) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color;
+  for (const [a, w, l] of FXRAYS) {
+    const ang = a * Math.PI * 2, r0 = inner * (.85 + l * .6), r1 = Math.max(G.W, G.H) * 1.2, hw = .004 + w * .012;
+    ctx.beginPath(); ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0);
+    ctx.lineTo(cx + Math.cos(ang - hw) * r1, cy + Math.sin(ang - hw) * r1); ctx.lineTo(cx + Math.cos(ang + hw) * r1, cy + Math.sin(ang + hw) * r1); ctx.fill();
+  }
+  ctx.restore();
+}
+function drawFX() {
+  FX = FX.filter(f => NOW - f.t0 < f.dur);
+  let shake = 0;
+  for (const f of FX) {
+    const k = NOW - f.t0, end = 1 - fxSeg(k, f.dur - .25, f.dur);
+    if (f.kind === 'impact') {
+      if (k < .3) shake = Math.max(shake, (1 - k / .3) * 9);
+      if (k < .08) { ctx.fillStyle = FXPAPER; ctx.fillRect(0, 0, G.W, G.H); fxRays(f.x, f.y, 50, 1, FXINK) }
+      else fxRays(f.x, f.y, 60 + k * 30, .75 * (1 - k / f.dur), FXPAPER);
+      const by = Math.max(46, f.y - 62), bk = fxBack(fxSeg(k, 0, .16)) * end;
+      fxBurst(f.x, by, 96, 52, bk);
+      if (bk > 0) { ctx.save(); ctx.translate(f.x, by); ctx.scale(bk, bk); ctx.rotate(-.05); ctx.font = '44px Bangers'; ctx.fillStyle = FXINK;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(f.text, 0, 2); ctx.restore() }
+      fxText(f.jp, f.x < G.W / 2 ? f.x + 220 : f.x - 220, Math.max(56, f.y - 70), 64, -.2, fxBack(fxSeg(k, .05, .22)) * end, 'Dela Gothic One', FXPAPER);
+    } else if (f.kind === 'cutin') {
+      const h = Math.min(190, G.H * .42), y0 = Math.max(10, G.H * .5 - h * .62), sk = 34;
+      const slide = (1 - fxOut(fxSeg(k, 0, .28))) * (G.W + 60) - fxOut(fxSeg(k, f.dur - .3, f.dur)) * (G.W + 60);
+      ctx.save(); ctx.translate(slide, 0);
+      ctx.beginPath(); ctx.moveTo(-10, y0 + sk); ctx.lineTo(G.W + 10, y0); ctx.lineTo(G.W + 10, y0 + h); ctx.lineTo(-10, y0 + h + sk); ctx.closePath();
+      ctx.save(); ctx.clip();
+      ctx.fillStyle = f.color; ctx.fillRect(-10, 0, G.W + 20, G.H);
+      ctx.fillStyle = f.dark;                                   // screentone dots, denser toward the portrait
+      for (let gy = y0 - 4; gy < y0 + h + sk; gy += 10) for (let gx = G.W * .3; gx < G.W; gx += 10) {
+        const r = 3.6 * (gx - G.W * .3) / (G.W * .7); if (r > .5) { ctx.beginPath(); ctx.arc(gx + (gy / 10 % 2) * 5, gy, r, 0, 7); ctx.fill() }
+      }
+      ctx.fillStyle = 'rgba(255,255,255,.75)';                  // speed lines
+      for (const [a, b, c] of FXLINES) { const yy = y0 + a * (h + sk), ln = 80 + b * 260, xs = c * G.W; ctx.fillRect(xs, yy, ln, 1.6) }
+      const im = castSprite(f.who, f.pose) || castSprite(f.who, 'bust-happy');
+      if (im) { const ih = h * 1.35, iw = im.naturalWidth / im.naturalHeight * ih; ctx.drawImage(im, G.W - iw - G.W * .04, y0 - h * .08, iw, ih) }
+      else { const c = S.chefs.find(c => c.n === f.who); if (c) emoji(c.e, G.W * .8, y0 + h * .55, h * .6) }
+      ctx.restore();
+      ctx.lineWidth = 6; ctx.strokeStyle = FXPAPER; ctx.stroke(); ctx.lineWidth = 2.5; ctx.strokeStyle = FXINK; ctx.stroke();
+      const tx = Math.max(24, G.W * .06), ty = y0 + h * .52;
+      ctx.save(); ctx.translate(tx, ty); ctx.rotate(-.05);
+      ctx.font = `${Math.round(Math.min(64, h * .36))}px Bangers`; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'; ctx.lineJoin = 'round';
+      ctx.lineWidth = 9; ctx.strokeStyle = FXINK; ctx.strokeText(f.title, 0, 0); ctx.fillStyle = '#fff'; ctx.fillText(f.title, 0, 0);
+      ctx.font = `700 ${G.narrow ? 10 : 12}px ${MONO}`; ctx.fillStyle = '#FFE39A'; ctx.fillText(f.sub, 4, Math.min(30, h * .17));
+      if (f.jp) fxText(f.jp, G.W * .66 - tx, -h * .3, Math.min(58, h * .32), -.12, fxBack(fxSeg(k, .2, .4)), 'Dela Gothic One', FXPAPER);
+      ctx.restore(); ctx.restore();
+    } else if (f.kind === 'sfx') {
+      const pop = fxBack(fxSeg(k, 0, .14)) * end;
+      fxText(f.text, f.x, f.y - k * (f.rise || 10), f.size, f.rot || 0, pop, f.font || 'Dela Gothic One', f.fill || FXPAPER);
+    }
+  }
+  cv.style.transform = shake ? `translate(${(Math.random() - .5) * shake}px,${(Math.random() - .5) * shake}px)` : '';
+}
+
 // ---------- cast art: anime sprites per character, emoji until their art exists ----------
 const ART = {Marco: 'cast/marco/', Yuki: 'cast/yuki/', Kofi: 'cast/kofi/', Waiter: 'cast/waiter/',
   Diner1: 'cast/diner1/', Diner2: 'cast/diner2/', Diner3: 'cast/diner3/', Diner4: 'cast/diner4/'};
@@ -1045,6 +1136,7 @@ const newRail = () => ({tickets: [], clip: 0, ck: 0, b: 0});
 function newStation(key) { return {...STATIONS[key], rr: 0, rails: [newRail()]} }
 
 function load(lvl) {
+  FX = [];
   const L = lvl < 0 ? SANDBOX : LEVELS[lvl];
   S = {
     lvl, started: false, paused: false, won: false, time: 0, acc: .7, rate: L.setup.rate, huddle: 0, banner: '',
@@ -1078,6 +1170,7 @@ const totalLag = () => S.stations.reduce((a, st) => a + st.rails.reduce((b, r) =
 
 function rebalance(msg, dur = HUDDLE) {
   S.huddle = dur; S.banner = msg; S.stats.rebalances++;
+  if (G.staff) fx('sfx', {text: 'ゴゴゴゴ', x: G.pad + 110, y: G.staff.top + 40, size: 26, rot: -.08, fill: '#B9A6FF', rise: 6, dur: Math.min(2.4, dur + .4)});
   for (const c of S.chefs) {
     if (c.job) dropJob(c.job);
     c.job = null; c.goal = null;
@@ -1090,6 +1183,7 @@ function dropJob(j) {
   if (t.off < rail.clip && !t.served) {
     t.state = 'lost'; S.stats.lost++; S.flags.lostT = {si: j.si, ri: j.ri, t};
     const p = tablePos(t.table, 0); puff(p.x, p.y - 22, '😡', 2, -10);
+    fx('sfx', {text: 'ムカッ!', x: p.x + 26, y: p.y - 40, size: 22, rot: .15, fill: '#FF6A55', dur: 1.3});
   } else t.state = 'wait';
 }
 
@@ -1139,7 +1233,7 @@ function finishJob(c) {
   if (st.key === 'desserts' && S.chefs.length === 1) S.flags.solo++;
   const wait = S.time - t.born;
   const sp = stovePos(si, ri);
-  S.flights.push({kind: 'plate', e: t.e, table: t.table, wait, from: {x: sp.x, y: sp.y - 6}, t0: S.time, dur: .8});
+  S.flights.push({kind: 'plate', e: t.e, table: t.table, wait, chef: c.n, from: {x: sp.x, y: sp.y - 6}, t0: S.time, dur: .8});
   snd('ding'); codeFlash('serve', `table ${t.table + 1}`);
   // with a gap, the plate is out but the clip hasn't moved yet: the window where a slip causes a repeat
   if (S.commitGap && S.commit === 'plate') { t.state = 'plated'; c.job.phase = 'commit'; c.job.left = S.commitGap }
@@ -1172,6 +1266,8 @@ function step(dt) {
       tb.happy = 1.4; tb.mood = f.wait < 8 ? '😋' : f.wait < UPSET ? '🙂' : '😤';
       const p = tablePos(f.table, 0);
       puff(p.x - 22, p.y, tb.mood, 1.4, -18);
+      S.fxServed = (S.fxServed || 0) + 1;
+      fxServe(p.x, p.y, f.chef, S.fxServed === 1 || S.fxServed % 10 === 0);
     }
   }
   S.flights = S.flights.filter(f => !f.gone);
@@ -1284,6 +1380,7 @@ function hire() {
   const c = newChef(S.nextChef++, -30, G.staff ? G.staff.top + 60 : 0);
   S.chefs.push(c);
   rebalance(`${c.n} joined the crew. Huddle! The head chef is reassigning rails…`);
+  fx('cutin', {who: c.n, pose: 'bust-fired', title: 'NEW CHEF!', sub: `${c.n.toUpperCase()} JOINS THE CREW · CONSUMER JOINED`, color: '#5F9B48', dark: '#3F7431', dur: 1.7});
   snd('hire'); renderCtls();
 }
 function openStation() {
@@ -1318,6 +1415,7 @@ function crash(c) {
   if (c.job) dropJob(c.job);
   c.job = null; c.goal = null; c.down = true; c.downAt = S.time; c.detect = LV().ctl.detect || .5;
   c.say = {text: 'whoa—!', until: NOW + 1.5}; c.shake = .6;
+  fx('cutin', {who: c.n, pose: 'bust-shocked', title: 'CHEF DOWN!', sub: `${c.n.toUpperCase()} SLIPPED · CONSUMER CRASHED`, color: '#2B2F45', dark: '#1A1D2E', jp: 'ガーン!!', dur: 1.9});
   snd('bump'); renderCtls();
 }
 function clockOut() {
@@ -1720,6 +1818,7 @@ function draw(rdt) {
     p.x += p.vx * rdt; p.y += p.vy * rdt; p.r += p.vr * rdt;
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-4, -2, 8, 4); ctx.restore();
   }
+  drawFX();
 }
 
 function ticketPath() {
