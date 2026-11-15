@@ -7,7 +7,7 @@ html,body{margin:0;background:#0F1113}
 canvas{display:block;width:960px;height:540px}
 </style></head><body>
 <canvas id="cv" width="960" height="540"></canvas>
-<img id="yuki" src="../sprites/yuki-portrait.png" style="display:none">
+<img id="yuki" src="../sprites/yuki-bust.png" style="display:none">
 <img id="yukiFull" src="../sprites/yuki.png" style="display:none">
 <script>
 // "First dish served" beat, manga style. ?t=1.2 freezes at that time (for screenshots).
@@ -119,7 +119,7 @@ function cutIn(k) {
   halftone(640, y0 + hh / 2, 520, '#B83A2C', 1);
   speedLines(y0, y0 + hh + sk, 0.75, -1);
   const img = document.getElementById('yuki');
-  if (img.complete) x.drawImage(img, 0, 120, 768, 560, 470, y0 - 20, 420, 306);
+  if (img.complete) x.drawImage(img, 60, 40, 648, 472, 500, y0 - 10, 400, 291);
   x.restore();
   x.lineWidth = 8; x.strokeStyle = PAPER; x.stroke();
   x.fillStyle = PAPER; x.font = '64px Bangers'; x.textBaseline = 'alphabetic';
