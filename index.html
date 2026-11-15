@@ -891,7 +891,8 @@ const hits = [];
 const LV = () => S.lvl < 0 ? SANDBOX : LEVELS[S.lvl];
 
 // ---------- cast art: anime sprites per character, emoji until their art exists ----------
-const ART = {Marco: 'cast/marco/', Yuki: 'cast/yuki/', Kofi: 'cast/kofi/', Waiter: 'cast/waiter/'};
+const ART = {Marco: 'cast/marco/', Yuki: 'cast/yuki/', Kofi: 'cast/kofi/', Waiter: 'cast/waiter/',
+  Diner1: 'cast/diner1/', Diner2: 'cast/diner2/', Diner3: 'cast/diner3/', Diner4: 'cast/diner4/'};
 const castImg = {};
 function castSprite(name, pose) {
   const base = ART[name]; if (!base) return null;
@@ -1424,14 +1425,22 @@ function draw(rdt) {
     glowAt(x, 92, 62, .22);
     ctx.strokeStyle = 'rgba(255,214,170,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x - 30, 8); ctx.stroke();
     ctx.fillStyle = '#FFD7A1'; ctx.shadowColor = '#FF9A4A'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x - 30, 11, 3, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    const p = pend[i], wait = p.n ? S.time - p.oldest : 0;
+    const hop = tb.happy > 0 && !RM ? -Math.abs(Math.sin(NOW * 12)) * 4 : 0;
+    // anime diner: happy right after food lands, then waiting → upset → angry as their oldest ticket ages
+    const who = 'Diner' + (i + 1);
+    const pose = tb.happy > 0 ? 'chibi-happy' : wait >= UPSET ? 'chibi-angry' : wait >= 7 ? 'chibi-upset' : 'chibi-waiting';
+    const dim = castSprite(who, pose) || castSprite(who, 'chibi-waiting');
+    if (dim) {
+      const h = G.narrow ? 54 : 64, w = dim.naturalWidth / dim.naturalHeight * h;
+      ctx.drawImage(dim, x - w / 2, 98 - h + hop, w, h);
+    }
     ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, 103, 30, 9, 0, 0, 7); ctx.fill();
     ctx.fillStyle = '#5E3F27'; ctx.beginPath(); ctx.ellipse(x, 96, 27, 11, 0, 0, 7); ctx.fill();
     gr = ctx.createLinearGradient(x - 24, 0, x + 24, 0); gr.addColorStop(0, '#8A6240'); gr.addColorStop(.5, '#A97B52'); gr.addColorStop(1, '#7E5737');
     ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(x, 94, 23, 8, 0, 0, 7); ctx.fill();
     if (tb.happy > 0) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, 93, 10, 5, 0, 0, 7); ctx.fill() }
-    const hop = tb.happy > 0 && !RM ? -Math.abs(Math.sin(NOW * 12)) * 4 : 0;
-    emoji(tb.e, x, 64 + hop, G.narrow ? 24 : 28);
-    const p = pend[i];
+    if (!dim) emoji(tb.e, x, 64 + hop, G.narrow ? 24 : 28);
     if (p.n) {
       const w = S.time - p.oldest, mood = w < 7 ? '🙂' : w < UPSET ? '😐' : '😠';
       const bx = x + 20, by = 32;

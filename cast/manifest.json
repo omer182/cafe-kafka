@@ -1,4 +1,72 @@
 {
+ "diner1": {
+  "chibi-angry": {
+   "file": "diner1/chibi-angry.webp",
+   "h": 320,
+   "w": 302
+  },
+  "chibi-calm": {
+   "file": "diner1/chibi-calm.webp",
+   "h": 320,
+   "w": 225
+  },
+  "chibi-waiting": {
+   "file": "diner1/chibi-waiting.webp",
+   "h": 320,
+   "w": 217
+  }
+ },
+ "diner2": {
+  "chibi-angry": {
+   "file": "diner2/chibi-angry.webp",
+   "h": 320,
+   "w": 313
+  },
+  "chibi-upset": {
+   "file": "diner2/chibi-upset.webp",
+   "h": 320,
+   "w": 298
+  },
+  "chibi-waiting": {
+   "file": "diner2/chibi-waiting.webp",
+   "h": 320,
+   "w": 215
+  }
+ },
+ "diner3": {
+  "chibi-angry": {
+   "file": "diner3/chibi-angry.webp",
+   "h": 320,
+   "w": 317
+  },
+  "chibi-happy": {
+   "file": "diner3/chibi-happy.webp",
+   "h": 320,
+   "w": 312
+  },
+  "chibi-waiting": {
+   "file": "diner3/chibi-waiting.webp",
+   "h": 320,
+   "w": 250
+  }
+ },
+ "diner4": {
+  "chibi-angry": {
+   "file": "diner4/chibi-angry.webp",
+   "h": 320,
+   "w": 284
+  },
+  "chibi-happy": {
+   "file": "diner4/chibi-happy.webp",
+   "h": 320,
+   "w": 279
+  },
+  "chibi-waiting": {
+   "file": "diner4/chibi-waiting.webp",
+   "h": 320,
+   "w": 243
+  }
+ },
  "diners": {
   "sheet": {
    "file": "diners/sheet.webp",
