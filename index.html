@@ -536,6 +536,27 @@ canvas{border-radius:0}
 .rcap{right:150px}
 .dwaiter .sp{height:62px;width:auto;display:block;transition:transform .2s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 .dwaiter.kick .sp{transform:translateY(-6px)}
+/* glossary icons (Meet the crew, lesson recap) */
+.card .cast .ce,.xrows .xi{width:40px;height:40px;display:inline-grid;place-items:center;flex:none}
+.card .cr{grid-template-columns:40px 1fr auto}
+.gi{height:40px;width:auto;max-width:40px;object-fit:contain}
+.gi.food{height:32px;max-width:38px}
+.gcrew{position:relative;width:40px;height:40px;display:block}
+.gcrew .gi{position:absolute;bottom:0;height:34px}
+.gcrew .gi:nth-child(1){left:-4px}.gcrew .gi:nth-child(2){left:8px;z-index:1}.gcrew .gi:nth-child(3){left:20px;z-index:2}
+.gtk{width:24px;height:30px;background:#fff;border:2px solid var(--ink);font:13px/1 var(--sfx);display:grid;place-items:start center;padding-top:3px;
+  clip-path:polygon(0 0,100% 0,100% 88%,83% 100%,66% 88%,50% 100%,33% 88%,16% 100%,0 88%)}
+.grail{width:36px;height:30px;position:relative;display:block}
+.grail::before{content:'';position:absolute;left:0;right:0;top:6px;height:5px;border-radius:3px;background:linear-gradient(#F1F5F7,#8E99A1);border:1.5px solid var(--ink)}
+.grail i{position:absolute;left:12px;top:11px;width:12px;height:16px;background:#fff;border:1.5px solid var(--ink)}
+.gnum{font:20px/1 var(--sfx);letter-spacing:.02em;color:#fff;background:var(--ink);padding:5px 5px 3px;border-radius:4px}
+.gnum.hot{background:var(--tomato)}
+.gclip{width:11px;height:32px;border-radius:3px;border:2px solid var(--ink);background:linear-gradient(90deg,#F3CD78,#D9A441,#9C7426);display:block}
+.gclip.blue{background:linear-gradient(90deg,#9CC4E4,#5B8DB8,#38658C)}
+.gdot{font-size:20px;line-height:1}
+.xrows .k{display:flex;align-items:center;gap:8px}
+.xrows .k span{margin-right:0}
+
 .dtk .fd{width:38px;height:34px;object-fit:contain;display:block;margin:-4px auto 0}
 .dstove .fd{width:34px;height:30px;object-fit:contain;display:block}
 </style>
@@ -820,7 +841,7 @@ const LEVELS = [
         kitchen: 'Every ticket from one table lands on the same rail. Tables 1 and 3 go to Rail 1; tables 2 and 4 go to Rail 2.',
         kafka: 'The table number is the message <b>key</b>. The producer picks the partition from it: <code>hash(key) % partitions</code>. Same key, same partition, every time.'},
       {title: 'Follow one table', do: true, ask: 'Tap a diner in the dining room to light up their tickets.',
-        until: S => S.flags.tableTap, at: () => ({x: G.tables[S.flags.tableTap.i], y: 44, h: 50, w: 60}),
+        until: S => S.flags.tableTap, at: () => ({x: G.tables[S.flags.tableTap.i], y: 44 + G.dining.h - 132, h: 50, w: 60}),
         kitchen: 'All of that table’s tickets light up on one rail, in the order they were placed. Their courses can’t overtake each other.',
         kafka: 'This is <b>per-key ordering</b>: all events for one key (a customer, an account, an order) go to one partition and are processed in order. It’s the main reason to use keys.'},
       {title: 'Another rail', do: true, btn: '#addrail', ask: 'Add a third rail to Mains.',
@@ -983,7 +1004,7 @@ const SANDBOX = {
   story: [
     'No lesson, no script. Every knob from every lesson is unlocked.',
     'Hire up to six chefs, open the dessert station, add rails, change the waiter’s key, call in the auditor, flip when the clip moves, trip chefs or clock them out, and watch Kafka react.'],
-  learn: 'Everything at once. Turn on <b>🩻 Kafka X-ray</b> to see the real names, and keep <b>&lt;/&gt; Code</b> open to watch the KafkaJS lines light up as you play.',
+  learn: 'Everything at once. Turn on <b>Kafka X-ray</b> to see the real names, and keep <b>&lt;/&gt; Code</b> open to watch the KafkaJS lines light up as you play.',
   setup: {stations: ['mains'], chefs: 2, rate: .6, offer: ['desserts'], keys: true, keyBy: 'none', burger: .3},
   ctl: {rateMax: 3, hire: 6, open: true, rails: 4, keyBy: 'all', audit: true, commit: true, trip: 'now', detect: 3, recover: 6, leave: true},
   steps: [], xray: [],
@@ -1497,7 +1518,7 @@ function geom() {
   W = cw / K;
   const narrow = W < 560;
   const g = {W, narrow, pad: narrow ? 8 : 14, SLOT: narrow ? 42 : 50, TW: narrow ? 36 : 44, TH: narrow ? 48 : 54};
-  g.dining = {h: 132};
+  g.dining = {h: 172};
   let y = g.dining.h + 12;
   g.st = S.stations.map(st => {
     const top = y, rails = st.rails.map((_, i) => top + 38 + i * 118);
@@ -1511,7 +1532,7 @@ function geom() {
   g.H = y;
   g.railL = g.pad + 12; g.railR = W - g.pad - 12;
   g.clipX = g.railL + (narrow ? 1.7 : 2.7) * g.SLOT;
-  g.waiter = {x: W - g.pad - 34, y: 66};
+  g.waiter = {x: W - g.pad - 34, y: 106};
   const avail = W - 2 * g.pad - 90;
   g.tables = S.tables.map((_, i) => g.pad + avail * (i + .5) / S.tables.length);
   G = g;
@@ -1520,7 +1541,7 @@ function geom() {
     DPR = dpr; cv.width = Math.round(W * K * dpr); cv.height = Math.round(g.H * K * dpr); cv.style.height = g.H * K + 'px';
   }
 }
-const tablePos = (i, dy = 0) => ({x: G.tables[i], y: 64 + dy});
+const tablePos = (i, dy = 0) => ({x: G.tables[i], y: 104 + dy});
 const stovePos = (si, ri) => ({x: G.clipX + 2 + (G.TW + 44) / 2, y: G.st[si].rails[ri] + 93});
 const clipPos = (si, ri) => ({x: G.clipX, y: G.st[si].rails[ri], h: 34, w: 18});
 const tkAt = (si, ri, off) => { const t = S.stations[si].rails[ri].tickets[off]; return t ? {x: t.rx + G.TW / 2, y: G.st[si].rails[ri] + 4, h: G.TH, w: G.TW + 6} : clipPos(si, ri) };
@@ -1680,17 +1701,31 @@ function draw(rdt) {
   gr.addColorStop(0, '#231A16'); gr.addColorStop(.55, '#2B201A'); gr.addColorStop(.56, '#3A2A1F'); gr.addColorStop(1, '#2C1F17');
   ctx.fillStyle = gr; rr(0, 0, G.W, G.dining.h, [16, 16, 0, 0]); ctx.fill();
   ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = 1;
-  for (let x = -40; x < G.W; x += 46) { ctx.beginPath(); ctx.moveTo(x, G.dining.h * .56); ctx.lineTo(x + 40, G.dining.h); ctx.stroke() }
-  txt('DINING ROOM', G.pad + 4, 16, `700 9px ${MONO}`, 'rgba(255,214,170,.4)');
+  if (!BG.dining) for (let x = -40; x < G.W; x += 46) { ctx.beginPath(); ctx.moveTo(x, G.dining.h * .56); ctx.lineTo(x + 40, G.dining.h); ctx.stroke() }
+  // painted café: scaled so its four tables sit exactly under the game's tables (table tops at y = DY + 94)
+  const DY = G.dining.h - 132, PT = {x0: 262 / 1672, x3: 1145 / 1672, y: 628 / 941};
+  let dinBG = null;
+  if (BG.dining) {
+    const im = BG.dining, span = G.tables[3] - G.tables[0], iw = span / (PT.x3 - PT.x0), ih = iw * im.naturalHeight / im.naturalWidth;
+    dinBG = {im, x: G.tables[0] - PT.x0 * iw, y: DY + 94 - PT.y * ih, w: iw, h: ih};
+    ctx.save(); rr(0, 0, G.W, G.dining.h, [16, 16, 0, 0]); ctx.clip();
+    ctx.drawImage(im, dinBG.x, dinBG.y, dinBG.w, dinBG.h);
+    const vg = ctx.createLinearGradient(0, 0, 0, G.dining.h); vg.addColorStop(0, 'rgba(10,8,6,.45)'); vg.addColorStop(.35, 'rgba(10,8,6,0)');
+    ctx.fillStyle = vg; ctx.fillRect(0, 0, G.W, G.dining.h); ctx.restore();
+  }
+  txt('DINING ROOM', G.pad + 4, 16, `700 9px ${MONO}`, 'rgba(255,214,170,.5)');
   const pend = S.tables.map(() => ({n: 0, oldest: Infinity}));
   for (const st of S.stations) for (const rail of st.rails)
     for (let o = rail.clip; o < rail.tickets.length; o++) { const t = rail.tickets[o], p = pend[t.table]; p.n++; p.oldest = Math.min(p.oldest, t.born) }
   S.tables.forEach((tb, i) => {
     const x = G.tables[i];
     tb.ask = Math.max(0, tb.ask - rdt); tb.happy = Math.max(0, tb.happy - rdt);
-    glowAt(x, 92, 62, .22);
-    ctx.strokeStyle = 'rgba(255,214,170,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x - 30, 8); ctx.stroke();
-    ctx.fillStyle = '#FFD7A1'; ctx.shadowColor = '#FF9A4A'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x - 30, 11, 3, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    ctx.save(); ctx.translate(0, DY);
+    if (!dinBG) {
+      glowAt(x, 92, 62, .22);
+      ctx.strokeStyle = 'rgba(255,214,170,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(x - 30, -DY); ctx.lineTo(x - 30, 8); ctx.stroke();
+      ctx.fillStyle = '#FFD7A1'; ctx.shadowColor = '#FF9A4A'; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(x - 30, 11, 3, 0, 7); ctx.fill(); ctx.shadowBlur = 0;
+    }
     const p = pend[i], wait = p.n ? S.time - p.oldest : 0;
     const hop = tb.happy > 0 && !RM ? -Math.abs(Math.sin(NOW * 12)) * 4 : 0;
     // anime diner: happy right after food lands, then waiting → upset → angry as their oldest ticket ages
@@ -1698,13 +1733,18 @@ function draw(rdt) {
     const pose = tb.happy > 0 ? 'chibi-happy' : wait >= UPSET ? 'chibi-angry' : wait >= 7 ? 'chibi-upset' : 'chibi-waiting';
     const dim = castSprite(who, pose) || castSprite(who, 'chibi-waiting');
     if (dim) {
-      const h = G.narrow ? 54 : 64, w = dim.naturalWidth / dim.naturalHeight * h;
-      ctx.drawImage(dim, x - w / 2, 98 - h + hop, w, h);
+      const h = G.narrow ? 58 : 70, w = dim.naturalWidth / dim.naturalHeight * h;
+      ctx.drawImage(dim, x - w / 2, (dinBG ? 104 : 98) - h + hop, w, h);
     }
-    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, 103, 30, 9, 0, 0, 7); ctx.fill();
-    ctx.fillStyle = '#5E3F27'; ctx.beginPath(); ctx.ellipse(x, 96, 27, 11, 0, 0, 7); ctx.fill();
-    gr = ctx.createLinearGradient(x - 24, 0, x + 24, 0); gr.addColorStop(0, '#8A6240'); gr.addColorStop(.5, '#A97B52'); gr.addColorStop(1, '#7E5737');
-    ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(x, 94, 23, 8, 0, 0, 7); ctx.fill();
+    if (dinBG) {                                   // paint the table back over the diner, so they sit behind it
+      ctx.save(); ctx.beginPath(); ctx.rect(x - 48, 88, 96, 60); ctx.clip();
+      ctx.drawImage(dinBG.im, dinBG.x, dinBG.y - DY, dinBG.w, dinBG.h); ctx.restore();
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, 103, 30, 9, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#5E3F27'; ctx.beginPath(); ctx.ellipse(x, 96, 27, 11, 0, 0, 7); ctx.fill();
+      gr = ctx.createLinearGradient(x - 24, 0, x + 24, 0); gr.addColorStop(0, '#8A6240'); gr.addColorStop(.5, '#A97B52'); gr.addColorStop(1, '#7E5737');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(x, 94, 23, 8, 0, 0, 7); ctx.fill();
+    }
     if (tb.happy > 0) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, 93, 10, 5, 0, 0, 7); ctx.fill() }
     if (!dim) emoji(tb.e, x, 64 + hop, G.narrow ? 24 : 28);
     if (p.n) {
@@ -1716,7 +1756,8 @@ function draw(rdt) {
       if (w >= UPSET && !RM) emoji('💢', x - 16, 44 + Math.sin(NOW * 8) * 2, 12);
     }
     txt(`T${i + 1}`, x, 122, `700 9px ${MONO}`, TCOL[i], 'center');
-    hits.push({kind: 'table', i, x: x - 30, y: 36, w: 60, h: 76});
+    ctx.restore();
+    hits.push({kind: 'table', i, x: x - 30, y: 36 + DY, w: 60, h: 76});
   });
   // waiter
   S.waiterKick = Math.max(0, S.waiterKick - rdt * 3);
@@ -2240,6 +2281,20 @@ function updateHud(rdt) {
 }
 
 // lesson 1 opens with the cast: every kitchen role and its Kafka name
+// Glossary icons: anime sprites and little drawn props instead of emoji.
+const SPR = (src, cls = '') => `<img class="gi ${cls}" src="${src}" alt="">`;
+const ICONS = {
+  '🤵': SPR('cast/waiter/chibi-idle.webp'),
+  '🧑‍🍳': SPR('cast/marco/chibi-idle.webp'), '👨‍🍳': SPR('cast/headchef/chibi-idle.webp'), '🕵️': SPR('cast/auditor/chibi-idle.webp'),
+  '👥': `<span class="gcrew">${SPR('cast/kofi/chibi-idle.webp')}${SPR('cast/yuki/chibi-idle.webp')}${SPR('cast/marco/chibi-idle.webp')}</span>`,
+  '🥩': SPR('cast/food/food-steak.webp', 'food'), '🍰': SPR('cast/food/food-cake.webp', 'food'),
+  '🧾': '<span class="gtk">#0</span>', '🎫': '<span class="gtk">#0</span>',
+  '🛤️': '<span class="grail"><i></i></span>', '🧵': '<span class="grail"><i></i></span>',
+  '#️⃣': '<span class="gnum">#7</span>', '🔢': '<span class="gnum">#7</span>',
+  '📎': '<span class="gclip"></span>', '🔵': '<span class="gclip blue"></span>',
+  '⏳': '<span class="gnum">LAG</span>', '🔥': '<span class="gnum hot">HOT</span>',
+};
+const icon = e => ICONS[e] || `<span class="gdot">${e}</span>`;
 const CAST = [
   ['🤵', 'Waiter', 'writes each order on a ticket', 'Producer'],
   ['🧾', 'Ticket', 'one order', 'Message'],
@@ -2257,8 +2312,8 @@ function renderVeil() {
   if (S.started) return;
   if (S.lvl === 0 && !castShown) {
     v.innerHTML = `<div class="card intro crew"><div class="mise">Before we open</div><h3>Meet the crew</h3>
-      <p class="castp">Everyone in this kitchen has a real Kafka name. No need to memorize it: the kitchen explains each one when it shows up, and <b>🩻 Kafka X-ray</b> writes the names on everything.</p>
-      <div class="cast">${CAST.map(([e, k, d, x]) => `<div class="cr"><span class="ce">${e}</span><span class="ck">${k}<small>${d}</small></span><span class="cx">${x}</span></div>`).join('')}</div>
+      <p class="castp">Everyone in this kitchen has a real Kafka name. No need to memorize it: the kitchen explains each one when it shows up, and <b>Kafka X-ray</b> writes the names on everything.</p>
+      <div class="cast">${CAST.map(([e, k, d, x]) => `<div class="cr"><span class="ce">${icon(e)}</span><span class="ck">${k}<small>${d}</small></span><span class="cx">${x}</span></div>`).join('')}</div>
       <p class="castn">With a single rail, the rail is the whole topic. You’ll add more rails in lesson 4.</p>
       <button class="bell" id="cast">Next: tonight’s story →</button></div>`;
     $('#cast').onclick = () => { castShown = true; renderVeil() };
@@ -2276,8 +2331,8 @@ function renderWin() {
   const L = LV(), w = $('#win'), last = S.lvl === LEVELS.length - 1;
   w.innerHTML = `<div class="card win"><div class="mise">✓ Lesson ${S.lvl + 1} complete · cheat sheet</div>
     <h3>${L.dish}, in Kafka words</h3>
-    <p>Everything you just saw, side by side. The <b>🩻 Kafka X-ray</b> button (top right) writes these names right on the kitchen.</p>
-    <div class="xrows">${L.xray.map(([e, k, v, d]) => `<div class="k"><span>${e}</span>${k}</div><div class="v"><b>${v}</b><div>${d}</div></div>`).join('')}</div>
+    <p>Everything you just saw, side by side. The <b>Kafka X-ray</b> button (top right) writes these names right on the kitchen.</p>
+    <div class="xrows">${L.xray.map(([e, k, v, d]) => `<div class="k"><span class="xi">${icon(e)}</span>${k}</div><div class="v"><b>${v}</b><div>${d}</div></div>`).join('')}</div>
     ${L.teaser ? `<div class="soon">👀 ${L.teaser}</div>` : ''}
     <div class="acts"><button class="btn ghost" id="wf">Stay and play with the knobs</button>
     ${last ? '' : `<button class="btn gold" id="wn">Next lesson →</button>`}</div></div>`;
