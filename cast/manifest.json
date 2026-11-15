@@ -10,6 +10,11 @@
    "h": 320,
    "w": 225
   },
+  "chibi-happy": {
+   "file": "diner1/chibi-happy.webp",
+   "h": 320,
+   "w": 246
+  },
   "chibi-waiting": {
    "file": "diner1/chibi-waiting.webp",
    "h": 320,
@@ -21,6 +26,11 @@
    "file": "diner2/chibi-angry.webp",
    "h": 320,
    "w": 313
+  },
+  "chibi-happy": {
+   "file": "diner2/chibi-happy.webp",
+   "h": 320,
+   "w": 249
   },
   "chibi-upset": {
    "file": "diner2/chibi-upset.webp",
