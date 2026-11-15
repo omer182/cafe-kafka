@@ -1,4 +1,31 @@
 {
+ "kofi": {
+  "bust-fired": {
+   "file": "kofi/bust-fired.webp",
+   "h": 822,
+   "w": 900
+  },
+  "bust-happy": {
+   "file": "kofi/bust-happy.webp",
+   "h": 822,
+   "w": 900
+  },
+  "bust-shocked": {
+   "file": "kofi/bust-shocked.webp",
+   "h": 822,
+   "w": 900
+  },
+  "portrait": {
+   "file": "kofi/portrait.webp",
+   "h": 1200,
+   "w": 1049
+  },
+  "sheet": {
+   "file": "kofi/sheet.webp",
+   "h": 1022,
+   "w": 1502
+  }
+ },
  "marco": {
   "bust-fired": {
    "file": "marco/bust-fired.webp",
