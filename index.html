@@ -890,6 +890,27 @@ let S, G = {}, W = 800, DPR = 1, K = 1, NOW = 0;
 const hits = [];
 const LV = () => S.lvl < 0 ? SANDBOX : LEVELS[S.lvl];
 
+// ---------- cast art: anime sprites per character, emoji until their art exists ----------
+const ART = {Yuki: 'cast/yuki/'};
+const castImg = {};
+function castSprite(name, pose) {
+  const base = ART[name]; if (!base) return null;
+  let im = castImg[name + pose];
+  if (!im) { im = castImg[name + pose] = new Image(); im.onerror = () => { im.bad = true }; im.src = base + pose + '.webp' }
+  return im.complete && im.naturalWidth && !im.bad ? im : null;
+}
+const chefPose = c => c.down ? 'chibi-down' : c.leaving ? 'chibi-bye' : c.job ? 'chibi-cook' : 'chibi-idle';
+// Draws a chef; returns the sprite's top edge (for bubbles), or null when it fell back to emoji.
+function drawChef(c, x, y, size) {
+  const pose = chefPose(c), im = castSprite(c.n, pose) || castSprite(c.n, 'chibi-idle');
+  if (!im) { emoji(c.e, x, y, size); return null }
+  const h = size * (pose === 'chibi-down' ? 1.9 : 2.4), w = im.naturalWidth / im.naturalHeight * h;
+  const foot = y + size * .55;
+  ctx.drawImage(im, x - w / 2, foot - h, w, h);
+  c.hasDown = pose === 'chibi-down' && im === castSprite(c.n, 'chibi-down');
+  return foot - h;
+}
+
 function newChef(i, x = -30, y = 0) {
   const [e, n] = CREW[i % CREW.length];
   return {id: i, e, n, x, y, rails: [], job: null, goal: null, last: null, shake: 0, say: null, served: 0};
@@ -1490,10 +1511,10 @@ function draw(rdt) {
     if (c.shake) x += Math.sin(NOW * 60) * 5 * c.shake;
     if (c.walking && !RM) y += -Math.abs(Math.sin(NOW * 14)) * 3;
     if (c.job && !RM) x += Math.sin(NOW * 9) * 1.2;
-    if (c.down) ctx.globalAlpha = .45;
-    emoji(c.e, x, y, 30);
+    if (c.down && !c.hasDown) ctx.globalAlpha = .45;
+    const top = drawChef(c, x, y, 30);
     ctx.globalAlpha = 1;
-    if (c.down) emoji('💫', x + 12, y - 22 + (RM ? 0 : Math.sin(NOW * 5) * 2), 14);
+    if (c.down && !c.hasDown) emoji('💫', x + 12, (top ?? y) - 22 + 22 * (top === null) + (RM ? 0 : Math.sin(NOW * 5) * 2), 14);
     const atStove = c.rails.length && !c.walking && S.huddle === 0;
     if (atStove) {
       txt(c.n, x - 22, y + 4, `700 10px ${MONO}`, C.paper, 'right', 'middle');
@@ -1506,7 +1527,7 @@ function draw(rdt) {
       if (!RM) txt('z', x + 16, y - 16 - (NOW * 8 % 8), `700 ${10 + (NOW * 2 % 1) * 4}px ${MONO}`, C.mut);
       hits.push({kind: 'chef', c, x: x - 20, y: y - 20, w: 40, h: 40});
     }
-    if (c.say && c.say.until > NOW) bubble(c.say.text, x, y - 18);
+    if (c.say && c.say.until > NOW) bubble(c.say.text, x, top === null ? y - 18 : top + 6);
   }
 
   // flights
@@ -1552,7 +1573,7 @@ function draw(rdt) {
       if (taken) txt(`${taken.n}’s rail`, G.W - G.pad - 16, ry + 76, `700 11px ${MONO}`, C.tomato, 'right');
     }
     ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 14;
-    emoji(c.e, x, y, 38); ctx.shadowBlur = 0;
+    drawChef(c, x, y, 38); ctx.shadowBlur = 0;
   }
 
   confetti = confetti.filter(p => (p.life -= rdt) > 0);

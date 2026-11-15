@@ -1,0 +1,34 @@
+{
+ "yuki": {
+  "bust-fired": {
+   "file": "yuki/bust-fired.webp",
+   "h": 872,
+   "w": 900
+  },
+  "bust-happy": {
+   "file": "yuki/bust-happy.webp",
+   "h": 824,
+   "w": 900
+  },
+  "bust-shocked": {
+   "file": "yuki/bust-shocked.webp",
+   "h": 1177,
+   "w": 900
+  },
+  "chibi-idle": {
+   "file": "yuki/chibi-idle.webp",
+   "h": 320,
+   "w": 128
+  },
+  "portrait": {
+   "file": "yuki/portrait.webp",
+   "h": 1200,
+   "w": 489
+  },
+  "sheet": {
+   "file": "yuki/sheet.webp",
+   "h": 1019,
+   "w": 1500
+  }
+ }
+}
