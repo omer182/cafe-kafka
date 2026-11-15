@@ -15,6 +15,26 @@
    "h": 822,
    "w": 900
   },
+  "chibi-bye": {
+   "file": "kofi/chibi-bye.webp",
+   "h": 320,
+   "w": 173
+  },
+  "chibi-cook": {
+   "file": "kofi/chibi-cook.webp",
+   "h": 320,
+   "w": 208
+  },
+  "chibi-down": {
+   "file": "kofi/chibi-down.webp",
+   "h": 320,
+   "w": 274
+  },
+  "chibi-idle": {
+   "file": "kofi/chibi-idle.webp",
+   "h": 320,
+   "w": 155
+  },
   "portrait": {
    "file": "kofi/portrait.webp",
    "h": 1200,
