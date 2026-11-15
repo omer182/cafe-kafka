@@ -1,4 +1,21 @@
 {
+ "auditor": {
+  "bust-happy": {
+   "file": "auditor/bust-happy.webp",
+   "h": 819,
+   "w": 900
+  },
+  "chibi-idle": {
+   "file": "auditor/chibi-idle.webp",
+   "h": 320,
+   "w": 166
+  },
+  "sheet": {
+   "file": "auditor/sheet.webp",
+   "h": 1017,
+   "w": 1534
+  }
+ },
  "diner1": {
   "chibi-angry": {
    "file": "diner1/chibi-angry.webp",

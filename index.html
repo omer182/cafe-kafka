@@ -1115,7 +1115,7 @@ function drawFX() {
 }
 
 // ---------- cast art: anime sprites per character, emoji until their art exists ----------
-const ART = {Marco: 'cast/marco/', Yuki: 'cast/yuki/', Kofi: 'cast/kofi/', Waiter: 'cast/waiter/', HeadChef: 'cast/headchef/',
+const ART = {Marco: 'cast/marco/', Yuki: 'cast/yuki/', Kofi: 'cast/kofi/', Waiter: 'cast/waiter/', HeadChef: 'cast/headchef/', Auditor: 'cast/auditor/',
   Diner1: 'cast/diner1/', Diner2: 'cast/diner2/', Diner3: 'cast/diner3/', Diner4: 'cast/diner4/'};
 const castImg = {};
 function castSprite(name, pose) {
@@ -1409,7 +1409,10 @@ function addRail() {
 function toggleAud() {
   if (!S.started) return;
   S.aud.on = !S.aud.on; S.aud.t = .3;
-  if (S.aud.on) S.aud.resumeLag = audLag();
+  if (S.aud.on) {
+    S.aud.resumeLag = audLag();
+    fx('cutin', {who: 'Auditor', pose: 'bust-happy', title: 'ON THE CASE!', sub: 'A SECOND CONSUMER GROUP · "AUDIT"', color: '#3E6E9A', dark: '#2A4F72', dur: 1.7});
+  }
   renderCtls();
 }
 function setCommit(v) { S.commit = v; renderCtls() }
@@ -1992,7 +1995,11 @@ function drawRail(si, ri, rail, y, rdt) {
     ctx.fillStyle = '#5B8DB8'; ctx.shadowColor = '#6FA8C9'; ctx.shadowBlur = 8;
     rr(bx - 3, y + 2, 6, 30, 2); ctx.fill(); ctx.shadowBlur = 0;
     if (far) txt(`◀ ${rail.clip - rail.b} behind`, bx + 8, y + 40, `700 9px ${MONO}`, '#8FB8DC');
-    if (S.aud.on && S.aud.at && S.aud.at.si === si && S.aud.at.ri === ri) emoji('🕵️', bx, y - 10, 18);
+    if (S.aud.on && S.aud.at && S.aud.at.si === si && S.aud.at.ri === ri) {
+      const aim = castSprite('Auditor', 'chibi-idle');            // she stands on her blue clip, reading behind the kitchen
+      if (aim) { const h = 52, w = aim.naturalWidth / aim.naturalHeight * h; ctx.drawImage(aim, bx - w / 2, y + 2 - h, w, h) }
+      else emoji('🕵️', bx, y - 10, 18);
+    }
     if (X) xlabel(`group "audit" @ ${rail.b}`, bx, y + 74);
   }
 }
