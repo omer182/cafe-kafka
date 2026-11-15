@@ -84,6 +84,13 @@
    "w": 1488
   }
  },
+ "food": {
+  "food-pizza": {
+   "file": "food/food-pizza.webp",
+   "h": 202,
+   "w": 256
+  }
+ },
  "kofi": {
   "bust-fired": {
    "file": "kofi/bust-fired.webp",

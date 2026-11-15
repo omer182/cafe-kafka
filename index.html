@@ -536,6 +536,8 @@ canvas{border-radius:0}
 .rcap{right:150px}
 .dwaiter .sp{height:62px;width:auto;display:block;transition:transform .2s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 .dwaiter.kick .sp{transform:translateY(-6px)}
+.dtk .fd{width:38px;height:auto;display:block;margin:-4px auto 0}
+.dstove .fd{width:34px;height:auto;display:block}
 </style>
 </head>
 <body>
@@ -1576,7 +1578,21 @@ function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r) }
 function txt(s, x, y, font, color, align = 'left', base = 'alphabetic') {
   ctx.font = font; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = base; ctx.fillText(s, x, y);
 }
-function emoji(e, x, y, size) { txt(e, x, y, `${size}px ${EMO}`, '#000', 'center', 'middle') }
+// Food emoji are drawn as anime food sprites once a dish's art exists (cast/food/food-<name>.webp).
+const FOOD = {'🍕': 'pizza', '🥩': 'steak', '🍝': 'pasta', '🥘': 'paella', '🍔': 'burger', '🍰': 'cake', '🧁': 'cupcake', '🍮': 'flan', '🍨': 'sundae'};
+const foodImg = {};
+function foodSprite(e) {
+  const n = FOOD[e]; if (!n) return null;
+  let im = foodImg[n];
+  if (!im) { im = foodImg[n] = new Image(); im.onerror = () => { im.bad = true }; im.src = `cast/food/food-${n}.webp` }
+  return im.complete && im.naturalWidth && !im.bad ? im : null;
+}
+const foodHTML = e => FOOD[e] ? `<img class="fd" src="cast/food/food-${FOOD[e]}.webp" alt="${e}" onerror="this.replaceWith(this.alt)">` : e;
+function emoji(e, x, y, size) {
+  const im = foodSprite(e);
+  if (im) { const w = size * 1.5, h = w * im.naturalHeight / im.naturalWidth; ctx.drawImage(im, x - w / 2, y - h / 2, w, h); return }
+  txt(e, x, y, `${size}px ${EMO}`, '#000', 'center', 'middle');
+}
 function xlabel(s, x, y, align = 'center') {
   ctx.font = `700 9px ${MONO}`;
   const w = ctx.measureText(s).width + 8, x0 = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
@@ -2383,7 +2399,7 @@ function dTick(dt) {
   if (D.t <= 0 && lag < Math.floor((g.w - g.clipX - 70) / g.slot)) {
     D.t = 1.3 + Math.random() * 1.2;
     const el = document.createElement('div');
-    el.className = 'dtk new'; el.innerHTML = `#${D.next}<span>${DISH[D.next % DISH.length]}</span>`;
+    el.className = 'dtk new'; el.innerHTML = `#${D.next}<span>${foodHTML(DISH[D.next % DISH.length])}</span>`;
     el.style.transform = `translateX(${g.w + 30}px)`;
     $('#dtks').appendChild(el);
     D.tks.push({n: D.next, el});
@@ -2394,7 +2410,7 @@ function dTick(dt) {
   }
   if (!D.cook && D.rest <= 0) {
     const t = D.tks.find(t => t.n === D.clip);
-    if (t) { D.cook = {t, left: 2.4}; t.el.classList.add('cook'); $('#dstove').classList.add('on'); $('#dchef').src = 'cast/marco/chibi-cook.webp'; $('#dpan').textContent = t.el.querySelector('span').textContent; D.last = {kind: 'cook', n: t.n}; dEvent('cook', t.n) }
+    if (t) { D.cook = {t, left: 2.4}; t.el.classList.add('cook'); $('#dstove').classList.add('on'); $('#dchef').src = 'cast/marco/chibi-cook.webp'; $('#dpan').innerHTML = t.el.querySelector('span').innerHTML; D.last = {kind: 'cook', n: t.n}; dEvent('cook', t.n) }
   } else if (D.cook && (D.cook.left -= dt) <= 0) {
     const {t} = D.cook;
     t.el.classList.replace('cook', 'done'); D.clip++; D.cook = null; D.rest = .6;
