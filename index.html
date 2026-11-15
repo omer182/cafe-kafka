@@ -518,11 +518,12 @@ canvas{border-radius:0}
 .card.intro .bell{font-size:28px}
 
 /* front door = an anime title card: black splash panel with white focus lines */
-.hero{position:relative;max-width:none;margin:0;border-bottom:4px solid var(--ink);
+.hero{position:relative;max-width:none;margin:0;background:none}
+.app.on-home .home{
   background:
     radial-gradient(closest-side at 50% 34%,rgba(255,90,50,.22),transparent 75%),
     repeating-conic-gradient(from 0deg at 50% 30%,rgba(255,255,255,.07) 0deg 1.2deg,transparent 1.2deg 5deg),
-    var(--ink)}
+    var(--ink) fixed}
 .hero h1{font:clamp(24px,3.4vw,40px)/1.15 var(--title);letter-spacing:0;color:#fff}
 .hero .sub{color:#D6CCBB}
 .ghost2{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:8px;box-shadow:5px 5px 0 #fff;font:22px/1 var(--sfx);letter-spacing:.06em;padding:14px 24px 12px}
