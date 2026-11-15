@@ -1,4 +1,36 @@
 {
+ "marco": {
+  "bust-fired": {
+   "file": "marco/bust-fired.webp",
+   "h": 877,
+   "w": 900
+  },
+  "bust-happy": {
+   "file": "marco/bust-happy.webp",
+   "h": 822,
+   "w": 900
+  },
+  "bust-shocked": {
+   "file": "marco/bust-shocked.webp",
+   "h": 822,
+   "w": 900
+  },
+  "chibi-idle": {
+   "file": "marco/chibi-idle.webp",
+   "h": 320,
+   "w": 141
+  },
+  "portrait": {
+   "file": "marco/portrait.webp",
+   "h": 1200,
+   "w": 780
+  },
+  "sheet": {
+   "file": "marco/sheet.webp",
+   "h": 1024,
+   "w": 1458
+  }
+ },
  "yuki": {
   "bust-fired": {
    "file": "yuki/bust-fired.webp",
