@@ -110,6 +110,11 @@
    "h": 188,
    "w": 256
   },
+  "food-pasta": {
+   "file": "food/food-pasta.webp",
+   "h": 206,
+   "w": 256
+  },
   "food-pizza": {
    "file": "food/food-pizza.webp",
    "h": 202,
