@@ -1,4 +1,11 @@
 {
+ "diners": {
+  "sheet": {
+   "file": "diners/sheet.webp",
+   "h": 1021,
+   "w": 1488
+  }
+ },
  "kofi": {
   "bust-fired": {
    "file": "kofi/bust-fired.webp",
@@ -91,6 +98,28 @@
    "file": "marco/sheet.webp",
    "h": 1024,
    "w": 1458
+  }
+ },
+ "waiter": {
+  "bust-happy": {
+   "file": "waiter/bust-happy.webp",
+   "h": 819,
+   "w": 900
+  },
+  "chibi-idle": {
+   "file": "waiter/chibi-idle.webp",
+   "h": 320,
+   "w": 110
+  },
+  "chibi-send": {
+   "file": "waiter/chibi-send.webp",
+   "h": 320,
+   "w": 211
+  },
+  "sheet": {
+   "file": "waiter/sheet.webp",
+   "h": 1024,
+   "w": 1490
   }
  },
  "yuki": {
