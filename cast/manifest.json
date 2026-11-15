@@ -109,6 +109,21 @@
    "h": 1177,
    "w": 900
   },
+  "chibi-bye": {
+   "file": "yuki/chibi-bye.webp",
+   "h": 320,
+   "w": 189
+  },
+  "chibi-cook": {
+   "file": "yuki/chibi-cook.webp",
+   "h": 320,
+   "w": 207
+  },
+  "chibi-down": {
+   "file": "yuki/chibi-down.webp",
+   "h": 320,
+   "w": 291
+  },
   "chibi-idle": {
    "file": "yuki/chibi-idle.webp",
    "h": 320,
