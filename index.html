@@ -529,6 +529,13 @@ canvas{border-radius:0}
 .ghost2{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:8px;box-shadow:5px 5px 0 #fff;font:22px/1 var(--sfx);letter-spacing:.06em;padding:14px 24px 12px}
 .ghost2:hover{border-color:var(--ink);transform:translate(-1px,-1px)}
 .demo{border:3px solid #fff;border-radius:6px;box-shadow:8px 8px 0 var(--tomato)}
+.dchef{top:122px}
+.dchef .sp{height:84px;width:auto;display:block;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+.dwaiter{top:-6px;flex-direction:row-reverse;align-items:flex-end;gap:6px}
+.dwaiter .cap{margin:0 0 6px}
+.rcap{right:150px}
+.dwaiter .sp{height:62px;width:auto;display:block;transition:transform .2s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
+.dwaiter.kick .sp{transform:translateY(-6px)}
 </style>
 </head>
 <body>
@@ -548,25 +555,25 @@ canvas{border-radius:0}
       <div class="signrow"><span class="sign">Café Kafka</span><span class="open big">OPEN</span></div>
       <h1>Learn Apache Kafka by running a restaurant kitchen.</h1>
       <p class="sub">No Kafka knowledge needed. You’ll take orders, hire chefs and survive the Friday rush, and every move maps to a real Kafka idea.</p>
-      <div class="cta"><button class="bell" id="hstart">🔔 Start service</button><button class="ghost2" id="hfree">🎛 Free play</button></div>
+      <div class="cta"><button class="bell" id="hstart">Start service</button><button class="ghost2" id="hfree">Free play</button></div>
 
       <div class="demo" aria-label="A tiny kitchen: orders arrive on a rail and a chef cooks them in order">
         <div class="dhead">
           <span class="dlabel">Live from the pass</span>
           <div class="dtools">
-            <div class="seg dark" role="group" aria-label="Words"><button id="wk" class="on">🍳 Kitchen words</button><button id="wx">🩻 Kafka words</button></div>
+            <div class="seg dark" role="group" aria-label="Words"><button id="wk" class="on">Kitchen words</button><button id="wx">Kafka words</button></div>
             <button class="hoodsw" id="hood" role="switch" aria-checked="false"><span class="sw"></span>Under the hood <code>&lt;/&gt;</code></button>
           </div>
         </div>
         <div class="dbody">
         <div class="dstage" id="dstage">
           <div class="dlamps"><i></i><i></i><i></i></div>
-          <div class="dwaiter"><span class="em">🤵</span><span class="cap" data-k="Waiter" data-x="Producer"></span></div>
+          <div class="dwaiter"><img class="sp" id="dwaiter" src="cast/waiter/chibi-idle.webp" alt=""><span class="cap" data-k="Waiter" data-x="Producer"></span></div>
           <div class="cap rcap" data-k="The Mains rail" data-x="Topic “mains”"></div>
           <div class="dbar"></div>
           <div class="dtks" id="dtks"></div>
           <div class="dclip"><span class="cap" data-k="Brass clip: done up to here" data-x="Committed offset"></span></div>
-          <div class="dchef"><span class="em" id="dchef">🧑‍🍳</span><span class="cap" data-k="Chef Marco" data-x="Consumer"></span></div>
+          <div class="dchef"><img class="sp" id="dchef" src="cast/marco/chibi-idle.webp" alt=""><span class="cap" data-k="Chef Marco" data-x="Consumer"></span></div>
           <div class="dstove" id="dstove"><span id="dpan"></span></div>
           <div class="cap tcap" data-k="← waiting tickets" data-x="← consumer lag"></div>
         </div>
@@ -2382,15 +2389,16 @@ function dTick(dt) {
     D.tks.push({n: D.next, el});
     el.offsetWidth; el.classList.remove('new');
     D.last = {kind: 'add', n: D.next++}; dEvent('add', D.last.n);
-    $('.dwaiter').classList.add('kick'); setTimeout(() => $('.dwaiter').classList.remove('kick'), 200);
+    $('.dwaiter').classList.add('kick'); $('#dwaiter').src = 'cast/waiter/chibi-send.webp';
+    setTimeout(() => { $('.dwaiter').classList.remove('kick'); $('#dwaiter').src = 'cast/waiter/chibi-idle.webp' }, 650);
   }
   if (!D.cook && D.rest <= 0) {
     const t = D.tks.find(t => t.n === D.clip);
-    if (t) { D.cook = {t, left: 2.4}; t.el.classList.add('cook'); $('#dstove').classList.add('on'); $('#dpan').textContent = t.el.querySelector('span').textContent; D.last = {kind: 'cook', n: t.n}; dEvent('cook', t.n) }
+    if (t) { D.cook = {t, left: 2.4}; t.el.classList.add('cook'); $('#dstove').classList.add('on'); $('#dchef').src = 'cast/marco/chibi-cook.webp'; $('#dpan').textContent = t.el.querySelector('span').textContent; D.last = {kind: 'cook', n: t.n}; dEvent('cook', t.n) }
   } else if (D.cook && (D.cook.left -= dt) <= 0) {
     const {t} = D.cook;
     t.el.classList.replace('cook', 'done'); D.clip++; D.cook = null; D.rest = .6;
-    $('#dstove').classList.remove('on'); $('#dpan').textContent = '';
+    $('#dstove').classList.remove('on'); $('#dchef').src = 'cast/marco/chibi-idle.webp'; $('#dpan').textContent = '';
     $('.dclip').classList.add('kick'); setTimeout(() => $('.dclip').classList.remove('kick'), 250);
     D.last = {kind: 'done', n: t.n}; dEvent('done', t.n);
     for (const o of D.tks.filter(o => o.n < D.clip - 3)) { o.el.classList.add('gone'); setTimeout(() => o.el.remove(), 700) }
