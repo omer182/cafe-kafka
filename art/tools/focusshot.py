@@ -12,7 +12,7 @@ with sync_playwright() as p:
     for i in range(40):
         pg.wait_for_timeout(500)
         t = pg.evaluate("S.phase === 'explain' && (STEP().title || '')")
-        if t == 'A chef picks it up': break
+        if t == 'An order comes in': break
         nxt = pg.locator(".lesson:not([hidden]) .btn.gold")
         if t and nxt.count(): nxt.first.click()
     pg.wait_for_timeout(700)

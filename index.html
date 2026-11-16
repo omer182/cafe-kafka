@@ -2210,10 +2210,15 @@ function drawFocus() {
       ctx.shadowBlur = 0; ctx.drawImage(b.im, b.x, b.y, b.w, b.h); ctx.restore();
       continue;
     }
-    ctx.save();
-    ctx.shadowColor = `rgba(${col},${.9 * pulse})`; ctx.shadowBlur = 26 * pulse;
-    ctx.fillStyle = `rgba(${col},${.12 * pulse})`; ctx.strokeStyle = `rgb(${col})`; ctx.lineWidth = 3;
-    rr(a.x - w / 2 - p, a.y - p, w + 2 * p, h + 2 * p, 9); ctx.fill(); ctx.stroke();
+    // corner brackets: a focus frame that marks the target without painting over it
+    const gap = p + 3 + (RM ? 0 : 2.5 * (1 - pulse) * 4), x0 = a.x - w / 2 - gap, y0 = a.y - gap, x1 = a.x + w / 2 + gap, y1 = a.y + h + gap;
+    const L = Math.max(8, Math.min(16, Math.min(w, h) * .32));
+    const corners = [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]];
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const [lw, st, glow] of [[6, '#14110F', 0], [3, `rgb(${col})`, 12 * pulse]]) {
+      ctx.lineWidth = lw; ctx.strokeStyle = st; ctx.shadowColor = `rgba(${col},.8)`; ctx.shadowBlur = glow;
+      for (const [cx, cy, sx, sy] of corners) { ctx.beginPath(); ctx.moveTo(cx + sx * L, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + sy * L); ctx.stroke() }
+    }
     ctx.restore();
   }
 }
