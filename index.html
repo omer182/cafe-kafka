@@ -536,6 +536,38 @@ canvas{border-radius:0}
 .rcap{right:150px}
 .dwaiter .sp{height:62px;width:auto;display:block;transition:transform .2s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 .dwaiter.kick .sp{transform:translateY(-6px)}
+/* locked controls: faded, no cursor change, not clickable (lessons hand out one action at a time) */
+button:disabled{cursor:default}
+.locked{opacity:.3;filter:grayscale(.8);pointer-events:none;transition:opacity .25s,filter .25s}
+/* the floating "what to do now" bar */
+.nowbar{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:14px;
+  width:max-content;max-width:min(900px,calc(100vw - 24px));background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:10px;
+  box-shadow:6px 6px 0 var(--ink);padding:9px 10px 9px 9px;font:700 16px/1.35 var(--sans)}
+.nowbar[hidden]{display:none}
+.nowbar .ntag{flex:none;background:var(--ink);color:#fff;font:19px/1 var(--sfx);letter-spacing:.08em;padding:8px 10px 6px;border-radius:5px;white-space:nowrap}
+.nowbar .nmsg{flex:1;min-width:0}
+.nowbar .nbtn{flex:none;border:3px solid var(--ink);background:var(--ink);color:#fff;font:21px/1 var(--sfx);letter-spacing:.06em;
+  padding:10px 16px 8px;border-radius:7px;box-shadow:3px 3px 0 var(--tomato);cursor:pointer;white-space:nowrap;transition:transform .08s,box-shadow .08s}
+.nowbar .nbtn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--tomato)}
+.nowbar .nbtn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--tomato)}
+.nowbar.do{background:var(--amber)}
+.nowbar.do .ntag{background:var(--tomato)}
+.nowbar.done{background:#DDF2CF}
+.nowbar.watch .ntag::after{content:'';display:inline-block;width:7px;height:7px;margin-left:7px;border-radius:50%;background:var(--amber);vertical-align:2px;animation:nowblink 1s steps(2) infinite}
+@keyframes nowblink{50%{opacity:0}}
+.nowbar.pop{animation:nowpop .45s cubic-bezier(.2,1.6,.4,1)}
+.nowbar.do.pop{animation:nowpop .45s cubic-bezier(.2,1.6,.4,1),nowhop 2.2s ease-in-out 1.2s infinite}
+@keyframes nowpop{from{transform:translate(-50%,26px) scale(.96);opacity:0}}
+@keyframes nowhop{0%,70%,100%{transform:translateX(-50%)}80%{transform:translate(-50%,-6px)}90%{transform:translate(-50%,-2px)}}
+.app.has-now .layout{padding-bottom:92px}
+@media(max-width:700px){
+  .nowbar{left:8px;right:8px;bottom:8px;width:auto;transform:none;flex-wrap:wrap;font-size:14.5px;gap:8px 10px}
+  .nowbar .nmsg{flex-basis:calc(100% - 120px)}
+  .nowbar .nbtn{flex:1 1 100%}
+  .nowbar.pop,.nowbar.do.pop{animation:none}
+}
+@media(prefers-reduced-motion:reduce){.nowbar.pop,.nowbar.do.pop,.nowbar.watch .ntag::after{animation:none}}
+
 /* glossary icons (Meet the crew, lesson recap) */
 .card .cast .ce,.xrows .xi{width:40px;height:40px;display:inline-grid;place-items:center;flex:none}
 .card .cr{grid-template-columns:40px 1fr auto}
@@ -619,6 +651,7 @@ canvas{border-radius:0}
     </aside>
     <main class="stage" id="stage">
       <div class="status" id="status" role="status"></div>
+      <div class="nowbar" id="nowbar" role="status" aria-live="polite" hidden></div>
       <div class="split" id="split">
       <div class="scene" id="scene">
         <div class="cwrap" id="cwrap">
@@ -2117,6 +2150,14 @@ $('#coach').onclick = () => coachCur && (coachCur.left = 0);
 
 // ---------- lesson: run until a step's event, freeze, explain, continue ----------
 const STEP = () => LV().steps[S.si];
+// What the player may touch right now. Lessons hand out one action at a time; free play (and a finished lesson) hands out everything.
+function gate() {
+  if (!S.started || !$('#win').hidden) return {all: false};
+  if (LV().free || S.phase === 'free') return {all: true};
+  if (S.phase === 'explain') return {all: false};
+  const st = STEP();
+  return {all: false, btn: st.do ? st.btn : null, canvas: !!(st.do && !st.btn)};
+}
 function startStep() {
   S.phase = 'wait'; S.paused = !!STEP().paused; S.stepT = S.time; STEP().start?.(S); focusCode();
   lastGoals = ''; renderSteps(); renderCtls(); hudT = 0;
@@ -2278,6 +2319,12 @@ function renderCtls() {
   $('#restart').onclick = () => load(S.lvl);
   const g = S.phase === 'wait' && STEP().btn;
   if (g) $({'#rate': '#rateK', '#commit': '#commitK', '#keyBy': '#keyK'}[g] || g)?.classList.add('glow');
+  // lock every action that isn't this step's job (speed, pause, restart and "next lesson" stay usable)
+  const gt = gate(), wrap = {'#rate': 'rateK', '#commit': 'commitK', '#keyBy': 'keyK'}, allowed = gt.btn ? (wrap[gt.btn] || gt.btn.slice(1)) : null;
+  for (const id of ['rateK', 'hire', 'open', 'addrail', 'aud', 'trip', 'leave', 'commitK', 'keyK'])
+    $('#' + id)?.classList.toggle('locked', !gt.all && id !== allowed);
+  $('#ctls').querySelectorAll('.crew').forEach(el => el.classList.toggle('locked', !gt.all));
+  renderNow();
 }
 function renderPills() {
   const h = LEVELS.map((L, i) => `<button class="pill ${i === S.lvl ? 'on' : ''} ${save.won[i] ? 'won' : ''}" data-l="${i}" title="${L.title}">${i + 1}</button>`).join('')
@@ -2287,6 +2334,38 @@ function renderPills() {
   $('#pills').querySelectorAll('[data-l]').forEach(b => b.onclick = () => load(+b.dataset.l));
   $('#xray').title = 'Show the real Kafka names on everything (X)';
   $('#xray').classList.toggle('xon', save.xray);
+}
+// The floating "what to do now" bar: one place, always the same, telling people exactly what's next.
+let nowKey = '';
+const plain = t => String(t).replace(/<[^>]+>/g, '').replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}]\uFE0F?|\u200D|\uFE0F/gu, '').replace(/\s+/g, ' ').trim();
+function renderNow() {
+  const bar = $('#nowbar'), L = LV();
+  let kind = '', tag = '', msg = '', act = null;
+  if (!onHome() && S.started && $('#win').hidden && !L.free) {
+    if (S.phase === 'explain') {
+      kind = 'read'; tag = 'READ'; msg = `${STEP().title}: read the card, then carry on.`;
+      act = {label: S.si + 1 < L.steps.length ? 'Continue →' : 'Finish the lesson →', fn: nextStep};
+    } else if (S.phase === 'wait') {
+      const st = STEP(); msg = plain(st.ask);
+      if (st.do) {
+        kind = 'do'; tag = 'YOUR TURN';
+        const b = st.btn && $(st.btn);
+        if (b && b.tagName === 'BUTTON' && !b.disabled) act = {label: plain(b.childNodes[0].textContent), fn: () => $(st.btn)?.click()};
+      } else { kind = 'watch'; tag = 'WATCH' }
+    } else if (S.won && S.lvl < LEVELS.length - 1) {
+      kind = 'done'; tag = 'LESSON DONE'; msg = `Next up: ${LEVELS[S.lvl + 1].title}`;
+      act = {label: 'Next lesson →', fn: () => load(S.lvl + 1)};
+    }
+  }
+  $('.app').classList.toggle('has-now', !!kind);
+  if (!kind) { bar.hidden = true; nowKey = ''; return }
+  const key = [kind, msg, act?.label].join('|');
+  if (key === nowKey) return;
+  nowKey = key;
+  bar.className = 'nowbar ' + kind; bar.hidden = false;
+  bar.innerHTML = `<span class="ntag">${tag}</span><span class="nmsg">${msg}</span>${act ? `<button class="nbtn" id="nbtn">${act.label}</button>` : ''}`;
+  if (act) $('#nbtn').onclick = act.fn;
+  bar.classList.remove('pop'); void bar.offsetWidth; bar.classList.add('pop');
 }
 let hudT = 0;
 function updateHud(rdt) {
@@ -2304,6 +2383,7 @@ function updateHud(rdt) {
   else if (S.phase === 'wait') { cls = STEP().do ? 'do' : 'ask'; msg = (STEP().do ? '👉 ' : '👀 ') + STEP().ask }
   else if (S.paused) msg = '⏸ Paused. Tap tickets to inspect them · Space to resume';
   else msg = X ? `Free play · ${S.stats.served} processed · consumer lag ${lag}` : `Free play · ${S.stats.served} served · ${lag} waiting`;
+  renderNow();
   st.className = 'status ' + cls + (X ? ' xr' : '');
   st.textContent = msg;
   const c = LV().ctl;
@@ -2385,10 +2465,18 @@ function setXray(on) {
 // ---------- input ----------
 const pt = e => { const r = cv.getBoundingClientRect(); return {x: (e.clientX - r.left) / K, y: (e.clientY - r.top) / K} };
 const hitAt = (x, y) => { for (let i = hits.length - 1; i >= 0; i--) { const h = hits[i]; if (x >= h.x && x <= h.x + h.w && y >= h.y && y <= h.y + h.h) return h } return null };
+function canTouch(h) {
+  const gt = gate();
+  if (gt.all) return true;
+  if (S.phase === 'explain' || !S.started) return false;
+  if (h.kind === 'chef') return gt.canvas;                       // dragging chefs around only when a step asks for it
+  if (h.kind === 'offer') return gt.btn === '#open';
+  return true;                                                    // tapping tickets / tables just inspects
+}
 cv.addEventListener('pointerdown', e => {
   if (!S.started) return;
   const {x, y} = pt(e), h = hitAt(x, y);
-  if (!h) return;
+  if (!h || !canTouch(h)) return;
   if (h.kind === 'chef') { S.drag = {c: h.c, x, y}; cv.setPointerCapture(e.pointerId) }
   else if (h.kind === 'ticket') tapTicket(h.si, h.ri, h.t);
   else if (h.kind === 'offer') openStation();
@@ -2397,7 +2485,8 @@ cv.addEventListener('pointerdown', e => {
 cv.addEventListener('pointermove', e => {
   const {x, y} = pt(e);
   if (S.drag) { S.drag.x = x; S.drag.y = y; return }
-  cv.style.cursor = S.started && hitAt(x, y) ? (hitAt(x, y).kind === 'chef' ? 'grab' : 'pointer') : 'default';
+  const h = S.started && hitAt(x, y);
+  cv.style.cursor = h && canTouch(h) ? (h.kind === 'chef' ? 'grab' : 'pointer') : 'default';
 });
 const endDrag = e => {
   if (!S.drag) return;
