@@ -538,6 +538,11 @@ canvas{border-radius:0}
 .rcap{right:150px}
 .dwaiter .sp{height:62px;width:auto;display:block;transition:transform .2s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 .dwaiter.kick .sp{transform:translateY(-6px)}
+/* X-ray and Code arrive at the end of lesson 1 */
+.app:not(.lens-x) #xray,.app:not(.lens-c) #codebtn{display:none}
+#xray.glow,#codebtn.glow{animation:inkglow 1s ease-in-out infinite;position:relative;z-index:5}
+.lesson .row{margin-top:6px}.lesson .row .btn{margin-top:0}
+
 /* the K of the neon sign is a tube on the blink: every few seconds it stutters off and back */
 .kf{animation:kflick 6.4s steps(1) 2s infinite}
 @keyframes kflick{0%,61%,63.5%,65%,68%,100%{color:inherit;text-shadow:inherit;opacity:1}
@@ -800,10 +805,18 @@ const LEVELS = [
         until: S => S.flags.hist, at: () => tkAt(0, 0, 0),
         kitchen: 'Served tickets aren’t thrown away. They stay on the rail, left of the clip, as a record of every order.',
         kafka: 'Kafka keeps messages after they’re read, for a set time called <b>retention</b> (often 7 days). That’s what lets a <i>different</i> app read the same orders later without bothering Marco.'},
-      {title: 'The whole loop', ask: 'Unpaused. Watch Marco serve a few more dishes.',
-        until: S => S.stats.served >= 4, at: () => clipPos(0, 0),
+      {title: 'X-ray on', do: true, btn: '#xray', reveal: 'xray', ask: 'Turn on Kafka X-ray (top right) to see the real Kafka name of everything.',
+        until: S => save.xray, at: () => clipPos(0, 0),
+        kitchen: 'X-ray writes the real Kafka name on everything in the kitchen, in teal. Same café, new labels.',
+        kafka: 'Waiter → <b>producer</b>. Rail → <b>topic</b> <code>mains</code>. Ticket number → <b>offset</b>. Brass clip → <b>committed offset</b>. Marco → <b>consumer</b>.'},
+      {title: 'Under the hood', do: true, btn: '#codebtn', reveal: 'code', ask: 'Now open the Code (top right) to see the KafkaJS code running this kitchen.',
+        until: S => save.code, at: () => clipPos(0, 0),
+        kitchen: 'Beside the kitchen is the real code behind it. As the waiter clips a ticket and Marco cooks, the matching lines light up.',
+        kafka: '<code>waiter.send()</code> is the <b>producer</b> writing to topic <code>mains</code>. <code>chef.run()</code> with <code>eachMessage</code> is the <b>consumer</b>, and committing the offset moves the clip.'},
+      {title: 'The whole loop', lens: true, ask: 'Watch a few more dishes go round, with the Kafka names and the code lighting up.',
+        start: S => { S.flags.loop0 = S.stats.served }, until: S => S.stats.served >= S.flags.loop0 + 3, at: () => clipPos(0, 0),
         kitchen: 'That’s the whole café: diners order, the waiter clips tickets to the rail, and Marco cooks them in order and moves the clip.',
-        kafka: '<b>Producer</b> writes → the message lands at the end of the <b>topic</b> with the next <b>offset</b> → the <b>consumer</b> reads in order → it <b>commits</b> its offset. Every Kafka system is this loop.'},
+        kafka: '<b>Producer</b> writes → the message lands at the end of the <b>topic</b> with the next <b>offset</b> → the <b>consumer</b> reads in order → it <b>commits</b> its offset. Every Kafka system is this loop.<br><br>Keep X-ray and the code on for the next lessons? You can switch either one any time, top right.'},
     ],
     xray: [
       ['🤵', 'Waiter', 'Producer', 'The app that writes events into Kafka. Here, every order is an event.'],
@@ -1120,7 +1133,7 @@ const SANDBOX = {
 
 // ---------- save ----------
 const SAVE_KEY = 'cafe-kafka-v2';
-const save = {unlocked: 0, won: {}, xray: false, mute: false, speed: .5, code: true};
+const save = {unlocked: 0, won: {}, xray: false, mute: false, speed: .5, code: false};
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}) } catch {}
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)) } catch {} };
 if (!save.burger) { const w = {}; for (const k in save.won) w[+k >= 5 ? +k + 1 : k] = save.won[k]; save.won = w; save.burger = true; persist() }
@@ -1275,6 +1288,7 @@ function newStation(key) { return {...STATIONS[key], rr: 0, rails: [newRail()]} 
 
 function load(lvl) {
   FX = [];
+  setTimeout(() => window.applyLens && applyLens());
   const L = lvl < 0 ? SANDBOX : LEVELS[lvl];
   S = {
     lvl, started: false, paused: false, won: false, time: 0, acc: .7, rate: L.setup.rate, huddle: 0, banner: '',
@@ -2233,7 +2247,17 @@ function gate() {
   const st = STEP();
   return {all: false, btn: st.do ? st.btn : null, canvas: !!(st.do && !st.btn)};
 }
+// X-ray and the code are introduced at the end of lesson 1; until then their buttons are hidden
+function applyLens() {
+  const done = save.won[0] || S.lvl >= 1;
+  $('.app').classList.toggle('lens-x', !!(save.lensX || done));
+  $('.app').classList.toggle('lens-c', !!(save.lensC || done));
+}
 function startStep() {
+  const rv = STEP().reveal;
+  if (rv === 'xray') save.lensX = true;
+  if (rv === 'code') save.lensC = true;
+  if (rv) { persist(); applyLens() }
   S.phase = 'wait'; S.paused = !!STEP().paused; S.stepT = S.time; STEP().start?.(S); focusCode();
   lastGoals = ''; renderSteps(); renderCtls(); hudT = 0;
 }
@@ -2245,9 +2269,11 @@ function lessonTick() {
   el.innerHTML = `<span class="arrow" id="larrow"></span><span class="who"><span>Café Kafka · lesson ${S.lvl + 1}</span><span>step ${S.si + 1}/${n}</span></span><h5>${s.title}</h5>
     <div class="kit"><b>🍳 In the kitchen</b>${s.kitchen}</div>
     <div class="kaf"><b>⚙️ In Kafka</b>${s.kafka}</div>
-    <button class="btn gold" id="lnext">${S.si + 1 < n ? 'Got it, continue →' : 'Finish the lesson →'}</button>`;
+    ${s.lens ? `<div class="row"><button class="btn gold" id="lnext">Keep them on →</button><button class="btn" id="lhide">Hide X-ray &amp; code</button></div>`
+             : `<button class="btn gold" id="lnext">${S.si + 1 < n ? 'Got it, continue →' : 'Finish the lesson →'}</button>`}`;
   el.classList.remove('docked'); el.style.position = ''; el.hidden = false;
   $('#lnext').onclick = nextStep;
+  if ($('#lhide')) $('#lhide').onclick = () => { setXray(false); setCode(false); nextStep() };
   requestAnimationFrame(() => { placeLesson(); el.scrollIntoView({block: 'nearest'}); $('#lnext')?.focus({preventScroll: true}) });
 }
 function nextStep() {
@@ -2392,6 +2418,7 @@ function renderCtls() {
   $('#speed').querySelectorAll('button').forEach(b => b.onclick = () => { S.speed = save.speed = +b.dataset.v; persist(); renderCtls() });
   $('#pause').onclick = togglePause;
   $('#restart').onclick = () => load(S.lvl);
+  document.querySelectorAll('#xray.glow,#codebtn.glow').forEach(el => el.classList.remove('glow'));
   const g = S.phase === 'wait' && STEP().btn;
   if (g) $({'#rate': '#rateK', '#commit': '#commitK', '#keyBy': '#keyK'}[g] || g)?.classList.add('glow');
   // lock every action that isn't this step's job (speed, pause, restart and "next lesson" stay usable)
@@ -2419,7 +2446,7 @@ function renderNow() {
   if (!onHome() && S.started && $('#win').hidden && !L.free) {
     if (S.phase === 'explain') {
       kind = 'read'; tag = 'READ'; msg = `${STEP().title}: read the card, then carry on.`;
-      act = {label: S.si + 1 < L.steps.length ? 'Continue →' : 'Finish the lesson →', fn: nextStep};
+      act = {label: STEP().lens ? 'Keep them on →' : S.si + 1 < L.steps.length ? 'Continue →' : 'Finish the lesson →', fn: nextStep};
     } else if (S.phase === 'wait') {
       const st = STEP(); msg = plain(st.ask);
       if (st.do) {
@@ -2575,7 +2602,7 @@ addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
   if (S.phase === 'explain' && (e.code === 'Space' || e.key === 'Enter')) { if (e.target.tagName !== 'BUTTON') { e.preventDefault(); nextStep() } return }
   if (e.code === 'Space' && S.started && $('#win').hidden) { e.preventDefault(); togglePause() }
-  if (e.key.toLowerCase() === 'x') setXray(!save.xray);
+  if (e.key.toLowerCase() === 'x' && $('.app').classList.contains('lens-x')) setXray(!save.xray);
 });
 $('#xray').onclick = () => setXray(!save.xray);
 const sndBtn = () => $('#snd').textContent = save.mute ? '🔇' : '🔊';
@@ -2877,8 +2904,12 @@ function frame(now) {
   updateHud(rdt);
   requestAnimationFrame(frame);
 }
+// first visit (or lesson 1 not reached its X-ray step yet): start with a clean screen, no code and no X-ray
+if (!save.won[0] && !save.lensX) save.xray = false;
+if (!save.won[0] && !save.lensC) save.code = false;
 load(resumeAt());
 setCode(save.code);
+applyLens();
 showHome(true);
 document.fonts?.ready.then(() => { lastGoals = '' });
 requestAnimationFrame(frame);
