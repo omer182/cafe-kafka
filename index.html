@@ -1550,7 +1550,29 @@ const pileAt = (si, ri) => { const r = S.stations[si].rails[ri], t = r.tickets.f
   if (!t) return clipPos(si, ri); const x0 = G.clipX - 12, x1 = t.rx + G.TW + 3; return {x: (x0 + x1) / 2, y: G.st[si].rails[ri] - 2, h: G.TH + 8, w: x1 - x0} };
 // every chef has walked back to where the head chef sent them
 const settled = () => S.chefs.every(c => { const p = chefTarget(c); return Math.hypot(p.x - c.x, p.y - c.y) < 3 });
-const chefAt = c => ({x: c.x, y: c.y - 26, h: 52, w: 52});
+// Where a chef's sprite is drawn (mirrors drawChef), so lesson highlights can hug the character itself.
+function chefSpriteBox(c, size = 30) {
+  const pose = chefPose(c), im = castSprite(c.n, pose) || castSprite(c.n, 'chibi-idle');
+  if (!im) return null;
+  const h = size * (pose === 'chibi-down' && im === castSprite(c.n, 'chibi-down') ? 1.9 : 2.4), w = im.naturalWidth / im.naturalHeight * h;
+  const dx = pose === 'chibi-down' && im === castSprite(c.n, 'chibi-down') ? w * .22 : 0;
+  return {im, x: c.x - w / 2 + dx, y: c.y + size * .55 - h, w, h};
+}
+const chefAt = c => {
+  const b = chefSpriteBox(c);
+  return b ? {x: b.x + b.w / 2, y: b.y - 4, h: b.h + 8, w: b.w + 8, sprite: b} : {x: c.x, y: c.y - 26, h: 52, w: 52};
+};
+// a solid-colour copy of a sprite, used to draw an outline around its silhouette
+const silCache = {};
+function silhouette(im, col) {
+  const k = im.src + col;
+  if (!silCache[k]) {
+    const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+    const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = `rgb(${col})`; x.fillRect(0, 0, c.width, c.height);
+    silCache[k] = c;
+  }
+  return silCache[k];
+}
 // the station's name, plus its topic tag in X-ray
 const stationAt = si => {
   const st = S.stations[si];
@@ -2174,13 +2196,20 @@ function drawFocus() {
   dimA = RM ? 1 : Math.min(1, dimA + .08);
   ctx.save();
   ctx.beginPath(); ctx.rect(0, 0, G.W, G.H);
-  for (const a of as) { const w = a.w || 40, h = a.h || 40; ctx.roundRect(a.x - w / 2 - p, a.y - p, w + 2 * p, h + 2 * p, 9) }
+  for (const a of as) { if (a.sprite) continue; const w = a.w || 40, h = a.h || 40; ctx.roundRect(a.x - w / 2 - p, a.y - p, w + 2 * p, h + 2 * p, 9) }
   ctx.clip('evenodd');
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = dimA; ctx.filter = `blur(${2.5 * DPR * K}px)`; ctx.drawImage(cv, 0, 0); ctx.restore();
   ctx.fillStyle = `rgba(8,10,12,${.55 * dimA})`; ctx.fillRect(0, 0, G.W, G.H);
   ctx.restore();
   for (const a of as) {
     const w = a.w || 40, h = a.h || 40;
+    if (a.sprite) {                                // a character: glowing outline around their own shape, no box
+      const b = a.sprite, sil = silhouette(b.im, col), r = 2.6;
+      ctx.save(); ctx.shadowColor = `rgba(${col},${.9 * pulse})`; ctx.shadowBlur = 18 * pulse;
+      for (let k = 0; k < 12; k++) { const t = k / 12 * Math.PI * 2; ctx.drawImage(sil, b.x + Math.cos(t) * r, b.y + Math.sin(t) * r, b.w, b.h) }
+      ctx.shadowBlur = 0; ctx.drawImage(b.im, b.x, b.y, b.w, b.h); ctx.restore();
+      continue;
+    }
     ctx.save();
     ctx.shadowColor = `rgba(${col},${.9 * pulse})`; ctx.shadowBlur = 26 * pulse;
     ctx.fillStyle = `rgba(${col},${.12 * pulse})`; ctx.strokeStyle = `rgb(${col})`; ctx.lineWidth = 3;
