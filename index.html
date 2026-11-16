@@ -536,6 +536,53 @@ canvas{border-radius:0}
 .rcap{right:150px}
 .dwaiter .sp{height:62px;width:auto;display:block;transition:transform .2s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 .dwaiter.kick .sp{transform:translateY(-6px)}
+/* hero = anime key visual: painted café behind, the cast flanking the title, a vertical katakana title */
+.app.on-home .home{background:
+  radial-gradient(closest-side at 50% 30%,rgba(255,90,50,.22),transparent 75%),
+  repeating-conic-gradient(from 0deg at 50% 30%,rgba(255,255,255,.06) 0deg 1.2deg,transparent 1.2deg 5deg),
+  linear-gradient(rgba(16,12,10,.78),rgba(16,12,10,.9) 60%,#14110F),
+  url(cast/bg/dining.webp) center 20%/cover,
+  var(--ink)}
+.hero{position:relative;overflow:hidden}
+
+
+/* home = an anime title card: the crew poses around the title and whooshes in from the sides */
+.home .demo{display:none}                                  /* the ticket-rail demo lives on in the lessons */
+.hero{min-height:min(100vh,860px);display:flex;flex-direction:column;align-items:center;justify-content:center;padding-block:40px}
+.hero>*:not(.hcast):not(.hkata){position:relative;z-index:2}
+/* the crew stands in one row along the bottom, each in their own space (no overlaps), title above them */
+.hero{justify-content:flex-start;padding-top:min(7vh,64px);min-height:100vh}
+.hcast{position:absolute;left:0;right:0;bottom:0;z-index:1;pointer-events:none;display:flex;align-items:flex-end;justify-content:space-evenly;
+  --H:min(46vh,430px,32vw);height:var(--H);
+  -webkit-mask-image:linear-gradient(#000 78%,transparent 100%);mask-image:linear-gradient(#000 78%,transparent 100%)}
+.hcast img{flex:none;width:auto;filter:drop-shadow(0 0 1px #000) drop-shadow(6px 0 0 rgba(20,16,13,.55))}
+.hcast .yuki,.hcast .marco{height:var(--H)}
+.hcast .kofi{height:calc(var(--H) * .96)}
+.hcast .henrik{height:calc(var(--H) * .64)}
+.hkata{position:absolute;top:40px;left:24px;z-index:3;writing-mode:vertical-rl;font:40px/1 'Dela Gothic One',sans-serif;
+  color:#FFE6DA;-webkit-text-stroke:2px #14110F;paint-order:stroke;letter-spacing:.06em;text-shadow:4px 4px 0 var(--tomato)}
+/* the entrance: in fast from off-screen, overshoot, settle; speed lines streak; a flash when the last one lands */
+.hcast .yuki,.hcast .marco{animation:inL .75s cubic-bezier(.2,1.25,.35,1) both}
+.hcast .kofi,.hcast .henrik{animation:inR .75s cubic-bezier(.2,1.25,.35,1) both;transform:scaleX(-1)}
+.hcast .yuki{animation-delay:.15s}.hcast .kofi{animation-delay:.3s}.hcast .marco{animation-delay:.45s}.hcast .henrik{animation-delay:.6s}
+@keyframes inL{0%{transform:translateX(-110vw) skewX(-14deg);filter:brightness(4) contrast(.6)}
+  70%{transform:translateX(4%) skewX(3deg);filter:brightness(1.4)}100%{transform:none}}
+@keyframes inR{0%{transform:translateX(110vw) scaleX(-1) skewX(14deg);filter:brightness(4) contrast(.6)}
+  70%{transform:translateX(-4%) scaleX(-1) skewX(-3deg);filter:brightness(1.4)}100%{transform:scaleX(-1)}}
+.hcast::before{content:'';position:absolute;left:-10%;right:-10%;top:20%;bottom:10%;pointer-events:none;opacity:0;
+  background:repeating-linear-gradient(0deg,transparent 0 14px,rgba(255,255,255,.5) 14px 16px,transparent 16px 31px,rgba(255,214,170,.35) 31px 32px,transparent 32px 47px);
+  animation:streak 1s ease-out .1s both}
+@keyframes streak{0%{opacity:0;transform:scaleX(.2)}25%{opacity:1}100%{opacity:0;transform:scaleX(1.4)}}
+.hero::after{content:'';position:absolute;inset:0;z-index:4;pointer-events:none;background:#FFF6EA;opacity:0;animation:flash .5s ease-out 1.05s}
+@keyframes flash{0%{opacity:.85}100%{opacity:0}}
+.hkata{animation:slam .45s cubic-bezier(.2,1.6,.4,1) 1.15s both}
+@keyframes slam{0%{transform:scale(2.4) rotate(-8deg);opacity:0}100%{transform:none;opacity:1}}
+.signrow,.hero h1,.hero .sub,.hero .cta{animation:titlein .6s ease-out .9s both}
+@keyframes titlein{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
+@media(max-width:900px),(max-height:620px){.hcast,.hkata{display:none}.hero{min-height:0}}
+@media(prefers-reduced-motion:reduce){.hcast img,.hcast::before,.hero::after,.hkata,.signrow,.hero h1,.hero .sub,.hero .cta{animation:none}}
+.demo{background:linear-gradient(rgba(20,16,13,.72),rgba(20,16,13,.84)),url(cast/bg/kitchen.webp) center 40%/cover}
+
 /* locked controls: faded, no cursor change, not clickable (lessons hand out one action at a time) */
 button:disabled{cursor:default}
 .locked{opacity:.3;filter:grayscale(.8);pointer-events:none;transition:opacity .25s,filter .25s}
@@ -607,10 +654,13 @@ button:disabled{cursor:default}
   </header>
   <section class="home" id="home" aria-label="Welcome to Café Kafka">
     <div class="hero">
+      <div class="hcast" aria-hidden="true"><img class="yuki" src="cast/yuki/portrait.webp" alt=""><img class="marco" src="cast/marco/portrait.webp" alt=""><img class="henrik" src="cast/waiter/bust-happy.webp" alt=""><img class="kofi" src="cast/kofi/portrait.webp" alt=""></div>
+      <div class="hkata" aria-hidden="true">カフェ・カフカ</div>
       <div class="signrow"><span class="sign">Café Kafka</span><span class="open big">OPEN</span></div>
       <h1>Learn Apache Kafka by running a restaurant kitchen.</h1>
       <p class="sub">No Kafka knowledge needed. You’ll take orders, hire chefs and survive the Friday rush, and every move maps to a real Kafka idea.</p>
       <div class="cta"><button class="bell" id="hstart">Start service</button><button class="ghost2" id="hfree">Free play</button></div>
+
 
       <div class="demo" aria-label="A tiny kitchen: orders arrive on a rail and a chef cooks them in order">
         <div class="dhead">
