@@ -26,7 +26,7 @@
 <meta name="twitter:description" content="Learn Apache Kafka by running a restaurant kitchen. Take orders, hire chefs and survive the Friday rush. Every move maps to a real Kafka idea. No Kafka knowledge needed.">
 <meta name="twitter:image" content="https://kafka.omersher.com/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Yellowtail&family=Bangers&family=Dela+Gothic+One&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Yellowtail&family=Bangers&family=Dela+Gothic+One&family=Mochiy+Pop+One&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#0F1113; --board2:#16191C; --line:#262B30; --steel:#3A4148;
@@ -524,7 +524,9 @@ canvas{border-radius:0}
     radial-gradient(closest-side at 50% 34%,rgba(255,90,50,.22),transparent 75%),
     repeating-conic-gradient(from 0deg at 50% 30%,rgba(255,255,255,.07) 0deg 1.2deg,transparent 1.2deg 5deg),
     var(--ink) fixed}
-.hero h1{font:clamp(24px,3.4vw,40px)/1.15 var(--title);letter-spacing:0;color:#fff}
+.hero h1{font:clamp(26px,3.3vw,46px)/1.22 'Mochiy Pop One',var(--title);letter-spacing:.01em;color:#fff;max-width:900px;
+  -webkit-text-stroke:5px #14110F;paint-order:stroke fill;text-shadow:4px 5px 0 var(--tomato);transform:rotate(-2deg)}
+.hero h1 em{font-style:normal;color:var(--amber)}
 .hero .sub{color:#D6CCBB}
 .ghost2{background:#fff;color:var(--ink);border:3px solid var(--ink);border-radius:8px;box-shadow:5px 5px 0 #fff;font:22px/1 var(--sfx);letter-spacing:.06em;padding:14px 24px 12px}
 .ghost2:hover{border-color:var(--ink);transform:translate(-1px,-1px)}
@@ -536,6 +538,12 @@ canvas{border-radius:0}
 .rcap{right:150px}
 .dwaiter .sp{height:62px;width:auto;display:block;transition:transform .2s;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 .dwaiter.kick .sp{transform:translateY(-6px)}
+/* the K of the neon sign is a tube on the blink: every few seconds it stutters off and back */
+.kf{animation:kflick 6.4s steps(1) 2s infinite}
+@keyframes kflick{0%,61%,63.5%,65%,68%,100%{color:inherit;text-shadow:inherit;opacity:1}
+  62%,64%,66.5%{color:#6E3A30;text-shadow:none;opacity:.55}}
+@media(prefers-reduced-motion:reduce){.kf{animation:none}}
+
 /* hero = anime key visual: painted café behind, the cast flanking the title, a vertical katakana title */
 .app.on-home .home{background:
   radial-gradient(closest-side at 50% 30%,rgba(255,90,50,.22),transparent 75%),
@@ -553,12 +561,22 @@ canvas{border-radius:0}
 /* the crew stands in one row along the bottom, each in their own space (no overlaps), title above them */
 .hero{justify-content:flex-start;padding-top:min(7vh,64px);min-height:100vh}
 .hcast{position:absolute;left:0;right:0;bottom:0;z-index:1;pointer-events:none;display:flex;align-items:flex-end;justify-content:space-evenly;
-  --H:min(46vh,430px,32vw);height:var(--H);
+  --H:max(300px,min(calc(100vh - 450px),36vw,860px));height:var(--H);       /* all the room under the title, but never wider than the screen allows */
   -webkit-mask-image:linear-gradient(#000 78%,transparent 100%);mask-image:linear-gradient(#000 78%,transparent 100%)}
 .hcast img{flex:none;width:auto;filter:drop-shadow(0 0 1px #000) drop-shadow(6px 0 0 rgba(20,16,13,.55))}
 .hcast .yuki,.hcast .marco{height:var(--H)}
 .hcast .kofi{height:calc(var(--H) * .96)}
-.hcast .henrik{height:calc(var(--H) * .64)}
+.hcast .henrikw{position:relative;flex:none;height:calc(var(--H) * .7);margin-bottom:calc(var(--H) * .22)}   /* a chest-up picture: lifted so his face lines up with the others' */
+.hcast .henrik{height:100%;-webkit-mask-image:linear-gradient(#000 72%,transparent 100%);mask-image:linear-gradient(#000 72%,transparent 100%)}
+/* the sparkle on Henrik's cloche catches the light every few seconds */
+.glint{position:absolute;left:61.8%;top:11%;width:0;height:0;z-index:2}
+.glint::before,.glint::after{content:'';position:absolute;left:0;top:0;width:calc(var(--H) * .16);aspect-ratio:1;transform:translate(-50%,-50%) scale(0);
+  background:conic-gradient(from 45deg,transparent 0 20deg,#fff 22deg 23deg,transparent 25deg 110deg,#fff 112deg 113deg,transparent 115deg 200deg,#fff 202deg 203deg,transparent 205deg 290deg,#fff 292deg 293deg,transparent 295deg);
+  -webkit-mask:radial-gradient(closest-side,#000 15%,transparent 100%);mask:radial-gradient(closest-side,#000 15%,transparent 100%);
+  animation:glint 3.2s ease-in-out 1.8s infinite}
+.glint::after{width:calc(var(--H) * .07);background:radial-gradient(closest-side,#fff,#FFE9A8 45%,rgba(255,214,120,0) 100%);-webkit-mask:none;mask:none}
+@keyframes glint{0%,72%,100%{transform:translate(-50%,-50%) scale(0) rotate(0)}80%{transform:translate(-50%,-50%) scale(1.15) rotate(25deg)}88%{transform:translate(-50%,-50%) scale(.6) rotate(45deg)}}
+@media(prefers-reduced-motion:reduce){.glint{display:none}}
 .hkata{position:absolute;top:40px;left:24px;z-index:3;writing-mode:vertical-rl;font:40px/1 'Dela Gothic One',sans-serif;
   color:#FFE6DA;-webkit-text-stroke:2px #14110F;paint-order:stroke;letter-spacing:.06em;text-shadow:4px 4px 0 var(--tomato)}
 /* the entrance: in fast from off-screen, overshoot, settle; speed lines streak; a flash when the last one lands */
@@ -579,7 +597,14 @@ canvas{border-radius:0}
 @keyframes slam{0%{transform:scale(2.4) rotate(-8deg);opacity:0}100%{transform:none;opacity:1}}
 .signrow,.hero h1,.hero .sub,.hero .cta{animation:titlein .6s ease-out .9s both}
 @keyframes titlein{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
-@media(max-width:900px),(max-height:620px){.hcast,.hkata{display:none}.hero{min-height:0}}
+@media(max-height:620px) and (min-width:901px){.hcast,.hkata{display:none}.hero{min-height:0}}
+/* phones: the crew stands in a smaller row under the button instead of along the screen bottom */
+@media(max-width:900px){
+  .hkata{display:none}
+  .hero{min-height:0;padding-bottom:0}
+  .hcast{position:relative;order:9;margin-top:26px;width:100%;--H:min(37vw,280px);justify-content:center;gap:0}
+  .hcast .yuki,.hcast .marco,.hcast .kofi,.hcast .henrikw{margin-inline:-1.5%}
+}
 @media(prefers-reduced-motion:reduce){.hcast img,.hcast::before,.hero::after,.hkata,.signrow,.hero h1,.hero .sub,.hero .cta{animation:none}}
 .demo{background:linear-gradient(rgba(20,16,13,.72),rgba(20,16,13,.84)),url(cast/bg/kitchen.webp) center 40%/cover}
 
@@ -643,7 +668,7 @@ button:disabled{cursor:default}
 <body>
 <div class="app on-home">
   <header class="hdr">
-    <div class="logo"><span class="neon">Café Kafka</span><span class="open">OPEN</span></div>
+    <div class="logo"><span class="neon">Café <span class="kf">K</span>afka</span><span class="open">OPEN</span></div>
     <div class="tag">learn Kafka by running a kitchen</div>
     <div class="right">
       <nav id="pills" style="display:flex;gap:5px" aria-label="Levels"></nav>
@@ -654,12 +679,12 @@ button:disabled{cursor:default}
   </header>
   <section class="home" id="home" aria-label="Welcome to Café Kafka">
     <div class="hero">
-      <div class="hcast" aria-hidden="true"><img class="yuki" src="cast/yuki/portrait.webp" alt=""><img class="marco" src="cast/marco/portrait.webp" alt=""><img class="henrik" src="cast/waiter/bust-happy.webp" alt=""><img class="kofi" src="cast/kofi/portrait.webp" alt=""></div>
+      <div class="hcast" aria-hidden="true"><img class="yuki" src="cast/yuki/portrait.webp" alt=""><img class="marco" src="cast/marco/portrait.webp" alt=""><span class="henrikw"><img class="henrik" src="cast/waiter/bust-happy.webp" alt=""><i class="glint"></i></span><img class="kofi" src="cast/kofi/portrait.webp" alt=""></div>
       <div class="hkata" aria-hidden="true">カフェ・カフカ</div>
-      <div class="signrow"><span class="sign">Café Kafka</span><span class="open big">OPEN</span></div>
-      <h1>Learn Apache Kafka by running a restaurant kitchen.</h1>
+      <div class="signrow"><span class="sign">Café <span class="kf">K</span>afka</span><span class="open big">OPEN</span></div>
+      <h1>Learn <em>Apache Kafka</em> by running a restaurant kitchen.</h1>
       <p class="sub">No Kafka knowledge needed. You’ll take orders, hire chefs and survive the Friday rush, and every move maps to a real Kafka idea.</p>
-      <div class="cta"><button class="bell" id="hstart">Start service</button><button class="ghost2" id="hfree">Free play</button></div>
+      <div class="cta"><button class="bell" id="hstart">Start service</button></div>
 
 
       <div class="demo" aria-label="A tiny kitchen: orders arrive on a rail and a chef cooks them in order">
@@ -2379,7 +2404,7 @@ function renderCtls() {
 function renderPills() {
   const h = LEVELS.map((L, i) => `<button class="pill ${i === S.lvl ? 'on' : ''} ${save.won[i] ? 'won' : ''}" data-l="${i}" title="${L.title}">${i + 1}</button>`).join('')
     + SOON.map((t, i) => `<button class="pill" disabled title="Coming next: ${t}">${i + 4}</button>`).join('')
-    + `<button class="pill freep ${S.lvl < 0 ? 'on' : ''}" data-l="-1" title="Free play: every knob unlocked">🎛 Free</button>`;
+;
   $('#pills').innerHTML = h;
   $('#pills').querySelectorAll('[data-l]').forEach(b => b.onclick = () => load(+b.dataset.l));
   $('#xray').title = 'Show the real Kafka names on everything (X)';
@@ -2571,7 +2596,7 @@ function renderHome() {
   $('#hstart').onclick = () => enter(k);
 }
 $('.logo').onclick = () => showHome(true);
-$('#hfree').onclick = () => enter(-1);
+
 $('.logo').title = 'Back to the front door';
 
 // the little live kitchen on the front page: one rail, one chef, the clip
