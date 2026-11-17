@@ -724,7 +724,6 @@ if (window.SakugaFX) { Object.assign(SakugaFX.P, {fill: '#fff', shade: '#FFD58A'
       <nav id="pills" style="display:flex;gap:5px" aria-label="Levels"></nav>
       <button id="codebtn" class="tool" title="Show the Node.js code behind the kitchen">&lt;/&gt; Code</button>
       <button id="xray" class="tool">🩻 Kafka X-ray</button>
-      <button id="snd" class="tool" aria-label="Toggle sound">🔊</button>
     </div>
   </header>
   <section class="home" id="home" aria-label="Welcome to Café Kafka">
@@ -1183,32 +1182,10 @@ const SANDBOX = {
 
 // ---------- save ----------
 const SAVE_KEY = 'cafe-kafka-v2';
-const save = {unlocked: 0, won: {}, xray: false, mute: false, speed: .5, code: false};
+const save = {unlocked: 0, won: {}, xray: false, speed: .5, code: false};
 try { Object.assign(save, JSON.parse(localStorage.getItem(SAVE_KEY)) || {}) } catch {}
 const persist = () => { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)) } catch {} };
 if (!save.burger) { const w = {}; for (const k in save.won) w[+k >= 5 ? +k + 1 : k] = save.won[k]; save.won = w; save.burger = true; persist() }
-
-// ---------- sound (tiny WebAudio synth, no files) ----------
-let AC = null;
-function snd(k) {
-  if (save.mute) return;
-  try { AC ||= new (window.AudioContext || window.webkitAudioContext)() } catch { return }
-  const t = AC.currentTime;
-  const tone = (f, d, type = 'sine', v = .05, at = 0) => {
-    const o = AC.createOscillator(), g = AC.createGain();
-    o.type = type; o.frequency.value = f;
-    g.gain.setValueAtTime(0, t + at); g.gain.linearRampToValueAtTime(v, t + at + .005);
-    g.gain.exponentialRampToValueAtTime(.0001, t + at + d);
-    o.connect(g).connect(AC.destination); o.start(t + at); o.stop(t + at + d + .02);
-  };
-  if (k === 'pin') tone(2400, .04, 'triangle', .018);
-  if (k === 'ding') { tone(1318, .45, 'sine', .04); tone(1976, .3, 'sine', .02) }
-  if (k === 'bell') [0, .2].forEach(a => { tone(1568, 1.2, 'sine', .07, a); tone(2349, .8, 'sine', .03, a); tone(3136, .5, 'sine', .015, a) });
-  if (k === 'bump') tone(110, .18, 'square', .04);
-  if (k === 'hire') { tone(660, .12, 'triangle', .04); tone(880, .18, 'triangle', .04, .1) }
-  if (k === 'goal') { tone(988, .15, 'triangle', .045); tone(1319, .25, 'triangle', .045, .09) }
-  if (k === 'huddle') { tone(392, .25, 'triangle', .03); tone(330, .3, 'triangle', .03, .15) }
-}
 
 // ---------- sim ----------
 let S, G = {}, W = 800, DPR = 1, K = 1, NOW = 0;
@@ -1391,7 +1368,7 @@ function rebalance(msg, dur = HUDDLE) {
     if (c.job) dropJob(c.job);
     c.job = null; c.goal = null;
   }
-  snd('huddle'); renderCtls();
+  renderCtls();
 }
 // a dish abandoned mid-way: if the clip already passed it, nobody will ever cook it
 function dropJob(j) {
@@ -1450,7 +1427,7 @@ function finishJob(c) {
   const wait = S.time - t.born;
   const sp = stovePos(si, ri);
   S.flights.push({kind: 'plate', e: t.e, table: t.table, wait, chef: c.n, from: {x: sp.x, y: sp.y - 6}, t0: S.time, dur: .8});
-  snd('ding'); codeFlash('serve', `table ${t.table + 1}`);
+  codeFlash('serve', `table ${t.table + 1}`);
   // with a gap, the plate is out but the clip hasn't moved yet: the window where a slip causes a repeat
   if (S.commitGap && S.commit === 'plate') { t.state = 'plated'; c.job.phase = 'commit'; c.job.left = S.commitGap }
   else commitJob(c);
@@ -1476,7 +1453,6 @@ function step(dt) {
     f.gone = true;
     if (f.kind === 'ticket') {
       f.t.landed = true; f.t.landedAt = S.time; f.t.kick = 1; f.t.rx = ticketX(S.stations[f.si].rails[f.ri], f.t);
-      snd('pin');
     } else {
       const tb = S.tables[f.table];
       tb.happy = 1.4; tb.mood = f.wait < 8 ? '😋' : f.wait < UPSET ? '🙂' : '😤';
@@ -1597,7 +1573,7 @@ function hire() {
   S.chefs.push(c);
   fx('cutin', {who: c.n, pose: 'bust-fired', title: 'NEW CHEF!', sub: `${c.n.toUpperCase()} JOINS THE CREW · CONSUMER JOINED`, color: '#5F9B48', dark: '#3F7431', dur: 2.8});
   rebalance(`${c.n} joined the crew. Huddle! The head chef is reassigning rails…`);
-  snd('hire'); renderCtls();
+  renderCtls();
 }
 function openStation() {
   if (!S.started || !S.offer.length) return;
@@ -1635,7 +1611,7 @@ function crash(c) {
   c.job = null; c.goal = null; c.down = true; c.downAt = S.time; c.detect = LV().ctl.detect || .5;
   c.say = {text: 'whoa—!', until: NOW + 1.5}; c.shake = .6;
   fx('cutin', {who: c.n, pose: 'bust-shocked', title: 'CHEF DOWN!', sub: `${c.n.toUpperCase()} SLIPPED · CONSUMER CRASHED`, color: '#2B2F45', dark: '#1A1D2E', jp: 'ガーン!!', dur: 3});
-  snd('bump'); renderCtls();
+  renderCtls();
 }
 function clockOut() {
   const c = active().filter(c => c.rails.length).pop();
@@ -1644,7 +1620,7 @@ function clockOut() {
   renderCtls();
 }
 function tapTable(i) {
-  S.hl = {table: i, until: NOW + 3.5}; S.flags.tableTap = {i}; snd('pin');
+  S.hl = {table: i, until: NOW + 3.5}; S.flags.tableTap = {i};
 }
 function togglePause() {
   if (!S.started) return;
@@ -1672,7 +1648,6 @@ function dropChef(c, x, y) {
   if (owner && owner !== c) {
     S.flags.squeeze = true;
     c.shake = .6; owner.say = {text: 'Hey, my rail!', until: NOW + 2.2};
-    snd('bump');
     if (S.phase === 'free') coach('Bounced! Two chefs on one rail would grab the same tickets and cook them twice. The rule is simple: <b>one rail, one chef</b>. Want more hands cooking? You’d need more rails.', () => ({x: owner.x, y: owner.y - 20}));
   }
 }
@@ -2402,7 +2377,7 @@ function lessonTick() {
   if (!S.metAt) S.metAt = NOW;
   if (!RM && (NOW - S.metAt < 1 || FX.some(f => f.kind === 'cutin' && NOW - f.t0 < f.dur - .3))) return;
   S.metAt = 0;
-  S.phase = 'explain'; hideCoach(); snd('goal'); hudT = 0; renderCtls(); focusCode();
+  S.phase = 'explain'; hideCoach(); hudT = 0; renderCtls(); focusCode();
   const s = STEP(), n = LV().steps.length, el = $('#lesson');
   el.innerHTML = `<span class="arrow" id="larrow"></span><span class="who"><span>Café Kafka · lesson ${S.lvl + 1}</span><span>step ${S.si + 1}/${n}</span></span><h5>${s.title}</h5>
     <div class="kit"><b>🍳 In the kitchen</b>${s.kitchen}</div>
@@ -2425,7 +2400,7 @@ function advanceStep() {
   S.phase = 'free'; S.paused = false; S.won = true;
   save.won[S.lvl] = true; save.unlocked = Math.max(save.unlocked, Math.min(LEVELS.length - 1, S.lvl + 1)); persist();
   lastGoals = ''; renderSteps(); renderPills(); renderCtls();
-  snd('bell'); burst(); setTimeout(renderWin, RM ? 0 : 900);
+  burst(); setTimeout(renderWin, RM ? 0 : 900);
 }
 // put the card beside what it explains (right, left, above, below), never on top of it
 // fade an element out, then hide it and carry on
@@ -2692,7 +2667,7 @@ function renderVeil() {
     <div class="tale">${LV().story.map(p => `<p>${p}</p>`).join('')}</div>
     <div class="learn"><b class="lh">${LV().free ? '🩻 Tip' : '🩻 In Kafka words, you’ll learn'}</b>${LV().learn}</div>
     <sakuga-button class="skb big" id="go">🔔 Open the kitchen</sakuga-button></div>`;
-  $('#go').onclick = () => { S.started = true; $('#storyd').open = false; snd('bell'); renderVeil(); if (LV().free) renderCtls(); else startStep() };
+  $('#go').onclick = () => { S.started = true; $('#storyd').open = false; renderVeil(); if (LV().free) renderCtls(); else startStep() };
   setTimeout(() => $('#go')?.focus(), 50);
 }
 function renderWin() {
@@ -2757,9 +2732,6 @@ addEventListener('keydown', e => {
   if (e.key.toLowerCase() === 'x' && $('.app').classList.contains('lens-x')) setXray(!save.xray);
 });
 $('#xray').onclick = () => setXray(!save.xray);
-const sndBtn = () => $('#snd').textContent = save.mute ? '🔇' : '🔊';
-$('#snd').onclick = () => { save.mute = !save.mute; persist(); sndBtn() };
-sndBtn();
 
 // ---------- front door ----------
 const onHome = () => $('.app').classList.contains('on-home');
