@@ -1223,8 +1223,14 @@ const fxOut = k => 1 - (1 - k) ** 3, fxBack = k => 1 + 2.7 * (k - 1) ** 3 + 1.7 
 function fx(kind, o) {
   if (RM && kind !== 'sfx') return;                      // reduced motion: lettering only, no flashes or slides
   if (kind === 'cutin' && S?.phase === 'explain') return;   // never cut in over a lesson card
-  if (kind === 'cutin') FX = FX.filter(f => f.kind !== 'cutin');
-  FX.push({kind, t0: NOW, ...o});
+  let t0 = NOW;
+  if (kind === 'cutin') {
+    // queue behind the cut-in on screen (they overlap only by its slide-out); keep at most one waiting
+    const on = FX.filter(f => f.kind === 'cutin' && f.t0 <= NOW);
+    FX = FX.filter(f => f.kind !== 'cutin' || f.t0 <= NOW);
+    if (on.length) t0 = Math.max(NOW, Math.max(...on.map(f => f.t0 + f.dur)) - .35);
+  }
+  const e = {kind, ...o, t0}; FX.push(e); return e;
 }
 function fxServe(x, y, chef, big) {
   if (!big) return fx('sfx', {text: 'SERVED!', x, y: y - 46, size: 17, rot: -.12, font: 'Bangers', fill: '#fff', dur: .8});
@@ -1259,6 +1265,7 @@ function drawFX() {
   FX = FX.filter(f => NOW - f.t0 < f.dur);
   let shake = 0;
   for (const f of FX) {
+    if (NOW < f.t0) continue;                             // queued cut-in, not its turn yet
     const k = NOW - f.t0, end = 1 - fxSeg(k, f.dur - .25, f.dur);
     if (f.kind === 'impact') {
       if (k < .3) shake = Math.max(shake, (1 - k / .3) * 9);
@@ -1372,8 +1379,8 @@ const lagOf = rail => rail.tickets.length - rail.clip;
 const totalLag = () => S.stations.reduce((a, st) => a + st.rails.reduce((b, r) => b + lagOf(r), 0), 0);
 
 function rebalance(msg, dur = HUDDLE) {
-  S.huddle = dur; S.banner = msg; S.stats.rebalances++;
-  fx('cutin', {who: 'HeadChef', pose: 'bust-happy', title: 'HUDDLE!', sub: 'HEAD CHEF · REBALANCE · REASSIGNING RAILS', color: '#2F2A24', dark: '#14110F', dur: 2.6});
+  const cut = fx('cutin', {who: 'HeadChef', pose: 'bust-happy', title: 'HUDDLE!', sub: 'HEAD CHEF · REBALANCE · REASSIGNING RAILS', color: '#2F2A24', dark: '#14110F', dur: 2.6});
+  S.huddle = dur + Math.max(0, (cut?.t0 ?? NOW) - NOW); S.banner = msg; S.stats.rebalances++;   // wait for a queued HUDDLE! cut-in
   if (G.staff) fx('sfx', {text: 'ゴゴゴゴ', x: G.pad + 110, y: G.staff.top + 40, size: 26, rot: -.08, fill: '#B9A6FF', rise: 6, dur: Math.min(2.4, dur + .4)});
   for (const c of S.chefs) {
     if (c.job) dropJob(c.job);
@@ -1583,8 +1590,8 @@ function hire() {
   if (!S.started || S.chefs.length >= (LV().ctl.hire || 1)) return;
   const c = newChef(S.nextChef++, -30, G.staff ? G.staff.top + 60 : 0);
   S.chefs.push(c);
-  rebalance(`${c.n} joined the crew. Huddle! The head chef is reassigning rails…`);
   fx('cutin', {who: c.n, pose: 'bust-fired', title: 'NEW CHEF!', sub: `${c.n.toUpperCase()} JOINS THE CREW · CONSUMER JOINED`, color: '#5F9B48', dark: '#3F7431', dur: 2.8});
+  rebalance(`${c.n} joined the crew. Huddle! The head chef is reassigning rails…`);
   snd('hire'); renderCtls();
 }
 function openStation() {
