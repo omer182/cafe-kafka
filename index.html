@@ -1431,7 +1431,7 @@ function finishJob(c) {
   const {t, si, ri} = c.job, st = S.stations[si];
   if (t.served) {
     t.dup = true; S.stats.dup++; S.flags.dupT = {si, ri, t};
-    const p = tablePos(t.table, 0); puff(p.x + 22, p.y - 22, '🤨 ×2', 2, -10);
+    const p = tablePos(t.table, 0); puff(p.x + 22, p.y - 22, '🤨', 2, -10);
   }
   t.served = true; c.served++;
   // an older ticket still waiting on a sibling rail: rails don't keep each other in order
@@ -1816,7 +1816,53 @@ function foodSprite(e) {
 }
 Object.keys(FOOD).forEach(foodSprite);   // fetch the dishes up front too
 const foodHTML = e => FOOD[e] ? `<img class="fd" src="cast/food/food-${FOOD[e]}.webp" alt="${e}" onerror="this.replaceWith(this.alt)">` : e;
+// ---------- manga marks: the diners' moods drawn in ink, the way manga draws them, instead of emoji ----------
+const MK = {ink: '#1A1614', paper: '#fff'};
+function mkStroke(fill, lw) { ctx.lineJoin = ctx.lineCap = 'round'; ctx.lineWidth = lw; ctx.strokeStyle = MK.ink; ctx.stroke(); if (fill) { ctx.fillStyle = fill; ctx.fill() } }
+const MARKS = {
+  vein(s) {                                  // anger cross: four bulging brackets
+    for (let q = 0; q < 4; q++) { ctx.save(); ctx.rotate(q * Math.PI / 2); ctx.beginPath();
+      ctx.moveTo(s * .12, -s * .5); ctx.quadraticCurveTo(s * .14, -s * .14, s * .5, -s * .12);
+      ctx.lineCap = 'round'; ctx.lineWidth = s * .26; ctx.strokeStyle = MK.ink; ctx.stroke(); ctx.lineWidth = s * .13; ctx.strokeStyle = '#E4573D'; ctx.stroke(); ctx.restore() }
+  },
+  drop(s) {                                  // nervous sweat drop
+    ctx.beginPath(); ctx.moveTo(0, -s * .55); ctx.bezierCurveTo(s * .1, -s * .2, s * .38, 0, s * .38, s * .2);
+    ctx.arc(0, s * .2, s * .38, 0, Math.PI); ctx.bezierCurveTo(-s * .38, 0, -s * .1, -s * .2, 0, -s * .55); ctx.closePath();
+    mkStroke('#8ED3F2', s * .1);
+    ctx.beginPath(); ctx.ellipse(-s * .14, s * .2, s * .06, s * .13, .3, 0, 7); ctx.fillStyle = MK.paper; ctx.fill();
+  },
+  note(s) {                                  // happy humming
+    ctx.save(); ctx.rotate(-.15);
+    ctx.beginPath(); ctx.ellipse(-s * .12, s * .3, s * .22, s * .16, -.4, 0, 7); mkStroke('#FFB547', s * .09);
+    ctx.beginPath(); ctx.moveTo(s * .08, s * .26); ctx.lineTo(s * .08, -s * .5); ctx.quadraticCurveTo(s * .42, -s * .36, s * .34, -s * .02);
+    ctx.lineWidth = s * .16; ctx.strokeStyle = MK.ink; ctx.lineCap = 'round'; ctx.stroke(); ctx.lineWidth = s * .06; ctx.strokeStyle = '#FFB547'; ctx.stroke(); ctx.restore();
+  },
+  heart(s) {
+    ctx.beginPath(); ctx.moveTo(0, s * .45); ctx.bezierCurveTo(-s * .62, 0, -s * .38, -s * .58, 0, -s * .2);
+    ctx.bezierCurveTo(s * .38, -s * .58, s * .62, 0, 0, s * .45); ctx.closePath(); mkStroke('#FF6F91', s * .1);
+    ctx.beginPath(); ctx.ellipse(-s * .2, -s * .18, s * .07, s * .1, -.6, 0, 7); ctx.fillStyle = MK.paper; ctx.fill();
+  },
+  hearts(s) { ctx.save(); ctx.translate(-s * .22, s * .08); MARKS.heart(s * .8); ctx.translate(s * .5, -s * .38); ctx.rotate(.3); MARKS.heart(s * .5); ctx.restore() },
+  sparkle(s) {                               // pleased twinkle
+    const star = (r, x, y) => { ctx.beginPath(); for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4, q = i % 2 ? r * .28 : r; ctx.lineTo(x + Math.sin(a) * q, y - Math.cos(a) * q) } ctx.closePath(); mkStroke('#FFD166', s * .08) };
+    star(s * .5, -s * .08, s * .06); star(s * .22, s * .36, -s * .32);
+  },
+  huff(s) {                                  // annoyed steam puff
+    ctx.beginPath(); [[-.22, .08, .2], [0, -.08, .24], [.24, .06, .2], [.02, .2, .2]].forEach(([x, y, r]) => { ctx.moveTo(x * s + r * s, y * s); ctx.arc(x * s, y * s, r * s, 0, 7) });
+    mkStroke(MK.paper, s * .12); ctx.fill();
+    [[-.5, .34, .09], [-.66, .46, .06]].forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x * s, y * s, r * s, 0, 7); mkStroke(MK.paper, s * .08) });
+  },
+  dots(s) { for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.arc(i * s * .3, s * .1, s * .09, 0, 7); ctx.fillStyle = MK.ink; ctx.fill() } },
+  huh(s) { mkWord('?!', s, '#B9A6FF') },
+  bye(s) { mkWord('BYE!', s * .8, '#fff') },
+};
+function mkWord(w, s, fill) { ctx.font = `${Math.round(s * 1.1)}px Bangers`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.lineWidth = s * .22; ctx.strokeStyle = MK.ink; ctx.strokeText(w, 0, 0); ctx.fillStyle = fill; ctx.fillText(w, 0, 0) }
+// every emoji the kitchen still uses for a feeling, mapped to its mark
+const MARK_OF = {'🙂': 'note', '😐': 'drop', '😠': 'vein', '💢': 'vein', '😡': 'vein', '😋': 'hearts', '😤': 'huff', '👋': 'bye', '🤨': 'huh', '…': 'dots'};
+function drawMark(m, x, y, size) { ctx.save(); ctx.translate(x, y); MARKS[m](size); ctx.restore() }
 function emoji(e, x, y, size) {
+  if (MARK_OF[e]) return drawMark(MARK_OF[e], x, y, size * 1.15);
   const im = foodSprite(e);
   if (!im && FOOD[e] && !foodImg[FOOD[e]].complete) return;   // dish art still downloading: draw nothing yet
   if (im) { const k = size * 1.5 / Math.max(im.naturalWidth, im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; ctx.drawImage(im, x - w / 2, y - h / 2, w, h); return }
