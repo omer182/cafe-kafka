@@ -690,6 +690,13 @@ sakuga-button.nb::part(button){font-size:21px;padding:10px 16px 8px;white-space:
 .lesson sakuga-button.skb{margin-top:6px}.lesson .row sakuga-button.skb{margin-top:0}
 .card .acts sakuga-button.skb{flex:1;min-width:180px}
 .knob sakuga-slider{display:block;margin:30px 4px 0;--sk-slider-width:100%}
+/* two buttons in a row: same height, centred, no wrapping */
+.lesson .row,.card .acts{align-items:stretch}
+.row sakuga-button.skb::part(button),.card .acts sakuga-button.skb::part(button){height:100%;justify-content:center;text-align:center;white-space:nowrap}
+.lesson .row sakuga-button.skb::part(button){font-size:18px;padding:11px 12px 9px}
+.lesson .row sakuga-button[variant=secondary]::part(button){font:700 13px/1.2 var(--sans);white-space:normal}
+/* the burst canvas behind each button reaches 160px past it; inside cards that made scrollbars */
+.card sakuga-button,#lesson sakuga-button{overflow:clip;overflow-clip-margin:10px}
 @media(max-width:700px){sakuga-button.nb{flex:1 1 100%}}
 </style>
 <script>
@@ -832,7 +839,7 @@ const LEVELS = [
         until: S => S.flags.hist, at: () => tkAt(0, 0, 0),
         kitchen: 'Served tickets aren’t thrown away. They stay on the rail, left of the clip, as a record of every order.',
         kafka: 'Kafka keeps messages after they’re read, for a set time called <b>retention</b> (often 7 days). That’s what lets a <i>different</i> app read the same orders later without bothering Marco.'},
-      {title: 'X-ray on', do: true, btn: '#xray', reveal: 'xray', ask: 'Turn on Kafka X-ray (top right) to see the real Kafka name of everything.',
+      {title: 'X-ray on', do: true, btn: '#xray', reveal: 'xray', spot: false, ask: 'Turn on Kafka X-ray (top right) to see the real Kafka name of everything.',
         until: S => save.xray, at: () => clipPos(0, 0),
         kitchen: 'X-ray writes the real Kafka name on everything in the kitchen, in teal. Same café, new labels.',
         kafka: 'Waiter → <b>producer</b>. Rail → <b>topic</b> <code>mains</code>. Ticket number → <b>offset</b>. Brass clip → <b>committed offset</b>. Marco → <b>consumer</b>.'},
@@ -1265,7 +1272,7 @@ function drawFX() {
       for (const [a, b, c] of FXLINES) { const yy = y0 + a * (h + sk), ln = 80 + b * 260, xs = c * G.W; ctx.fillRect(xs, yy, ln, 1.6) }
       const im = castSprite(f.who, f.pose) || castSprite(f.who, 'bust-happy');
       if (im) { const ih = h * 1.35, iw = im.naturalWidth / im.naturalHeight * ih; ctx.drawImage(im, G.W - iw - G.W * .04, y0 - h * .08, iw, ih) }
-      else { const c = S.chefs.find(c => c.n === f.who); if (c) emoji(c.e, G.W * .8, y0 + h * .55, h * .6) }
+      else if (!loading(f.who)) { const c = S.chefs.find(c => c.n === f.who); if (c) emoji(c.e, G.W * .8, y0 + h * .55, h * .6) }
       ctx.restore();
       ctx.lineWidth = 6; ctx.strokeStyle = FXPAPER; ctx.stroke(); ctx.lineWidth = 2.5; ctx.strokeStyle = FXINK; ctx.stroke();
       const tx = Math.max(24, G.W * .06), ty = y0 + h * .52;
@@ -1293,11 +1300,16 @@ function castSprite(name, pose) {
   if (!im) { im = castImg[name + pose] = new Image(); im.onerror = () => { im.bad = true }; im.src = base + pose + '.webp' }
   return im.complete && im.naturalWidth && !im.bad ? im : null;
 }
+// true while any of this character's pictures is still downloading: draw nothing then, never the emoji stand-in
+const loading = name => Object.keys(castImg).some(k => k.startsWith(name) && !castImg[k].complete);
+// fetch every sprite up front, so a chef hired later (or a cut-in) never flashes an emoji first
+const ART_POSES = {"Marco":["bust-fired","bust-happy","bust-shocked","chibi-bye","chibi-cook","chibi-down","chibi-idle"],"Yuki":["bust-fired","bust-happy","bust-shocked","chibi-bye","chibi-cook","chibi-down","chibi-idle"],"Kofi":["bust-fired","bust-happy","bust-shocked","chibi-bye","chibi-cook","chibi-down","chibi-idle"],"Waiter":["bust-happy","chibi-idle","chibi-send"],"HeadChef":["bust-happy","chibi-huddle","chibi-idle"],"Auditor":["bust-happy","chibi-idle"],"Diner1":["chibi-angry","chibi-calm","chibi-happy","chibi-waiting"],"Diner2":["chibi-angry","chibi-happy","chibi-upset","chibi-waiting"],"Diner3":["chibi-angry","chibi-happy","chibi-waiting"],"Diner4":["chibi-angry","chibi-happy","chibi-waiting"]};
+for (const [n, ps] of Object.entries(ART_POSES)) for (const p of ps) castSprite(n, p);
 const chefPose = c => c.down ? 'chibi-down' : c.leaving ? 'chibi-bye' : c.job ? 'chibi-cook' : 'chibi-idle';
 // Draws a chef; returns the sprite's top edge (for bubbles), or null when it fell back to emoji.
 function drawChef(c, x, y, size) {
   const pose = chefPose(c), im = castSprite(c.n, pose) || castSprite(c.n, 'chibi-idle');
-  if (!im) { emoji(c.e, x, y, size); return null }
+  if (!im) { if (!loading(c.n)) emoji(c.e, x, y, size); return null }
   const h = size * (pose === 'chibi-down' ? 1.9 : 2.4), w = im.naturalWidth / im.naturalHeight * h;
   const foot = y + size * .55;
   const dx = pose === 'chibi-down' ? w * .22 : 0;             // lying sprites are wide: keep the name label clear
@@ -1692,7 +1704,8 @@ function geom() {
 }
 const tablePos = (i, dy = 0) => ({x: G.tables[i], y: 104 + dy});
 const stovePos = (si, ri) => ({x: G.clipX + 2 + (G.TW + 44) / 2, y: G.st[si].rails[ri] + 93});
-const clipPos = (si, ri) => ({x: G.clipX, y: G.st[si].rails[ri], h: 34, w: 18});
+// xl: under X-ray, the focus frame redraws the clip's label above itself, crisp, instead of letting the dimming cut it
+const clipPos = (si, ri) => ({x: G.clipX, y: G.st[si].rails[ri], h: 34, w: 18, xl: () => `committed offset ${S.stations[si].rails[ri].clip}`});
 const tkAt = (si, ri, off) => { const t = S.stations[si].rails[ri].tickets[off]; return t ? {x: t.rx + G.TW / 2, y: G.st[si].rails[ri] + 4, h: G.TH, w: G.TW + 6} : clipPos(si, ri) };
 // the clip plus every waiting ticket after it on one rail
 const pileAt = (si, ri) => { const r = S.stations[si].rails[ri], t = r.tickets.filter((t, o) => o >= r.clip && t.landed).pop();
@@ -1783,9 +1796,11 @@ function foodSprite(e) {
   if (!im) { im = foodImg[n] = new Image(); im.onerror = () => { im.bad = true }; im.src = `cast/food/food-${n}.webp` }
   return im.complete && im.naturalWidth && !im.bad ? im : null;
 }
+Object.keys(FOOD).forEach(foodSprite);   // fetch the dishes up front too
 const foodHTML = e => FOOD[e] ? `<img class="fd" src="cast/food/food-${FOOD[e]}.webp" alt="${e}" onerror="this.replaceWith(this.alt)">` : e;
 function emoji(e, x, y, size) {
   const im = foodSprite(e);
+  if (!im && FOOD[e] && !foodImg[FOOD[e]].complete) return;   // dish art still downloading: draw nothing yet
   if (im) { const k = size * 1.5 / Math.max(im.naturalWidth, im.naturalHeight), w = im.naturalWidth * k, h = im.naturalHeight * k; ctx.drawImage(im, x - w / 2, y - h / 2, w, h); return }
   txt(e, x, y, `${size}px ${EMO}`, '#000', 'center', 'middle');
 }
@@ -1917,7 +1932,7 @@ function draw(rdt) {
       ctx.fillStyle = gr; ctx.beginPath(); ctx.ellipse(x, 94, 23, 8, 0, 0, 7); ctx.fill();
     }
     if (tb.happy > 0) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x, 93, 10, 5, 0, 0, 7); ctx.fill() }
-    if (!dim) emoji(tb.e, x, 64 + hop, G.narrow ? 24 : 28);
+    if (!dim && !loading(who)) emoji(tb.e, x, 64 + hop, G.narrow ? 24 : 28);
     if (p.n) {
       const w = S.time - p.oldest, mood = w < 7 ? '🙂' : w < UPSET ? '😐' : '😠';
       const bx = x + 20, by = 32;
@@ -1937,7 +1952,7 @@ function draw(rdt) {
   if (wim) {
     const h = 80, w = wim.naturalWidth / wim.naturalHeight * h;
     ctx.drawImage(wim, G.waiter.x - Math.min(w, 34) / 2 - (w > 34 ? 6 : 0), G.waiter.y + 18 - h - S.waiterKick * 6, w, h);
-  } else emoji('🤵', G.waiter.x, G.waiter.y - S.waiterKick * 6, 30);
+  } else if (!loading('Waiter')) emoji('🤵', G.waiter.x, G.waiter.y - S.waiterKick * 6, 30);
   txt('WAITER', G.waiter.x, G.waiter.y + 28, `700 9px ${MONO}`, 'rgba(255,214,170,.55)', 'center');
   if (X) xlabel('producer', G.waiter.x, G.waiter.y + 42);
   // the pass
@@ -1989,12 +2004,12 @@ function draw(rdt) {
     if (X) xlabel('consumer group "kitchen"', G.pad + 92, s.top + 15, 'left');
     const him = castSprite('HeadChef', S.huddle > 0 ? 'chibi-huddle' : 'chibi-idle') || castSprite('HeadChef', 'chibi-idle');
     if (him) { const h = 74, w = him.naturalWidth / him.naturalHeight * h; ctx.drawImage(him, G.pad + 40 - w / 2, s.top + 82 - h, w, h) }
-    else { emoji('👨‍🍳', G.pad + 40, s.top + 60, 30); emoji('📋', G.pad + 54, s.top + 70, 15) }
+    else if (!loading('HeadChef')) { emoji('👨‍🍳', G.pad + 40, s.top + 60, 30); emoji('📋', G.pad + 54, s.top + 70, 15) }
     txt('HEAD CHEF', G.pad + 40, s.top + 92, `700 9px ${MONO}`, 'rgba(233,229,220,.55)', 'center');
     if (X) xlabel('coordinator', G.pad + 40, s.top + 104 - 1);
     ctx.fillStyle = '#6B4D33'; rr(G.W * .4, s.top + 78, G.W * .6 - G.pad - 110, 7, 3); ctx.fill();
     ctx.fillStyle = '#3E2C1D'; ctx.fillRect(G.W * .4 + 8, s.top + 85, 4, 10); ctx.fillRect(G.W - G.pad - 122, s.top + 85, 4, 10);
-    if (S.huddle > 0 && !RM && !him) emoji('💬', G.pad + 64, s.top + 36 + Math.sin(NOW * 6) * 2, 16);
+    if (S.huddle > 0 && !RM && !him && !loading('HeadChef')) emoji('💬', G.pad + 64, s.top + 36 + Math.sin(NOW * 6) * 2, 16);
   }
 
   // chefs
@@ -2227,7 +2242,7 @@ function drawRail(si, ri, rail, y, rdt) {
     if (S.aud.on && S.aud.at && S.aud.at.si === si && S.aud.at.ri === ri) {
       const aim = castSprite('Auditor', 'chibi-idle');            // she stands on her blue clip, reading behind the kitchen
       if (aim) { const h = 52, w = aim.naturalWidth / aim.naturalHeight * h; ctx.drawImage(aim, bx - w / 2, y + 2 - h, w, h) }
-      else emoji('🕵️', bx, y - 10, 18);
+      else if (!loading('Auditor')) emoji('🕵️', bx, y - 10, 18);
     }
     if (X) xlabel(`group "audit" @ ${rail.b}`, bx, y + 74);
   }
@@ -2358,7 +2373,8 @@ function placeAt(el, p, w, H, ax, cy) {
 }
 let dimA = 0;
 function drawFocus() {
-  if (S.phase !== 'explain') { dimA = 0; return }
+  // spot:false = the whole kitchen is the point (X-ray labels everywhere), so no dimming and no frame
+  if (S.phase !== 'explain' || STEP().spot === false) { dimA = 0; return }
   const pulse = RM ? 1 : .75 + .25 * Math.sin(NOW * 5), col = save.xray ? '95,224,208' : '255,181,71';
   const as = [STEP().at()].flat().filter(Boolean), p = 5;
   // blur and dim the kitchen around the highlighted thing(s), so the eye goes to it and the card
@@ -2389,6 +2405,7 @@ function drawFocus() {
       for (const [cx, cy, sx, sy] of corners) { ctx.beginPath(); ctx.moveTo(cx + sx * L, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + sy * L); ctx.stroke() }
     }
     ctx.restore();
+    if (save.xray && a.xl) xlabel(a.xl(), a.x, a.y + 2);
   }
 }
 
