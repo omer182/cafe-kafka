@@ -571,10 +571,10 @@ canvas{border-radius:0}
 .hcast img{flex:none;width:auto;filter:drop-shadow(0 0 1px #000) drop-shadow(6px 0 0 rgba(20,16,13,.55))}
 .hcast .yuki,.hcast .marco{height:var(--H)}
 .hcast .kofi{height:calc(var(--H) * .96)}
-.hcast .henrikw{position:relative;flex:none;height:calc(var(--H) * .7);margin-bottom:calc(var(--H) * .22)}   /* a chest-up picture: lifted so his face lines up with the others' */
-.hcast .henrik{height:100%;-webkit-mask-image:linear-gradient(#000 72%,transparent 100%);mask-image:linear-gradient(#000 72%,transparent 100%)}
+.hcast .henrikw{position:relative;flex:none;height:calc(var(--H) * .9)}   /* thigh-up picture, so a little shorter to keep his head the others' size */
+.hcast .henrik{display:block;height:100%}
 /* the sparkle on Henrik's cloche catches the light every few seconds */
-.glint{position:absolute;left:61.8%;top:11%;width:0;height:0;z-index:2}
+.glint{position:absolute;left:7.8%;top:10.7%;width:0;height:0;z-index:2}
 .glint::before,.glint::after{content:'';position:absolute;left:0;top:0;width:calc(var(--H) * .16);aspect-ratio:1;transform:translate(-50%,-50%) scale(0);
   background:conic-gradient(from 45deg,transparent 0 20deg,#fff 22deg 23deg,transparent 25deg 110deg,#fff 112deg 113deg,transparent 115deg 200deg,#fff 202deg 203deg,transparent 205deg 290deg,#fff 292deg 293deg,transparent 295deg);
   -webkit-mask:radial-gradient(closest-side,#000 15%,transparent 100%);mask:radial-gradient(closest-side,#000 15%,transparent 100%);
@@ -718,7 +718,7 @@ if (window.SakugaFX) { Object.assign(SakugaFX.P, {fill: '#fff', shade: '#FFD58A'
   </header>
   <section class="home" id="home" aria-label="Welcome to Café Kafka">
     <div class="hero">
-      <div class="hcast" aria-hidden="true"><img class="yuki" src="cast/yuki/portrait.webp" alt=""><img class="marco" src="cast/marco/portrait.webp" alt=""><span class="henrikw"><img class="henrik" src="cast/waiter/bust-happy.webp" alt=""><i class="glint"></i></span><img class="kofi" src="cast/kofi/portrait.webp" alt=""></div>
+      <div class="hcast" aria-hidden="true"><img class="yuki" src="cast/yuki/portrait.webp" alt=""><img class="marco" src="cast/marco/portrait.webp" alt=""><span class="henrikw"><img class="henrik" src="cast/waiter/portrait.webp" alt=""><i class="glint"></i></span><img class="kofi" src="cast/kofi/portrait.webp" alt=""></div>
       <div class="hkata" aria-hidden="true">カフェ・カフカ</div>
       <div class="signrow"><span class="sign">Café <span class="kf">K</span>afka</span><span class="open big">OPEN</span></div>
       <h1>Learn <em>Apache Kafka</em> by running a restaurant kitchen.</h1>

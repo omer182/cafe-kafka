@@ -280,6 +280,11 @@
    "h": 320,
    "w": 211
   },
+  "portrait": {
+   "file": "waiter/portrait.webp",
+   "h": 1200,
+   "w": 1097
+  },
   "sheet": {
    "file": "waiter/sheet.webp",
    "h": 1024,
