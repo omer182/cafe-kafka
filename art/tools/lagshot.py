@@ -12,7 +12,18 @@ with sync_playwright() as p:
     for i in range(60):
         if pg.evaluate("S.phase") == "explain": break
         pg.wait_for_timeout(500)
-    pg.wait_for_timeout(1200)
+    pg.evaluate("setXray(true)"); pg.wait_for_timeout(1500)
     print("step:", pg.evaluate("STEP()?.title"), "phase:", pg.evaluate("S.phase"), "lag:", pg.evaluate("totalLag()"))
     pg.screenshot(path=out)
+    # continue: card fades, then a hire -> NEW CHEF cut-in; card must wait for it
+    pg.evaluate("nextStep()"); pg.wait_for_timeout(200); print("fading:", pg.evaluate("$('#lesson').className"))
+    pg.wait_for_timeout(600); print("after fade hidden:", pg.evaluate("$('#lesson').hidden"), "step:", pg.evaluate("STEP().title"))
+    pg.evaluate("$('#hire').b.click()"); pg.wait_for_timeout(1300)
+    pg.screenshot(path=out.replace('.png','-cut.png'))
+    t0 = pg.evaluate("NOW")
+    for i in range(40):
+        if pg.evaluate("S.phase") == "explain": break
+        pg.wait_for_timeout(250)
+    print("card after", round(pg.evaluate("NOW") - t0 + 1.3, 1), "s; cutins live:", pg.evaluate("FX.filter(f=>f.kind==='cutin'&&NOW-f.t0<f.dur).length"))
+    pg.wait_for_timeout(700); pg.screenshot(path=out.replace('.png','-hire.png'))
     print("errors:", errs or "none"); b.close()
