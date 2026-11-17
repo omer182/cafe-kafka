@@ -886,7 +886,7 @@ const LEVELS = [
         kitchen: 'Orders now arrive faster than Marco can cook. Every ticket to the right of the clip is a diner still waiting for food, and the line keeps growing.',
         kafka: 'The number of messages after the committed offset is <b>consumer lag</b>. It’s the number teams watch most: growing lag means the consumer can’t keep up with the producers.'},
       {title: 'Hire help?', do: true, btn: '#hire', ask: 'The obvious fix: click ＋ Hire a chef in the left panel.',
-        until: S => S.chefs.length >= 2 && S.huddle === 0 && settled(), at: () => ({x: G.pad + 40, y: G.staff.top + 34, h: 60, w: 60}),
+        until: S => S.chefs.length >= 2 && S.huddle === 0 && settled(), at: headChefAt,
         kitchen: 'Yuki walked in and the <b>head chef</b> called a <b>huddle</b>: everyone stopped cooking, he took back every rail and dealt them out again. Orders kept arriving the whole time.',
         kafka: 'That huddle is a <b>rebalance</b>. Marco and Yuki now form a <b>consumer group</b>, and the head chef is its <b>group coordinator</b>. Whenever a consumer joins or leaves, the coordinator pauses the group and reassigns the partitions. Nobody consumes while it runs, so lag jumps.'},
       {title: 'Nothing for Yuki', ask: 'Look at the staff room.',
@@ -934,7 +934,7 @@ const LEVELS = [
         kitchen: 'Marco moves between the stove and the blender. He always takes whichever rail has the oldest waiting ticket. Busy, but nothing gets stuck.',
         kafka: 'One consumer can read several topics at once: <code>subscribe(["mains", "desserts"])</code>. It owns both partitions until someone joins to share the work.'},
       {title: 'Huddle!', do: true, btn: '#hire', ask: 'Marco is stretched thin. Click ＋ Hire a chef to bring in a pastry chef.',
-        until: S => S.chefs.length >= 2 && (S.flags.hud ||= S.huddle > 0 && S.huddle < HUDDLE - .4), at: () => ({x: G.pad + 40, y: G.staff.top + 34, h: 60, w: 60}),
+        until: S => S.chefs.length >= 2 && (S.flags.hud ||= S.huddle > 0 && S.huddle < HUDDLE - .4), at: headChefAt,
         kitchen: 'Everyone stopped cooking. The head chef is taking back every rail and dealing them out again between Marco and Yuki. Meanwhile, orders keep arriving.',
         kafka: 'Another <b>rebalance</b>, like in lesson 2. When a consumer joins or leaves the group (or partitions change), the coordinator pauses the group and reassigns partitions. While it happens nobody consumes, so lag jumps.'},
       {title: 'One station each', ask: 'Watch the head chef finish the huddle.',
@@ -1704,11 +1704,13 @@ function geom() {
 const tablePos = (i, dy = 0) => ({x: G.tables[i], y: 104 + dy});
 const stovePos = (si, ri) => ({x: G.clipX + 2 + (G.TW + 44) / 2, y: G.st[si].rails[ri] + 93});
 // xl: under X-ray, the focus frame redraws the clip's label above itself, crisp, instead of letting the dimming cut it
-const clipPos = (si, ri) => ({x: G.clipX, y: G.st[si].rails[ri], h: 34, w: 18, xl: () => `committed offset ${S.stations[si].rails[ri].clip}`});
-const tkAt = (si, ri, off) => { const t = S.stations[si].rails[ri].tickets[off]; return t ? {x: t.rx + G.TW / 2, y: G.st[si].rails[ri] + 4, h: G.TH, w: G.TW + 6} : clipPos(si, ri) };
+const clipShape = (si, ri) => ({x: G.clipX - 10, y: G.st[si].rails[ri] - 1, w: 20, h: 36, r: 5});
+const tkShape = (si, ri, t) => ({tk: true, x: t.rx, y: G.st[si].rails[ri] + 12});
+const clipPos = (si, ri) => ({x: G.clipX, y: G.st[si].rails[ri], h: 34, w: 18, shapes: [clipShape(si, ri)], xl: () => `committed offset ${S.stations[si].rails[ri].clip}`});
+const tkAt = (si, ri, off) => { const t = S.stations[si].rails[ri].tickets[off]; return t ? {x: t.rx + G.TW / 2, y: G.st[si].rails[ri] + 4, h: G.TH, w: G.TW + 6, shapes: [tkShape(si, ri, t)]} : clipPos(si, ri) };
 // the clip plus every waiting ticket after it on one rail
-const pileAt = (si, ri) => { const r = S.stations[si].rails[ri], t = r.tickets.filter((t, o) => o >= r.clip && t.landed).pop();
-  if (!t) return clipPos(si, ri); const x0 = G.clipX - 12, x1 = Math.min(G.railR, t.rx + G.TW + 3); return {x: (x0 + x1) / 2, y: G.st[si].rails[ri] - 2, h: G.TH + 8, w: x1 - x0, xl: () => `committed offset ${r.clip}`, xlx: G.clipX, xly: G.st[si].rails[ri] + 2} };
+const pileAt = (si, ri) => { const r = S.stations[si].rails[ri], ws = r.tickets.filter((t, o) => o >= r.clip && t.landed && t.rx < G.railR), t = ws[ws.length - 1];
+  if (!t) return clipPos(si, ri); const x0 = G.clipX - 12, x1 = Math.min(G.railR, t.rx + G.TW + 3); return {x: (x0 + x1) / 2, y: G.st[si].rails[ri] - 2, h: G.TH + 8, w: x1 - x0, shapes: [clipShape(si, ri), ...ws.map(t => tkShape(si, ri, t))], xl: () => `committed offset ${r.clip}`, xlx: G.clipX, xly: G.st[si].rails[ri] + 2} };
 // every chef has walked back to where the head chef sent them
 const settled = () => S.chefs.every(c => { const p = chefTarget(c); return Math.hypot(p.x - c.x, p.y - c.y) < 3 });
 // Where a chef's sprite is drawn (mirrors drawChef), so lesson highlights can hug the character itself.
@@ -1718,6 +1720,12 @@ function chefSpriteBox(c, size = 30) {
   const h = size * (pose === 'chibi-down' && im === castSprite(c.n, 'chibi-down') ? 1.9 : 2.4), w = im.naturalWidth / im.naturalHeight * h;
   const dx = pose === 'chibi-down' && im === castSprite(c.n, 'chibi-down') ? w * .22 : 0;
   return {im, x: c.x - w / 2 + dx, y: c.y + size * .55 - h, w, h};
+}
+function headChefAt() {
+  const s = G.staff, im = castSprite('HeadChef', S.huddle > 0 ? 'chibi-huddle' : 'chibi-idle') || castSprite('HeadChef', 'chibi-idle');
+  if (!s || !im) return {x: G.pad + 40, y: (s ? s.top : 0) + 34, h: 60, w: 60};
+  const h = 74, w = im.naturalWidth / im.naturalHeight * h, b = {im, x: G.pad + 40 - w / 2, y: s.top + 82 - h, w, h};
+  return {x: b.x + w / 2, y: b.y - 4, h: h + 8, w: w + 8, sprite: b};
 }
 const chefAt = c => {
   const b = chefSpriteBox(c);
@@ -2454,39 +2462,54 @@ function placeAt(el, p, w, H, ax, cy) {
   }
 }
 let dimA = 0;
+let focusCv = null, spotCv = null;
+// outline of a highlighted thing: a ticket's own zigzag paper (plus its pin), or a rounded box; grown by g
+function shapePath(r, g) {
+  ctx.beginPath();
+  if (!r.tk) return void ctx.roundRect(r.x - g, r.y - g, r.w + 2 * g, r.h + 2 * g, r.r + g);
+  const w = G.TW, h = G.TH, x = r.x, y = r.y;
+  ctx.moveTo(x - g, y - g); ctx.lineTo(x + w + g, y - g); ctx.lineTo(x + w + g, y + h - 3 + g);
+  for (let k = w, up = false; k > 0; k -= 4, up = !up) ctx.lineTo(x + Math.max(0, k - 4), y + (up ? h - 3 : h) + g);
+  ctx.lineTo(x - g, y + h - 3 + g); ctx.closePath();
+  ctx.roundRect(x + w / 2 - 9 - g, y - 6 - g, 18 + 2 * g, 9 + 2 * g, 2 + g);   // the pin on top
+}
 function drawFocus() {
   // spot:false = the whole kitchen is the point (X-ray labels everywhere), so no dimming and no frame
   if (S.phase !== 'explain' || STEP().spot === false) { dimA = 0; return }
-  const pulse = RM ? 1 : .75 + .25 * Math.sin(NOW * 5), col = save.xray ? '95,224,208' : '255,181,71';
-  const as = [STEP().at()].flat().filter(Boolean), p = 5;
-  // blur and dim the kitchen around the highlighted thing(s), so the eye goes to it and the card
+  const pulse = RM ? 1 : .6 + .4 * Math.sin(NOW * 4), col = save.xray ? '95,224,208' : '255,181,71';
+  const as = [STEP().at()].flat().filter(Boolean), T = ctx.getTransform();
+  // keep a crisp copy of the frame, blur and dim the whole kitchen, then bring back only the thing(s) being explained
+  focusCv ||= document.createElement('canvas');
+  if (focusCv.width !== cv.width || focusCv.height !== cv.height) { focusCv.width = cv.width; focusCv.height = cv.height }
+  const fc = focusCv.getContext('2d'); fc.setTransform(1, 0, 0, 1, 0, 0); fc.clearRect(0, 0, cv.width, cv.height); fc.drawImage(cv, 0, 0);
   dimA = RM ? 1 : Math.min(1, dimA + .08);
-  ctx.save();
-  ctx.beginPath(); ctx.rect(0, 0, G.W, G.H);
-  for (const a of as) { if (a.sprite) continue; const w = a.w || 40, h = a.h || 40; ctx.roundRect(a.x - w / 2 - p, a.y - p, w + 2 * p, h + 2 * p, 9) }
-  ctx.clip('evenodd');
-  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = dimA; ctx.filter = `blur(${2.5 * DPR * K}px)`; ctx.drawImage(cv, 0, 0); ctx.restore();
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = dimA; ctx.filter = `blur(${2.5 * DPR * K}px)`; ctx.drawImage(focusCv, 0, 0); ctx.restore();
   ctx.fillStyle = `rgba(8,10,12,${.55 * dimA})`; ctx.fillRect(0, 0, G.W, G.H);
-  ctx.restore();
+  const crisp = () => { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(focusCv, 0, 0); ctx.restore() };
   for (const a of as) {
-    const w = a.w || 40, h = a.h || 40;
-    if (a.sprite) {                                // a character: glowing outline around their own shape, no box
+    if (a.sprite) {                                // a character: glowing outline around their own shape
       const b = a.sprite, sil = silhouette(b.im, col), r = 2.6;
-      ctx.save(); ctx.shadowColor = `rgba(${col},${.9 * pulse})`; ctx.shadowBlur = 18 * pulse;
+      ctx.save(); ctx.shadowColor = `rgba(${col},${.9 * pulse})`; ctx.shadowBlur = 20 * pulse;
       for (let k = 0; k < 12; k++) { const t = k / 12 * Math.PI * 2; ctx.drawImage(sil, b.x + Math.cos(t) * r, b.y + Math.sin(t) * r, b.w, b.h) }
       ctx.shadowBlur = 0; ctx.drawImage(b.im, b.x, b.y, b.w, b.h); ctx.restore();
-      continue;
+    } else if (a.shapes) {                         // tickets and the clip: just their own cards, crisp, with a pulsing glow
+      ctx.save(); ctx.shadowColor = `rgba(${col},${.95 * pulse})`; ctx.shadowBlur = 18 * pulse; ctx.fillStyle = `rgb(${col})`;
+      for (const r of a.shapes) { shapePath(r, 2); ctx.fill() }
+      ctx.restore();
+      for (const r of a.shapes) { ctx.save(); shapePath(r, 0); ctx.clip(); crisp(); ctx.restore() }
+    } else {                                       // anything else: a soft round spotlight, no box
+      const w = a.w || 40, h = a.h || 40, cx = a.x, cy = a.y + h / 2, rx = w / 2 + 16, ry = h / 2 + 16;
+      spotCv ||= document.createElement('canvas');
+      if (spotCv.width !== cv.width || spotCv.height !== cv.height) { spotCv.width = cv.width; spotCv.height = cv.height }
+      const sc = spotCv.getContext('2d'); sc.globalCompositeOperation = 'source-over'; sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, cv.width, cv.height);
+      sc.drawImage(focusCv, 0, 0); sc.globalCompositeOperation = 'destination-in'; sc.setTransform(T); sc.translate(cx, cy); sc.scale(rx, ry);
+      const g = sc.createRadialGradient(0, 0, 0, 0, 0, 1); g.addColorStop(0, '#000'); g.addColorStop(.72, '#000'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      sc.fillStyle = g; sc.beginPath(); sc.arc(0, 0, 1, 0, 7); sc.fill();
+      ctx.save(); ctx.translate(cx, cy); ctx.scale(rx * 1.12, ry * 1.12);
+      const gl = ctx.createRadialGradient(0, 0, .6, 0, 0, 1); gl.addColorStop(0, `rgba(${col},${.35 * pulse})`); gl.addColorStop(1, `rgba(${col},0)`);
+      ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, 1, 0, 7); ctx.fill(); ctx.restore();
+      ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(spotCv, 0, 0); ctx.restore();
     }
-    // corner brackets: a focus frame that marks the target without painting over it
-    const gap = p + 3 + (RM ? 0 : 2.5 * (1 - pulse) * 4), x0 = a.x - w / 2 - gap, y0 = a.y - gap, x1 = a.x + w / 2 + gap, y1 = a.y + h + gap;
-    const L = Math.max(8, Math.min(16, Math.min(w, h) * .32));
-    const corners = [[x0, y0, 1, 1], [x1, y0, -1, 1], [x0, y1, 1, -1], [x1, y1, -1, -1]];
-    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    for (const [lw, st, glow] of [[6, '#14110F', 0], [3, `rgb(${col})`, 12 * pulse]]) {
-      ctx.lineWidth = lw; ctx.strokeStyle = st; ctx.shadowColor = `rgba(${col},.8)`; ctx.shadowBlur = glow;
-      for (const [cx, cy, sx, sy] of corners) { ctx.beginPath(); ctx.moveTo(cx + sx * L, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + sy * L); ctx.stroke() }
-    }
-    ctx.restore();
     if (save.xray && a.xl) xlabel(a.xl(), a.xlx ?? a.x, a.xly ?? a.y + 2);
   }
 }
