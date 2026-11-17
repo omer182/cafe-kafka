@@ -578,7 +578,7 @@ canvas{border-radius:0}
 .glint::before,.glint::after{content:'';position:absolute;left:0;top:0;width:calc(var(--H) * .16);aspect-ratio:1;transform:translate(-50%,-50%) scale(0);
   background:conic-gradient(from 45deg,transparent 0 20deg,#fff 22deg 23deg,transparent 25deg 110deg,#fff 112deg 113deg,transparent 115deg 200deg,#fff 202deg 203deg,transparent 205deg 290deg,#fff 292deg 293deg,transparent 295deg);
   -webkit-mask:radial-gradient(closest-side,#000 15%,transparent 100%);mask:radial-gradient(closest-side,#000 15%,transparent 100%);
-  animation:glint 3.2s ease-in-out 1.8s infinite}
+  animation:glint 3.2s ease-in-out 2.4s infinite}
 .glint::after{width:calc(var(--H) * .07);background:radial-gradient(closest-side,#fff,#FFE9A8 45%,rgba(255,214,120,0) 100%);-webkit-mask:none;mask:none}
 @keyframes glint{0%,72%,100%{transform:translate(-50%,-50%) scale(0) rotate(0)}80%{transform:translate(-50%,-50%) scale(1.15) rotate(25deg)}88%{transform:translate(-50%,-50%) scale(.6) rotate(45deg)}}
 @media(prefers-reduced-motion:reduce){.glint{display:none}}
@@ -587,7 +587,7 @@ canvas{border-radius:0}
 /* the entrance: in fast from off-screen, overshoot, settle; speed lines streak; a flash when the last one lands */
 .hcast .yuki,.hcast .marco{animation:inL .75s cubic-bezier(.2,1.25,.35,1) both}
 .hcast .kofi,.hcast .henrik{animation:inR .75s cubic-bezier(.2,1.25,.35,1) both;transform:scaleX(-1)}
-.hcast .yuki{animation-delay:.15s}.hcast .kofi{animation-delay:.3s}.hcast .marco{animation-delay:.45s}.hcast .henrik{animation-delay:.6s}
+.hcast .yuki{animation-delay:.2s}.hcast .kofi{animation-delay:.6s}.hcast .marco{animation-delay:1s}.hcast .henrik{animation-delay:1.4s}
 @keyframes inL{0%{transform:translateX(-110vw) skewX(-14deg);filter:brightness(4) contrast(.6)}
   70%{transform:translateX(4%) skewX(3deg);filter:brightness(1.4)}100%{transform:none}}
 @keyframes inR{0%{transform:translateX(110vw) scaleX(-1) skewX(14deg);filter:brightness(4) contrast(.6)}
