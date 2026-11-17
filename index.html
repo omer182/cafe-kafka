@@ -872,7 +872,7 @@ const LEVELS = [
     ctl: {rateMax: 3, hire: 3},
     steps: [
       {title: 'Falling behind', do: true, btn: '#rate', ask: 'Drag the Crowd slider (left panel) all the way to the right.',
-        until: S => totalLag() >= 6, at: () => lastWaitAt(0, 0),
+        until: S => totalLag() >= 6, at: () => pileAt(0, 0),
         kitchen: 'Orders now arrive faster than Marco can cook. Every ticket to the right of the clip is a diner still waiting for food, and the line keeps growing.',
         kafka: 'The number of messages after the committed offset is <b>consumer lag</b>. It’s the number teams watch most: growing lag means the consumer can’t keep up with the producers.'},
       {title: 'Hire help?', do: true, btn: '#hire', ask: 'The obvious fix: click ＋ Hire a chef in the left panel.',
@@ -949,7 +949,7 @@ const LEVELS = [
     ctl: {rateMax: 2.5, rails: 3},
     steps: [
       {title: 'One rail, one cook', ask: 'Watch the Mains rail fill up while Yuki waits in the staff room.',
-        until: S => totalLag() >= 5, at: () => lastWaitAt(0, 0),
+        until: S => totalLag() >= 5, at: () => pileAt(0, 0),
         kitchen: 'Orders pile up on the only rail. Yuki is ready to cook, but the rail belongs to Marco.',
         kafka: 'A topic with <b>one partition</b> can be read by only <b>one consumer</b> in a group. Adding consumers doesn’t help: the number of partitions is the limit.'},
       {title: 'A second rail', do: true, btn: '#addrail', ask: 'Click ＋ Add a rail to Mains in the left panel.',
@@ -1709,7 +1709,7 @@ const clipPos = (si, ri) => ({x: G.clipX, y: G.st[si].rails[ri], h: 34, w: 18, x
 const tkAt = (si, ri, off) => { const t = S.stations[si].rails[ri].tickets[off]; return t ? {x: t.rx + G.TW / 2, y: G.st[si].rails[ri] + 4, h: G.TH, w: G.TW + 6} : clipPos(si, ri) };
 // the clip plus every waiting ticket after it on one rail
 const pileAt = (si, ri) => { const r = S.stations[si].rails[ri], t = r.tickets.filter((t, o) => o >= r.clip && t.landed).pop();
-  if (!t) return clipPos(si, ri); const x0 = G.clipX - 12, x1 = t.rx + G.TW + 3; return {x: (x0 + x1) / 2, y: G.st[si].rails[ri] - 2, h: G.TH + 8, w: x1 - x0} };
+  if (!t) return clipPos(si, ri); const x0 = G.clipX - 12, x1 = Math.min(G.railR, t.rx + G.TW + 3); return {x: (x0 + x1) / 2, y: G.st[si].rails[ri] - 2, h: G.TH + 8, w: x1 - x0} };
 // every chef has walked back to where the head chef sent them
 const settled = () => S.chefs.every(c => { const p = chefTarget(c); return Math.hypot(p.x - c.x, p.y - c.y) < 3 });
 // Where a chef's sprite is drawn (mirrors drawChef), so lesson highlights can hug the character itself.
@@ -1742,7 +1742,6 @@ const stationAt = si => {
   if (save.xray) { ctx.font = `700 9px ${MONO}`; w += 6 + ctx.measureText(st.rails.length > 1 ? `topic "${st.key}" · ${st.rails.length} partitions` : `topic "${st.key}" · partition ${st.key}-0`).width + 8 }
   return {x: G.pad + 4 + w / 2, y: G.st[si].top + 6, h: 24, w};
 };
-const lastWaitAt = (si, ri) => { const r = S.stations[si].rails[ri], t = r.tickets[r.tickets.length - 1]; return {x: Math.min(G.railR - 60, ticketX(r, t)) + G.TW / 2, y: G.st[si].rails[ri] + 4, h: G.TH, w: G.TW + 6} };
 const stationSpot = (si, ri) => ({x: G.clipX - 18, y: G.st[si].rails[ri] + 94});
 function chefTarget(c) {
   if (S.huddle > 0) {
