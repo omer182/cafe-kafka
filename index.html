@@ -669,6 +669,33 @@ button:disabled{cursor:default}
 .dtk .fd{width:38px;height:34px;object-fit:contain;display:block;margin:-4px auto 0}
 .dstove .fd{width:34px;height:30px;object-fit:contain;display:block}
 </style>
+<script src="vendor/sakuga/button.js"></script>
+<script src="vendor/sakuga/slider.js"></script>
+<style>
+/* Sakuga VFX controls (vendor/sakuga, MIT), recoloured for the manga theme */
+:root{--sk-card:#fff;--sk-ink:#1A1614;--sk-dim:#5E554A;--sk-soft:#1A1614;--sk-pri:#FFB547;--sk-pri-ink:#1A1614;--sk-acc:#E4573D;--sk-track:#EDE5D6;
+  --sk-r:8px;--sk-bw:3px;--sk-sh:5px 5px 0 #1A1614;--sk-alt-sh:3px 3px 0 #1A1614;--sk-fill:#E4573D;--sk-tick:#1A1614}
+sakuga-button.skb{display:block}
+sakuga-button.skb::part(button){width:100%;display:flex;align-items:center;justify-content:center;gap:8px;font:22px/1 var(--sfx);font-style:normal;letter-spacing:.06em;padding:13px 24px 11px}
+sakuga-button.skb::part(button):disabled{cursor:default;opacity:.35}
+sakuga-button.gold,sakuga-button.big{--sk-card:var(--amber)}
+sakuga-button.big::part(button){font-size:27px;padding:15px 32px 13px}
+.cta sakuga-button.big{display:inline-block}
+sakuga-button[variant=secondary]::part(button){font:700 13.5px/1.25 var(--sans);letter-spacing:0;padding:10px 14px;justify-content:flex-start;text-align:left;border-width:2.5px}
+sakuga-button[variant=secondary].gold::part(button){font-weight:800}
+sakuga-button.skb small{margin-left:auto;padding-left:8px;font-weight:500;opacity:.7;font-size:11px}
+sakuga-button.nb{flex:none;--sk-card:var(--ink);--sk-ink:#fff;--sk-btn-sh:3px 3px 0 var(--tomato)}
+sakuga-button.nb::part(button){font-size:21px;padding:10px 16px 8px;white-space:nowrap}
+.row sakuga-button.skb{flex:1}
+.lesson sakuga-button.skb{margin-top:6px}.lesson .row sakuga-button.skb{margin-top:0}
+.card .acts sakuga-button.skb{flex:1;min-width:180px}
+.knob sakuga-slider{display:block;margin:30px 4px 0;--sk-slider-width:100%}
+@media(max-width:700px){sakuga-button.nb{flex:1 1 100%}}
+</style>
+<script>
+// the effects (bursts, clouds, lettering) in our ink, paper and amber instead of the library's lavender
+if (window.SakugaFX) { Object.assign(SakugaFX.P, {fill: '#fff', shade: '#FFD58A', line: '#1A1614', accent: '#E4573D', ink: '#1A1614', sfx: ['#1A1614', '#fff']}) }
+</script>
 </head>
 <body>
 <div class="app on-home">
@@ -689,7 +716,7 @@ button:disabled{cursor:default}
       <div class="signrow"><span class="sign">Café <span class="kf">K</span>afka</span><span class="open big">OPEN</span></div>
       <h1>Learn <em>Apache Kafka</em> by running a restaurant kitchen.</h1>
       <p class="sub">No Kafka knowledge needed. You’ll take orders, hire chefs and survive the Friday rush, and every move maps to a real Kafka idea.</p>
-      <div class="cta"><button class="bell" id="hstart">Start service</button></div>
+      <div class="cta"><sakuga-button class="skb big" id="hstart">Start service</sakuga-button></div>
 
 
       <div class="demo" aria-label="A tiny kitchen: orders arrive on a rail and a chef cooks them in order">
@@ -2269,8 +2296,8 @@ function lessonTick() {
   el.innerHTML = `<span class="arrow" id="larrow"></span><span class="who"><span>Café Kafka · lesson ${S.lvl + 1}</span><span>step ${S.si + 1}/${n}</span></span><h5>${s.title}</h5>
     <div class="kit"><b>🍳 In the kitchen</b>${s.kitchen}</div>
     <div class="kaf"><b>⚙️ In Kafka</b>${s.kafka}</div>
-    ${s.lens ? `<div class="row"><button class="btn gold" id="lnext">Keep them on →</button><button class="btn" id="lhide">Hide X-ray &amp; code</button></div>`
-             : `<button class="btn gold" id="lnext">${S.si + 1 < n ? 'Got it, continue →' : 'Finish the lesson →'}</button>`}`;
+    ${s.lens ? `<div class="row"><sakuga-button class="skb gold" id="lnext">Keep them on →</sakuga-button><sakuga-button class="skb" variant="secondary" id="lhide">Hide X-ray &amp; code</sakuga-button></div>`
+             : `<sakuga-button class="skb gold" id="lnext">${S.si + 1 < n ? 'Got it, continue →' : 'Finish the lesson →'}</sakuga-button>`}`;
   el.classList.remove('docked'); el.style.position = ''; el.hidden = false;
   $('#lnext').onclick = nextStep;
   if ($('#lhide')) $('#lhide').onclick = () => { setXray(false); setCode(false); nextStep() };
@@ -2386,20 +2413,20 @@ function renderCtls() {
   const L = LV(), c = L.ctl;
   const ends = ['🧍', '👨‍👩‍👧‍👦'];
   let h = '';
-  if (S.won && S.lvl < LEVELS.length - 1) h += `<button class="btn gold" id="next">Next lesson → ${LEVELS[S.lvl + 1].title}</button>`;
+  if (S.won && S.lvl < LEVELS.length - 1) h += `<sakuga-button class="skb gold" id="next">Next lesson → ${LEVELS[S.lvl + 1].title}</sakuga-button>`;
   if (!S.serial) h += `<div class="knob" id="rateK"><label for="rate"><span>${save.xray ? 'Producer rate' : 'Crowd'}</span><b id="rateV">${S.rate.toFixed(1)} orders/s</b></label>
-    <input id="rate" type="range" min="0" max="${c.rateMax}" step="0.1" value="${S.rate}"><div class="ends"><span>${ends[0]}</span><span>${ends[1]}</span></div></div>`;
-  if (c.hire) h += `<button class="btn" id="hire" ${!S.started || S.chefs.length >= c.hire ? 'disabled' : ''}>＋ Hire a chef<small>${S.chefs.length}/${c.hire} on staff</small></button>`;
-  if (c.open && S.offer.length) h += `<button class="btn gold" id="open" ${S.started ? '' : 'disabled'}>🍰 Open the dessert station</button>`;
+    <sakuga-slider id="rate" label="Crowd, orders per second" min="0" max="${c.rateMax}" step="0.1" value="${S.rate}" unit="/s"></sakuga-slider><div class="ends"><span>${ends[0]}</span><span>${ends[1]}</span></div></div>`;
+  if (c.hire) h += `<sakuga-button variant="secondary" class="skb" id="hire" ${!S.started || S.chefs.length >= c.hire ? 'disabled' : ''}>＋ Hire a chef<small>${S.chefs.length}/${c.hire} on staff</small></sakuga-button>`;
+  if (c.open && S.offer.length) h += `<sakuga-button variant="secondary" class="skb gold" id="open" ${S.started ? '' : 'disabled'}>🍰 Open the dessert station</sakuga-button>`;
   const on = S.started, nr = S.stations[0].rails.length, crew = active();
-  if (c.rails) h += `<button class="btn" id="addrail" ${on && nr < c.rails ? '' : 'disabled'}>＋ Add a rail to Mains<small>${nr}/${c.rails} · can’t undo</small></button>`;
-  if (c.audit) h += `<button class="btn ${S.aud.on ? 'ghost' : ''}" id="aud" ${on ? '' : 'disabled'}>${S.aud.on ? '🏠 Send the auditor home' : '🕵️ Call in the auditor'}</button>`;
+  if (c.rails) h += `<sakuga-button variant="secondary" class="skb" id="addrail" ${on && nr < c.rails ? '' : 'disabled'}>＋ Add a rail to Mains<small>${nr}/${c.rails} · can’t undo</small></sakuga-button>`;
+  if (c.audit) h += `<sakuga-button variant="secondary" class="skb ${S.aud.on ? 'ghost' : ''}" id="aud" ${on ? '' : 'disabled'}>${S.aud.on ? '🏠 Send the auditor home' : '🕵️ Call in the auditor'}</sakuga-button>`;
   if (c.keyBy) h += `<div class="knob" id="keyK"><label><span>${save.xray ? 'Message key' : 'Waiter’s key'}</span></label><div class="seg" id="keyBy">${[...(c.keyBy === 'all' ? [['none', '🔁 None']] : []), ['table', '🔢 Table'], ['dish', '🍔 Dish']]
     .map(([v, l]) => `<button data-v="${v}" class="${(S.keys ? S.keyBy : 'none') === v ? 'on' : ''}" ${on ? '' : 'disabled'}>${l}</button>`).join('')}</div></div>`;
   if (c.commit) h += `<div class="knob" id="commitK"><label><span>Move the clip</span></label><div class="seg" id="commit">${[['grab', '🤖 auto (on grab)'], ['plate', '✋ after plating']]
     .map(([v, l]) => `<button data-v="${v}" class="${S.commit === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
-  if (c.trip) h += `<button class="btn" id="trip" ${on && !S.tripArm && crew.length > 1 ? '' : 'disabled'}>💥 ${S.tripArm ? 'Waiting for the worst moment…' : c.trip === 'worst' ? 'Trip the chef<small>at the worst moment</small>' : 'Trip a chef'}</button>`;
-  if (c.leave) h += `<button class="btn" id="leave" ${on && crew.length > 1 ? '' : 'disabled'}>👋 Clock out a chef<small>the proper way</small></button>`;
+  if (c.trip) h += `<sakuga-button variant="secondary" class="skb" id="trip" ${on && !S.tripArm && crew.length > 1 ? '' : 'disabled'}>💥 ${S.tripArm ? 'Waiting for the worst moment…' : c.trip === 'worst' ? 'Trip the chef<small>at the worst moment</small>' : 'Trip a chef'}</sakuga-button>`;
+  if (c.leave) h += `<sakuga-button variant="secondary" class="skb" id="leave" ${on && crew.length > 1 ? '' : 'disabled'}>👋 Clock out a chef<small>the proper way</small></sakuga-button>`;
   h += `<div class="row trow"><div class="seg" id="speed" aria-label="Speed">${[[.5, '🐢 Slow'], [1, '🐇 Normal']]
     .map(([v, l]) => `<button data-v="${v}" class="${S.speed === v ? 'on' : ''}">${l}</button>`).join('')}</div>
     <button class="btn ghost ib" id="pause" ${S.started ? '' : 'disabled'} title="${S.paused ? 'Resume' : 'Pause'} (Space)">${S.paused ? '▶' : '⏸'}</button>
@@ -2452,7 +2479,7 @@ function renderNow() {
       if (st.do) {
         kind = 'do'; tag = 'YOUR TURN';
         const b = st.btn && $(st.btn);
-        if (b && b.tagName === 'BUTTON' && !b.disabled) act = {label: plain(b.childNodes[0].textContent), fn: () => $(st.btn)?.click()};
+        if (b && /^(SAKUGA-)?BUTTON$/.test(b.tagName) && !b.disabled) act = {label: plain(b.childNodes[0].textContent), fn: () => { const t = $(st.btn); t?.b ? t.b.click() : t?.click() }};
       } else { kind = 'watch'; tag = 'WATCH' }
     } else if (S.won && S.lvl < LEVELS.length - 1) {
       kind = 'done'; tag = 'LESSON DONE'; msg = `Next up: ${LEVELS[S.lvl + 1].title}`;
@@ -2465,7 +2492,7 @@ function renderNow() {
   if (key === nowKey) return;
   nowKey = key;
   bar.className = 'nowbar ' + kind; bar.hidden = false;
-  bar.innerHTML = `<span class="ntag">${tag}</span><span class="nmsg">${msg}</span>${act ? `<button class="nbtn" id="nbtn">${act.label}</button>` : ''}`;
+  bar.innerHTML = `<span class="ntag">${tag}</span><span class="nmsg">${msg}</span>${act ? `<sakuga-button class="skb nb" id="nbtn">${act.label}</sakuga-button>` : ''}`;
   if (act) $('#nbtn').onclick = act.fn;
   bar.classList.remove('pop'); void bar.offsetWidth; bar.classList.add('pop');
 }
@@ -2531,7 +2558,7 @@ function renderVeil() {
       <p class="castp">Everyone in this kitchen has a real Kafka name. No need to memorize it: the kitchen explains each one when it shows up, and <b>Kafka X-ray</b> writes the names on everything.</p>
       <div class="cast">${CAST.map(([e, k, d, x]) => `<div class="cr"><span class="ce">${icon(e)}</span><span class="ck">${k}<small>${d}</small></span><span class="cx">${x}</span></div>`).join('')}</div>
       <p class="castn">With a single rail, the rail is the whole topic. You’ll add more rails in lesson 4.</p>
-      <button class="bell" id="cast">Next: tonight’s story →</button></div>`;
+      <sakuga-button class="skb big" id="cast">Next: tonight’s story →</sakuga-button></div>`;
     $('#cast').onclick = () => { castShown = true; renderVeil() };
     setTimeout(() => $('#cast')?.focus(), 50);
     return;
@@ -2539,7 +2566,7 @@ function renderVeil() {
   v.innerHTML = `<div class="card intro"><div class="mise">${LV().free ? 'Free play · no steps, no script' : `Lesson ${S.lvl + 1} · ${LV().steps.length} short steps`}</div><h3>${LV().title}</h3><div class="dish">🍽 Tonight: ${LV().dish}</div>
     <div class="tale">${LV().story.map(p => `<p>${p}</p>`).join('')}</div>
     <div class="learn"><b class="lh">${LV().free ? '🩻 Tip' : '🩻 In Kafka words, you’ll learn'}</b>${LV().learn}</div>
-    <button class="bell" id="go">🔔 Open the kitchen</button></div>`;
+    <sakuga-button class="skb big" id="go">🔔 Open the kitchen</sakuga-button></div>`;
   $('#go').onclick = () => { S.started = true; $('#storyd').open = false; snd('bell'); renderVeil(); if (LV().free) renderCtls(); else startStep() };
   setTimeout(() => $('#go')?.focus(), 50);
 }
@@ -2550,8 +2577,8 @@ function renderWin() {
     <p>Everything you just saw, side by side. The <b>Kafka X-ray</b> button (top right) writes these names right on the kitchen.</p>
     <div class="xrows">${L.xray.map(([e, k, v, d]) => `<div class="k"><span class="xi">${icon(e)}</span>${k}</div><div class="v"><b>${v}</b><div>${d}</div></div>`).join('')}</div>
     ${L.teaser ? `<div class="soon">👀 ${L.teaser}</div>` : ''}
-    <div class="acts"><button class="btn ghost" id="wf">Stay and play with the knobs</button>
-    ${last ? '' : `<button class="btn gold" id="wn">Next lesson →</button>`}</div></div>`;
+    <div class="acts"><sakuga-button class="skb" variant="secondary" id="wf">Stay and play with the knobs</sakuga-button>
+    ${last ? '' : `<sakuga-button class="skb gold" id="wn">Next lesson →</sakuga-button>`}</div></div>`;
   w.hidden = false;
   w.querySelector('.card').scrollTop = 0;
   $('#wf').onclick = () => { w.hidden = true };
