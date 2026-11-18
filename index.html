@@ -812,6 +812,7 @@ const STATIONS = {
   desserts: {key: 'desserts', name: 'Desserts', e: '🍰', share: .4, dishes: ['🍰', '🧁', '🍮', '🍨']},
 };
 const HUDDLE = 2.6, FLY = .6, UPSET = 15;
+const RET = {short: 10, long: 60};   // how long tickets stay on the rail, in kitchen seconds (lesson 10)
 
 // ---------- levels: kitchen words first, Kafka words only in the X-ray ----------
 const LEVELS = [
@@ -1130,7 +1131,7 @@ const LEVELS = [
       ['💥', 'A chef slips', 'Consumer crash', 'Its partitions move to another consumer, which resumes from the committed offset.'],
       ['🤨', 'Two plates', 'Duplicate processing', 'Handled with idempotent processing or transactions (exactly-once).'],
     ],
-    teaser: 'Last lesson: what if nobody notices a chef went down?',
+    teaser: 'Next: what if nobody notices a chef went down?',
   },
   {
     title: 'Failover & Session Timeouts', dish: 'Shift Change', chip: 'noticing failures · leaving cleanly',
@@ -1163,6 +1164,89 @@ const LEVELS = [
       ['⏳', 'Time to notice', 'session.timeout.ms', 'How long a dead consumer keeps its partitions.'],
       ['🧍', 'Spare chef', 'Idle consumer / standby', 'Takes over partitions when someone fails.'],
       ['👋', 'Clocking out', 'Graceful leave', 'Commit + LeaveGroup → a fast, clean rebalance.'],
+    ],
+    teaser: 'Next: the rail can’t keep every ticket forever. Where do old tickets go?',
+  },
+  {
+    title: 'Retention', dish: 'The Ticket Bin', chip: 'old tickets go · missed for good',
+    story: [
+      'The rail can’t grow forever. Once a ticket is <b>10 seconds old</b>, it’s torn off the old end of the rail and thrown in the <b>bin</b>.',
+      'The bin only looks at age. It never checks who has read a ticket. Marco keeps up, so he never notices. The auditor is another story.'],
+    learn: '<b>Retention</b>: Kafka deletes messages once they’re older than <code>retention.ms</code>, whether anyone has read them or not. A new consumer group starts at the oldest message still kept. A group whose committed offset points at deleted messages skips ahead, and what it missed is gone for good.',
+    setup: {stations: ['mains'], chefs: 1, rate: .4, ret: 'short'},
+    ctl: {rateMax: 1, audit: true, ret: true},
+    steps: [
+      {title: 'Into the bin', ask: 'Watch the old end of the rail, on the left.',
+        until: S => S.stats.binned >= 2, at: () => binAt(0, 0),
+        kitchen: 'Every ticket older than <b>10 seconds</b> is torn off the left end of the rail and dropped in the bin. Marco cooked these long ago, so nobody misses them.',
+        kafka: 'This is <b>retention</b>. A topic keeps messages for <code>retention.ms</code> (7 days by default), then deletes the oldest. Offsets never shift: the oldest ticket left keeps its number, and that number is the partition’s <b>log start offset</b>.'},
+      {title: 'A new reader', do: true, btn: '#aud', ask: 'Call in the auditor (left panel). It’s her first visit, so she has no blue clip yet.',
+        until: S => S.aud.on && S.stats.audited >= 3, at: () => audAt(),
+        kitchen: 'With no blue clip of her own, she starts at the <b>oldest ticket still on the rail</b>. The tickets already in the bin she will never see.',
+        kafka: 'A new consumer group has no committed offset, so <code>auto.offset.reset</code> decides where it starts: <code>earliest</code> (the oldest message still kept, KafkaJS <code>fromBeginning: true</code>) or <code>latest</code> (only new messages). Earliest means the log start offset, not offset 0.'},
+      {title: 'She steps out', do: true, btn: '#aud', ask: 'Send the auditor home, then keep an eye on her blue clip.',
+        until: S => !S.aud.on && audBinned() >= 1, at: () => audBinAt(),
+        kitchen: 'Her blue clip is still waiting at the next ticket she was going to read. But that ticket just went in the bin.',
+        kafka: 'Her committed offset now points <b>below the log start offset</b>. Retention never waits for consumers. It goes by age only, read or not.'},
+      {title: 'Gone for good', do: true, btn: '#aud', ask: 'Call the auditor back in.',
+        until: S => S.aud.on && S.flags.missed && S.stats.audited - S.flags.missAt >= 2, at: () => audAt(),
+        kitchen: 'She came back, found her ticket gone, and skipped ahead to the oldest ticket left. The orders in the bin will never make it into her books.',
+        kafka: 'Her offset was <b>out of range</b>, so <code>auto.offset.reset</code> moved her to the earliest offset. The deleted messages are lost for her group. Set retention longer than your longest consumer outage, plus the time it takes to fix one.'},
+      {title: 'Keep them longer', do: true, btn: '#ret', ask: 'Switch “Keep tickets” to ⏱ 1 minute in the left panel.',
+        until: S => S.ret === 'long' && S.time - S.flags.retAt >= 5, at: () => binAt(0, 0),
+        kitchen: 'Tickets now stay a whole minute and the bin goes quiet. The rail gets crowded, though: keeping more takes more room.',
+        kafka: 'Retention is set per topic. Longer retention lets slow or broken consumers catch up and lets you <b>replay</b> history, at the cost of disk space. Days to weeks is common.'},
+    ],
+    xray: [
+      ['🗑️', 'The bin', 'Retention', 'Messages older than retention.ms are deleted, read or not.'],
+      ['⏱️', 'Keep tickets: 10 s / 1 min', 'retention.ms', 'Set per topic. 7 days by default.'],
+      ['⬅️', 'Oldest ticket left', 'Log start offset', 'The first offset still kept. Offsets never shift.'],
+      ['🕵️', 'First visit: start at the oldest', 'auto.offset.reset: earliest', 'With no committed offset, or one that points at deleted messages, the group starts at the oldest kept (or latest).'],
+      ['🕳️', 'Tickets she never saw', 'Lost to retention', 'A group away longer than retention never sees those messages.'],
+    ],
+    teaser: 'Last lesson: what if the rail itself falls off the wall?',
+  },
+  {
+    title: 'Replication & Acks', dish: 'A Copy on the Back Wall', chip: 'a copy of every ticket · when the waiter walks away',
+    story: [
+      'Rails fall. A screw gives way and every ticket on it hits the floor. So the café hung a <b>copy rail</b> under the main one, and a <b>runner</b> copies each new ticket onto it.',
+      'Chefs cook from the <b>main rail</b>. If it falls, the copy is hung up as the new main rail. The question is what was on the main rail that hadn’t been copied yet.'],
+    learn: '<b>Replication</b>: every partition has copies (<b>replicas</b>) on different <b>brokers</b>. The <b>leader</b> takes reads and writes; <b>followers</b> copy it. If the leader’s broker dies, a follower takes over. The producer’s <code>acks</code> setting decides whether it waits for the copies: <code>acks=1</code> can lose messages it was told were saved, <code>acks=all</code> can’t.',
+    setup: {stations: ['mains'], chefs: 1, rate: .4, rep: true},
+    ctl: {rateMax: 1, fall: true, acks: true},
+    steps: [
+      {title: 'A copy of every ticket', ask: 'Watch the copy rail under the main rail.',
+        until: S => S.rep.f >= 3, at: () => copyAt(),
+        kitchen: 'Each ticket the waiter clips to the main rail, the runner copies onto the copy rail a moment later.',
+        kafka: 'This is <b>replication</b>. The main rail is the <b>leader replica</b> of partition <code>mains-0</code>, on broker 1. The copy is a <b>follower replica</b> on broker 2 that keeps fetching from the leader. Real clusters usually keep 3 copies (<code>replicationFactor: 3</code>).'},
+      {title: 'Only copied tickets', ask: 'Watch Marco when a new ticket lands.', start: S => { S.flags.hwWait = null },
+        until: S => S.flags.hwWait, at: () => { const w = S.flags.hwWait; return w && w.t.off < S.stations[0].rails[0].tickets.length ? tkAt(0, 0, w.t.off) : clipPos(0, 0) },
+        kitchen: 'Marco is waiting for the runner. Chefs only cook tickets that are already on the copy rail, so a falling rail can never take back a dish that was cooked.',
+        kafka: 'Consumers only read up to the <b>high watermark</b>: the last offset that every in-sync replica has. Anything after it could still disappear in a failover.'},
+      {title: 'The main rail falls', do: true, btn: '#fall', ask: 'Click 💥 Drop the main rail. It falls at the worst moment.',
+        until: S => S.rep.fell >= 1 && S.flags.repLost && S.time - S.flags.fellAt >= 1.5, at: () => [...S.flags.lostTables].map(tableAt),
+        kitchen: 'The main rail fell before the runner had copied the newest tickets. The copy was hung up as the new main rail, but those orders are gone. And the waiter had already told those diners “your order’s in”.',
+        kafka: 'The leader’s broker died and Kafka made the follower the new <b>leader</b>. With <code>acks=1</code> the producer got its “ok” from the leader alone, so messages that weren’t replicated yet are <b>lost</b>, even though the producer was told they were written.'},
+      {title: 'Wait for the copy', do: true, btn: '#acks', ask: 'Switch “Waiter says it’s in” to ✅ once it’s copied, in the left panel.',
+        until: S => S.rep.acks === 'all' && S.rep.okAll >= 2, at: () => waiterAt(),
+        kitchen: 'Now the waiter waits until the runner has copied a ticket, and only then tells the diner it’s in. The green tick comes a moment later than before.',
+        kafka: '<code>acks: -1</code> (<code>acks=all</code>): the leader confirms only once every in-sync replica has the message. Each send takes a little longer, but a confirmed message survives a broker failure. Pair it with <code>min.insync.replicas=2</code>.'},
+      {title: 'It falls again', do: true, btn: '#fall', ask: 'Drop the main rail again.',
+        until: S => S.rep.fell >= 2 && S.flags.retried?.landed, at: () => { const t = S.flags.retried; return t && t.off < S.stations[0].rails[0].tickets.length ? tkAt(0, 0, t.off) : copyAt() },
+        kitchen: 'The rail fell again, and again some tickets hadn’t been copied. But the waiter never told anyone those were in, so he simply clipped them again on the new main rail. Nobody lost an order.',
+        kafka: 'The producer <b>retries</b> any send that wasn’t acknowledged, now against the new leader. Nothing acknowledged is lost. A retry can occasionally write a message twice; the <b>idempotent producer</b> (<code>idempotent: true</code>) prevents that.'},
+      {title: 'Back on the wall', ask: 'Watch the copy rail.',
+        until: S => S.rep.up && S.rep.f >= landedN(S.stations[0].rails[0]) - 1 && S.time - S.flags.fellAt >= 3, at: () => copyAt(),
+        kitchen: 'The fallen rail is back up, this time as the copy, and the runner caught it up. The kitchen is protected again.',
+        kafka: 'The old leader’s broker came back as a <b>follower</b>, fetched what it missed and rejoined the <b>in-sync replicas</b> (ISR). Only an in-sync replica can be elected leader, which is why acknowledged messages survive.'},
+    ],
+    xray: [
+      ['🧷', 'Main rail', 'Leader replica', 'Producers write to it and consumers read from it.'],
+      ['📋', 'Copy rail', 'Follower replica', 'On another broker; it keeps fetching from the leader.'],
+      ['🏃', 'The runner', 'Replication', 'Followers copy the leader’s log. replicationFactor counts the copies.'],
+      ['⛔', 'Only copied tickets get cooked', 'High watermark', 'Consumers read only what every in-sync replica has.'],
+      ['💥', 'The copy hung as main rail', 'Leader election', 'When a broker dies, an in-sync follower becomes the new leader.'],
+      ['✅', 'Waiter waits for the copy', 'acks=all', 'Slower, but a confirmed message survives a broker failure. acks=1 can lose it.'],
     ],
   },
 ];
@@ -1323,7 +1407,7 @@ function newChef(i, x = -30, y = 0) {
   const [e, n] = CREW[i % CREW.length];
   return {id: i, e, n, x, y, rails: [], job: null, goal: null, last: null, shake: 0, say: null, served: 0};
 }
-const newRail = () => ({tickets: [], clip: 0, ck: 0, b: 0});
+const newRail = () => ({tickets: [], clip: 0, ck: 0, b: 0, start: 0});
 function newStation(key) { return {...STATIONS[key], rr: 0, rails: [newRail()]} }
 
 function load(lvl) {
@@ -1335,7 +1419,9 @@ function load(lvl) {
     stations: L.setup.stations.map(newStation), offer: [...(L.setup.offer || [])],
     chefs: [], tables: DINERS.map(e => ({e, ask: 0, happy: 0, mood: ''})), waiterKick: 0,
     flights: [], parts: [], flags: {solo: 0}, coached: {}, drag: null,
-    stats: {served: 0, produced: 0, maxLag: 0, upset: 0, rebalances: 0, by: {}, lost: 0, dup: 0, audited: 0},
+    stats: {served: 0, produced: 0, maxLag: 0, upset: 0, rebalances: 0, by: {}, lost: 0, dup: 0, audited: 0, binned: 0},
+    ret: L.setup.ret || null, drops: [],
+    rep: L.setup.rep ? {f: 0, t: .5, up: true, down: 0, lead: 1, acks: '1', arm: false, fell: 0, retry: [], okAll: 0} : null,
     si: 0, phase: L.free ? 'free' : 'wait', speed: save.speed, nextChef: L.setup.chefs,
     keys: !!L.setup.keys && L.setup.keyBy !== 'none', keyBy: 'table', burger: L.setup.burger || 0, lastRail: {}, hl: null, aud: {on: false, t: 0, at: null, resumeLag: 0},
     commit: L.setup.commit || 'plate', commitGap: L.ctl.trip ? .9 : 0, tripArm: false, serial: !!L.setup.serial, lastDone: 0,
@@ -1384,12 +1470,13 @@ function dropJob(j) {
 const keyHash = s => [...s].reduce((a, c) => (a * 31 + c.codePointAt(0)) >>> 0, 7);
 const burgerRail = () => keyHash('🍔') % S.stations[0].rails.length;
 function setKey(v) { S.keys = v !== 'none'; if (S.keys) S.keyBy = v; S.flags.keyAt = S.stats.produced; renderCtls() }
-function spawnOrder() {
+function spawnOrder(pre) {
   const tot = S.stations.reduce((a, s) => a + s.share, 0);
   let r = Math.random() * tot, si = 0;
-  for (; si < S.stations.length - 1; si++) if ((r -= S.stations[si].share) <= 0) break;
-  const st = S.stations[si], table = Math.floor(Math.random() * S.tables.length);
-  const e = st.key === 'mains' && Math.random() < S.burger ? '🍔' : st.dishes[Math.floor(Math.random() * st.dishes.length)];
+  for (; si < S.stations.length - 1; si++) if (!pre && (r -= S.stations[si].share) <= 0) break;
+  if (pre) si = 0;
+  const st = S.stations[si], table = pre ? pre.table : Math.floor(Math.random() * S.tables.length);
+  const e = pre ? pre.e : st.key === 'mains' && Math.random() < S.burger ? '🍔' : st.dishes[Math.floor(Math.random() * st.dishes.length)];
   let ri = st.rr++ % st.rails.length;
   if (S.keys) {
     ri = S.keyBy === 'dish' ? keyHash(e) % st.rails.length : table % st.rails.length;
@@ -1399,8 +1486,9 @@ function spawnOrder() {
   }
   const rail = st.rails[ri];
   const t = {off: rail.tickets.length, e, table,
-    born: S.time, landed: false, state: 'wait', rx: 0, kick: 0, upset: false};
+    born: pre ? pre.born : S.time, landed: false, state: 'wait', rx: 0, kick: 0, upset: false, retry: !!pre};
   rail.tickets.push(t);
+  if (pre) S.flags.retried = t;
   if (S.flags.remap && !S.flags.remap.t) S.flags.remap.t = t;
   codeFlash('send', S.keys ? `key ${S.keyBy === 'dish' ? e : table + 1} → ${st.key}-${ri} @ ${t.off}` : `→ ${st.key}-${ri} @ ${t.off}`);
   S.flights.push({kind: 'ticket', t, si, ri, from: tablePos(table, -18), t0: S.time, dur: FLY});
@@ -1453,6 +1541,7 @@ function step(dt) {
     f.gone = true;
     if (f.kind === 'ticket') {
       f.t.landed = true; f.t.landedAt = S.time; f.t.kick = 1; f.t.rx = ticketX(S.stations[f.si].rails[f.ri], f.t);
+      if (S.rep && (S.rep.acks === '1' || !S.rep.up)) confirm(f.t);
     } else {
       const tb = S.tables[f.table];
       tb.happy = 1.4; tb.mood = f.wait < 8 ? '😋' : f.wait < UPSET ? '🙂' : '😤';
@@ -1472,13 +1561,34 @@ function step(dt) {
   // the auditor reads the oldest unread ticket on any rail; kitchen huddles don't stop her
   if (S.aud.on && (S.aud.t -= dt) <= 0) {
     let best = null;
+    // her bookmark points at binned tickets (or she has none yet): auto.offset.reset → the oldest ticket left
+    S.stations.forEach((st, si) => st.rails.forEach((r, ri) => {
+      if (r.b >= r.start) return;
+      if (r.bSet) {
+        const n = r.start - r.b; S.flags.missed = (S.flags.missed || 0) + n; S.flags.missAt = S.stats.audited;
+        const x = audX(si, ri);
+        fx('sfx', {text: `${n} MISSED!`, x: x + 40, y: G.st[si].rails[ri] - 14, size: 22, rot: -.1, fill: '#FF6A55', dur: 1.8});
+        codeFlash('reset', `offset ${r.b} out of range → ${r.start}`);
+      }
+      r.b = r.start;
+    }));
     S.stations.forEach((st, si) => st.rails.forEach((r, ri) => {
       const t = r.tickets[r.b];
       if (t && t.landed && (!best || t.born < best.t.born)) best = {si, ri, r, t};
     }));
-    if (best) { best.r.b++; best.t.seen = NOW; S.aud.at = {si: best.si, ri: best.ri}; S.aud.t = .45; S.stats.audited++; codeFlash('audit', `${S.stations[best.si].key}-${best.ri} @ ${best.r.b - 1}`) }
+    if (best) { best.r.b++; best.r.bSet = true; best.t.seen = NOW; S.aud.at = {si: best.si, ri: best.ri}; S.aud.t = .45; S.stats.audited++; codeFlash('audit', `${S.stations[best.si].key}-${best.ri} @ ${best.r.b - 1}`) }
     else S.aud.t = .1;
   }
+
+  // retention: tickets older than the limit are torn off the old end of the rail, read or not
+  if (S.ret) for (const st of S.stations) for (const rail of st.rails) {
+    while (rail.start < rail.tickets.length) {
+      const t = rail.tickets[rail.start];
+      if (!t.landed || t.state === 'cook' || t.state === 'plated' || S.time - t.born < RET[S.ret]) break;
+      binTicket(st, rail, t);
+    }
+  }
+  if (S.rep) repStep(dt);
 
   // a fallen chef keeps their rails until the head chef notices, then gets back up later
   for (const c of S.chefs) if (c.down) {
@@ -1514,6 +1624,7 @@ function step(dt) {
       let best = null;
       for (const r of c.rails) {
         const rail = S.stations[r.si].rails[r.ri], t = rail.tickets[rail.clip];
+        if (t && t.landed && t.state === 'wait' && !belowHW(t)) { if (!S.flags.hwWait && S.time - t.landedAt > .5) S.flags.hwWait = {t}; continue }
         if (t && t.landed && t.state === 'wait' && (!S.serial || S.time - t.landedAt >= .9) && (!best || t.born < best.t.born)) best = {r, t};
       }
       if (best) {
@@ -1522,7 +1633,7 @@ function step(dt) {
     }
     if (c.goal && !c.walking) {
       const rail = S.stations[c.goal.si].rails[c.goal.ri], t = rail.tickets[rail.clip];
-      if (t && t.landed && t.state === 'wait') {
+      if (t && t.landed && t.state === 'wait' && belowHW(t)) {
         t.state = 'cook';
         c.job = {...c.goal, t, p: 0, dur: 1.7 + Math.random() * 1.1};
         c.last = c.goal;
@@ -1565,6 +1676,70 @@ function afterAssign() {
     S.flags.split = true;
   }
 }
+
+// ---------- retention (lesson 10) ----------
+function binTicket(st, rail, t) {
+  const si = S.stations.indexOf(st), ri = st.rails.indexOf(rail), y = G.st[si].rails[ri];
+  t.gone = true; rail.start++; S.stats.binned++;
+  S.drops.push({t, x: t.rx, y: y + 12, tx: G.railL + 14 - G.TW / 2, ty: y + 82, t0: NOW, dur: .8, bin: true});
+  if (t.off >= rail.clip) {                                     // binned before anyone cooked it
+    rail.clip = rail.start; t.state = 'lost'; S.stats.lost++;
+    const p = tablePos(t.table, 0); puff(p.x, p.y - 22, '😡', 2, -10);
+  }
+  codeFlash('retention', `deleted ${st.key}-${ri} @ ${t.off}`);
+}
+function setRet(v) { S.ret = v; S.flags.retAt = S.time; codeFlash('retention', `retention.ms ${RET[v] * 1000}`); renderCtls() }
+const audBinned = () => { const r = S.stations[0].rails[0]; return r.bSet ? r.start - r.b : 0 };
+
+// ---------- replication (lesson 11): a copy rail under the main rail ----------
+const landedN = rail => { let n = 0; while (n < rail.tickets.length && rail.tickets[n].landed) n++; return n };
+// high watermark: what every in-sync copy has. With the copy rail down, the main rail is the only one in sync.
+const hw = () => { const rail = S.stations[0].rails[0], n = landedN(rail); return S.rep.up ? Math.min(S.rep.f, n) : n };
+const belowHW = t => !S.rep || t.off < hw();
+function confirm(t) {
+  if (t.ok) return;
+  t.ok = true; if (S.rep.acks === 'all') S.rep.okAll++;
+  const p = tablePos(t.table, 0); puff(p.x - 24, p.y - 30, '✓', 1.3, -14, '#8EE09A');
+}
+function repStep(dt) {
+  const R = S.rep, rail = S.stations[0].rails[0];
+  if (!R.up) {
+    if ((R.down -= dt) <= 0) { R.up = true; R.t = .4; codeFlash('copy', `broker ${3 - R.lead} back · catching up`) }
+  } else if ((R.t -= dt) <= 0) {
+    const t = rail.tickets[R.f], behind = landedN(rail) - R.f;
+    // armed: the runner falls behind, and the rail drops once two new tickets are still uncopied
+    if (R.arm) { if (behind >= 2) railFall(); R.t = .1 }
+    else if (t && t.landed && S.time - t.landedAt >= .9) {
+      R.f++; t.cpAt = NOW; R.t = behind > 2 ? .25 : .7;
+      codeFlash('copy', `${rail.tickets.length > 0 ? 'mains-0' : ''} @ ${t.off} → broker ${3 - R.lead}`);
+      if (R.acks === 'all') confirm(t);
+    } else R.t = .1;
+  }
+  for (const r of R.retry) if (!r.done && S.time >= r.at) { r.done = true; spawnOrder(r) }
+  R.retry = R.retry.filter(r => !r.done);
+}
+function railFall() {
+  const R = S.rep, rail = S.stations[0].rails[0], keep = R.f, y = G.st[0].rails[0];
+  const cut = rail.tickets.slice(keep);
+  rail.tickets.length = keep;
+  S.flights = S.flights.filter(f => !(f.kind === 'ticket' && f.t.off >= keep));
+  let i = 0;
+  for (const t of cut) {
+    if (t.landed) S.drops.push({t, x: t.rx, y: y + 12, tx: t.rx + (Math.random() - .5) * 40, ty: y + 96, t0: NOW, dur: .9});
+    if (t.ok) {
+      t.state = 'lost'; S.stats.lost++; S.flags.repLost = t; (S.flags.lostTables ||= new Set()).add(t.table);
+      const p = tablePos(t.table, 0); puff(p.x, p.y - 22, '😡', 2.4, -10);
+      fx('sfx', {text: 'ムカッ!', x: p.x + 26, y: p.y - 40, size: 22, rot: .15, fill: '#FF6A55', dur: 1.6});
+    } else R.retry.push({e: t.e, table: t.table, born: t.born, at: S.time + .8 + i++ * .35});
+  }
+  R.arm = false; R.fell++; R.lead = 3 - R.lead; R.up = false; R.down = 4.5; R.f = keep; S.flags.fellAt = S.time;
+  fx('impact', {x: (G.railL + G.railR) / 2, y: y + 30, text: 'CRASH!', jp: 'ガシャーン!!', dur: 1.9});
+  setTimeout(() => fx('cutin', {who: 'HeadChef', pose: 'bust-happy', title: 'NEW MAIN RAIL!', sub: 'COPY HUNG UP · NEW LEADER ELECTED', color: '#2F2A24', dark: '#14110F', dur: 2.6}), 700);
+  codeFlash('leader', `broker ${3 - R.lead} down → leader: broker ${R.lead}`);
+  renderCtls();
+}
+function dropRail() { if (S.started && S.rep.up && !S.rep.arm) { S.rep.arm = true; renderCtls() } }
+function setAcks(v) { S.rep.acks = v; S.rep.okAll = 0; renderCtls(); codeFlash('acks', v === 'all' ? 'acks -1' : 'acks 1') }
 
 // ---------- player actions ----------
 function hire() {
@@ -1655,7 +1830,7 @@ function dropChef(c, x, y) {
 // ---------- geometry ----------
 function sceneH(narrow) { // unscaled height; must mirror the stacking in geom()
   const L = LV(), rails = S.stations.reduce((a, st) => a + st.rails.length, 0);
-  return 144 + S.stations.length * 42 + rails * 118 + (S.offer.length && L.ctl.open ? 62 : 6) + (hasStaff() ? 110 : 0);
+  return 144 + S.stations.length * 42 + rails * 118 + (S.rep ? 56 : 0) + (S.offer.length && L.ctl.open ? 62 : 6) + (hasStaff() ? 110 : 0);
 }
 const hasStaff = () => { const L = LV(); return !!(L.ctl.hire || L.setup.chefs > 1) };
 const audLag = () => S.stations.reduce((a, st) => a + st.rails.reduce((b, r) => b + r.tickets.length - r.b, 0), 0);
@@ -1682,7 +1857,7 @@ function geom() {
   let y = g.dining.h + 12;
   g.st = S.stations.map(st => {
     const top = y, rails = st.rails.map((_, i) => top + 38 + i * 118);
-    y = top + 38 + st.rails.length * 118 + 4;
+    y = top + 38 + st.rails.length * 118 + 4 + (S.rep ? 56 : 0);
     return {top, h: y - top, rails};
   });
   g.offer = S.offer.length && LV().ctl.open ? {top: y + 6, h: 50} : null;
@@ -1692,6 +1867,7 @@ function geom() {
   g.H = y;
   g.railL = g.pad + 12; g.railR = W - g.pad - 12;
   g.clipX = g.railL + (narrow ? 1.7 : 2.7) * g.SLOT;
+  if (S.ret) g.clipX = Math.max(g.clipX, g.railL + (g.railR - g.railL) * .42);   // room for the kept history
   g.waiter = {x: W - g.pad - 34, y: 106};
   const avail = W - 2 * g.pad - 90;
   g.tables = S.tables.map((_, i) => g.pad + avail * (i + .5) / S.tables.length);
@@ -1711,6 +1887,21 @@ const tkAt = (si, ri, off) => { const t = S.stations[si].rails[ri].tickets[off];
 // the clip plus every waiting ticket after it on one rail
 const pileAt = (si, ri) => { const r = S.stations[si].rails[ri], ws = r.tickets.filter((t, o) => o >= r.clip && t.landed && t.rx < G.railR), t = ws[ws.length - 1];
   if (!t) return clipPos(si, ri); const x0 = G.clipX - 12, x1 = Math.min(G.railR, t.rx + G.TW + 3); return {x: (x0 + x1) / 2, y: G.st[si].rails[ri] - 2, h: G.TH + 8, w: x1 - x0, shapes: [clipShape(si, ri), ...ws.map(t => tkShape(si, ri, t))], xl: () => `committed offset ${r.clip}`, xlx: G.clipX, xly: G.st[si].rails[ri] + 2} };
+const binAt = (si, ri) => {
+  const y = G.st[si].rails[ri], r = S.stations[si].rails[ri], b = {x: G.railL - 2, y: y + 66, w: 32, h: 42, r: 5};
+  const old = r.tickets.slice(r.start, Math.min(r.clip, r.start + 2)).filter(t => t.landed).map(t => tkShape(si, ri, t));
+  return {x: G.railL + 40, y: y + 4, w: 100, h: 104, shapes: [b, ...old]};
+};
+const audBinAt = () => { const y = G.st[0].rails[0], bx = audX(0, 0); return {x: G.railL + 40, y, w: 90, h: 110, shapes: [{x: bx - 3, y: y + 2, w: 6, h: 30, r: 2}, {x: G.railL - 2, y: y + 66, w: 32, h: 42, r: 5}]} };
+const copyY = () => G.st[0].rails[0] + 116;
+const copyAt = () => {
+  const cy = copyY(), rail = S.stations[0].rails[0];
+  const ms = rail.tickets.slice(0, S.rep.f).filter(t => !t.gone && t.landed && t.rx > G.railL - 20 && t.rx < G.railR).map(t => ({x: t.rx + G.TW * .2, y: cy + 10, w: G.TW * .6, h: G.TH * .6, r: 2}));
+  return {x: (G.railL + G.railR) / 2, y: cy - 2, w: G.railR - G.railL + 12, h: 48, shapes: [{x: G.railL - 6, y: cy + 3, w: G.railR - G.railL + 12, h: 6, r: 3}, ...ms]};
+};
+const spriteAt = b => ({x: b.x + b.w / 2, y: b.y - 4, h: b.h + 8, w: b.w + 8, sprite: b});
+const tableAt = i => { const b = S.tables[i].box; return b ? spriteAt(b) : {x: G.tables[i], y: 44 + G.dining.h - 132, h: 50, w: 60} };
+const waiterAt = () => G.waiterBox ? spriteAt(G.waiterBox) : {x: G.waiter.x, y: G.waiter.y - 64, h: 100, w: 70};
 // every chef has walked back to where the head chef sent them
 const settled = () => S.chefs.every(c => { const p = chefTarget(c); return Math.hypot(p.x - c.x, p.y - c.y) < 3 });
 // Where a chef's sprite is drawn (mirrors drawChef), so lesson highlights can hug the character itself.
@@ -1763,6 +1954,11 @@ function chefTarget(c) {
 }
 function ticketX(rail, t) {
   const k = t.off - rail.clip;
+  if (k < 0 && S.ret) {                         // served tickets slide toward the bin as they age
+    const x0 = G.clipX - 5 - G.TW, x1 = G.railL + 2, age = Math.min(1, (S.time - t.born) / RET[S.ret]);
+    const nx = rail.tickets[t.off + 1], cap = nx && nx.off < rail.clip ? (nx.rx || x0) - 8 : x0;   // never jump past the next one
+    return Math.min(cap, x0 - (x0 - x1) * age);
+  }
   if (k < 0) return G.clipX - 5 - G.TW + (k + 1) * G.SLOT;
   const lag = lagOf(rail), avail = G.railR - (G.clipX + 6) - G.TW;
   const slot = lag > 1 ? Math.min(G.SLOT, avail / (lag - 1)) : G.SLOT;
@@ -1995,6 +2191,7 @@ function draw(rdt) {
     if (dim) {
       const h = G.narrow ? 58 : 70, w = dim.naturalWidth / dim.naturalHeight * h;
       ctx.drawImage(dim, x - w / 2, (dinBG ? 104 : 98) - h + hop, w, h);
+      tb.box = {im: dim, x: x - w / 2, y: DY + (dinBG ? 104 : 98) - h, w, h};
     }
     if (dinBG) {                                   // paint the table back over the diner, so they sit behind it
       ctx.save(); ctx.beginPath(); ctx.rect(x - 48, 88, 96, 60); ctx.clip();
@@ -2028,9 +2225,14 @@ function draw(rdt) {
   if (wim) {
     const h = 80, w = wim.naturalWidth / wim.naturalHeight * h;
     ctx.drawImage(wim, G.waiter.x - Math.min(w, 34) / 2 - (w > 34 ? 6 : 0), G.waiter.y + 18 - h - S.waiterKick * 6, w, h);
+    G.waiterBox = {im: wim, x: G.waiter.x - Math.min(w, 34) / 2 - (w > 34 ? 6 : 0), y: G.waiter.y + 18 - h, w, h};
   } else if (!loading('Waiter')) emoji('🤵', G.waiter.x, G.waiter.y - S.waiterKick * 6, 30);
   txt('WAITER', G.waiter.x, G.waiter.y + 28, `700 9px ${MONO}`, 'rgba(255,214,170,.55)', 'center');
   if (X) xlabel('producer', G.waiter.x, G.waiter.y + 42);
+  if (S.rep && S.rep.acks === 'all') {             // acks=all: the waiter is still waiting to hear the ticket was copied
+    const n = S.stations[0].rails[0].tickets.filter(t => !t.ok).length + S.rep.retry.length;
+    if (n) txt(X ? `awaiting ${n} ack${n > 1 ? 's' : ''}` : `waiting for ${n} cop${n > 1 ? 'ies' : 'y'}…`, G.W - G.pad - 4, G.waiter.y + (X ? 56 : 44), `700 9px ${MONO}`, '#FFB547', 'right');
+  }
   // the pass
   gr = ctx.createLinearGradient(0, G.dining.h, 0, G.dining.h + 9);
   gr.addColorStop(0, '#E4EAEE'); gr.addColorStop(.35, '#A9B4BB'); gr.addColorStop(1, '#56616A');
@@ -2052,6 +2254,18 @@ function draw(rdt) {
     }
     st.rails.forEach((rail, ri) => drawRail(si, ri, rail, g.rails[ri], rdt));
   });
+
+  // tickets falling: into the bin (retention) or to the floor (a rail fell)
+  S.drops = S.drops.filter(d => NOW - d.t0 < d.dur + .3);
+  for (const d of S.drops) {
+    const k = Math.min(1, (NOW - d.t0) / d.dur), e = k * k, sc = d.bin ? 1 - .55 * k : 1;
+    const x = d.x + (d.tx - d.x) * k, y = d.y + (d.ty - d.y) * e - (d.bin ? Math.sin(k * Math.PI) * 18 : 0);
+    ctx.save(); ctx.globalAlpha = d.bin ? Math.max(0, 1 - Math.max(0, k - .75) * 4) : Math.max(0, 1 - Math.max(0, (NOW - d.t0) / (d.dur + .3) - .6) * 2.5);
+    ctx.translate(x + G.TW / 2, y); ctx.rotate((d.bin ? 1.2 : 2.4) * k * (d.t.off % 2 ? 1 : -1)); ctx.scale(sc, sc); ctx.translate(-G.TW / 2, 0);
+    ctx.fillStyle = d.bin ? '#CFCAC0' : d.t.ok ? '#EBC4BA' : '#FCFBF7'; ticketPath(); ctx.fill();
+    txt('#' + d.t.off, 4, 15, `700 11px ${MONO}`, '#1D1B18'); emoji(d.t.e, G.TW / 2, G.TH / 2 + 8, 18);
+    ctx.restore();
+  }
 
   if (G.offer) {
     const o = G.offer, d = STATIONS[S.offer[0]];
@@ -2252,20 +2466,26 @@ function drawRail(si, ri, rail, y, rdt) {
     if (X) xlabel(G.narrow ? `p${ri}` : `partition ${ri}`, G.railL, y + 1, 'left');
     else txt(`RAIL ${ri + 1}`, G.railL, y + 2, `700 9px ${MONO}`, '#9AA4AC');
   }
+  if (S.rep) {
+    if (X) xlabel(`leader replica · broker ${S.rep.lead}`, G.railR, y - 16, 'right');
+    else txt(`MAIN RAIL · ${'AB'[S.rep.lead - 1]}`, G.railL, y + 2, `700 9px ${MONO}`, '#C9D2D8');
+    drawCopyRail(rail, rdt);
+  }
+  if (S.ret) drawBin(si, ri, y);
   const owner = ownerOf(si, ri);
   if (owner?.down) txt(X ? '⚠ PARTITION STALLED' : '⚠ UNATTENDED', sx + sw + 10, sy + 17, `700 10px ${MONO}`, '#FF5E4D', 'left', 'middle');
   const lagTxt = X ? `consumer lag ${lag}` : `⏳ ${lag} waiting`;
   txt(lagTxt, G.railR, y + 1, `700 10px ${MONO}`, lag >= 8 ? '#FF5E4D' : X ? C.xr : '#9AA4AC', 'right');
   // tickets
   const k = 1 - Math.exp(-rdt * 9);
-  for (let o = Math.max(0, rail.clip - 5); o < rail.tickets.length; o++) {
+  for (let o = S.ret ? rail.start : Math.max(rail.start, rail.clip - 5); o < rail.tickets.length; o++) {
     const t = rail.tickets[o];
-    if (!t.landed) continue;
+    if (!t.landed || t.gone) continue;
     t.rx += (ticketX(rail, t) - t.rx) * k;
     t.kick *= Math.exp(-rdt * 2.5);
     const x = t.rx;
     let a = 1;
-    if (t.off < rail.clip && t.state !== 'cook') a = Math.max(0, Math.min(1, (x - G.railL + 10) / (G.SLOT * 1.3))) * (t.state === 'lost' ? .9 : .62);
+    if (t.off < rail.clip && t.state !== 'cook') a = S.ret ? (t.state === 'lost' ? .9 : .7) : Math.max(0, Math.min(1, (x - G.railL + 10) / (G.SLOT * 1.3))) * (t.state === 'lost' ? .9 : .62);
     if (a <= 0.02) continue;
     const rot = RM ? 0 : Math.sin(NOW * 10 + t.off) * .22 * t.kick + Math.sin(NOW * 1.3 + t.off * 1.7) * .012;
     const top = y + 12 - (t.state === 'cook' ? 3 : 0);
@@ -2285,6 +2505,7 @@ function drawRail(si, ri, rail, y, rdt) {
       ticketPath(); ctx.stroke(); ctx.shadowBlur = 0;
     }
     if (t.dup) { ctx.strokeStyle = '#9B6BD6'; ctx.lineWidth = 2.5; ticketPath(); ctx.stroke() }
+    if (S.rep && S.rep.up && t.off >= S.rep.f) { ctx.strokeStyle = '#FFB547'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ticketPath(); ctx.stroke(); ctx.setLineDash([]) }
     ctx.fillStyle = '#8C959C'; ctx.fillRect(G.TW / 2 - 7, -3, 14, 5);
     txt('#' + t.off, 4, 15, `700 ${G.narrow ? 10 : 11}px ${MONO}`, '#1D1B18');
     ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]);
@@ -2310,7 +2531,9 @@ function drawRail(si, ri, rail, y, rdt) {
   if (X) xlabel(`committed offset ${rail.clip}`, G.clipX, y + 2);
   // the auditor's own (blue) clip
   if (LV().ctl.audit) {
-    const bx = audX(si, ri), far = bx <= G.railL && rail.b < rail.clip - 5;
+    const bx = audX(si, ri), far = bx <= G.railL && rail.b < rail.clip - 5 && !S.ret;
+    if (S.ret && !rail.bSet && !S.aud.on) return;
+    if (S.ret && !X && rail.bSet && rail.b < rail.start) txt(`◀ her next ${rail.start - rail.b > 1 ? rail.start - rail.b + ' tickets are' : 'ticket is'} in the bin`, bx + 8, y + 2, `700 9px ${MONO}`, '#FF8A75');
     ctx.fillStyle = '#5B8DB8'; ctx.shadowColor = '#6FA8C9'; ctx.shadowBlur = 8;
     rr(bx - 3, y + 2, 6, 30, 2); ctx.fill(); ctx.shadowBlur = 0;
     if (far) txt(`◀ ${rail.clip - rail.b} behind`, bx + 8, y + 40, `700 9px ${MONO}`, '#8FB8DC');
@@ -2319,7 +2542,56 @@ function drawRail(si, ri, rail, y, rdt) {
       if (aim) { const h = 52, w = aim.naturalWidth / aim.naturalHeight * h; ctx.drawImage(aim, bx - w / 2, y + 2 - h, w, h) }
       else if (!loading('Auditor')) emoji('🕵️', bx, y - 10, 18);
     }
-    if (X) xlabel(`group "audit" @ ${rail.b}`, bx, y + 74);
+    if (X && S.ret && rail.b < rail.start) xlabel(`"audit" @ ${rail.b} · out of range`, bx + 8, y + 1, 'left');
+    else if (X) xlabel(`group "audit" @ ${rail.b}`, bx, y + 74);
+  }
+}
+
+// the bin at the old end of a rail (lesson 10)
+function drawBin(si, ri, y) {
+  const x = G.railL + 14, top = y + 70, w = 28, h = 34, X = save.xray;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(x, top + h + 2, 17, 4, 0, 0, 7); ctx.fill();
+  const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, '#59636B'); g.addColorStop(.45, '#9AA6AE'); g.addColorStop(1, '#3F474E');
+  ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(x - w / 2, top + 4); ctx.lineTo(x + w / 2, top + 4); ctx.lineTo(x + w / 2 - 3, top + h); ctx.lineTo(x - w / 2 + 3, top + h); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(0,0,0,.35)'; ctx.lineWidth = 1; for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + i * 7, top + 9); ctx.lineTo(x + i * 6, top + h - 4); ctx.stroke() }
+  ctx.fillStyle = '#B5C0C7'; rr(x - w / 2 - 3, top, w + 6, 5, 2); ctx.fill();
+  ctx.restore();
+  const n = S.stats.binned, r = S.stations[si].rails[ri], lx = x + w / 2 + 7;
+  if (G.narrow) {                                  // phones: two short lines, clear of the chef
+    if (X) { xlabel(`retention ${RET[S.ret]}s`, lx, top + 10, 'left'); xlabel(`start ${r.start}`, lx, top + 24, 'left') }
+    else { txt('BIN', lx, top + 17, `700 9px ${MONO}`, '#C9D2D8'); txt(S.ret === 'long' ? '1 MIN' : RET[S.ret] + ' S', lx, top + 29, `700 9px ${MONO}`, '#9AA4AC') }
+  } else if (X) { xlabel(`retention.ms ${RET[S.ret] * 1000}`, lx, top + 10, 'left'); xlabel(`log start offset ${r.start}`, lx, top + 24, 'left') }
+  else {
+    txt(`BIN · KEEPS ${S.ret === 'long' ? '1 MIN' : RET[S.ret] + ' S'}`, lx, top + 17, `700 9px ${MONO}`, '#C9D2D8');
+    txt(n ? `${n} thrown out · oldest #${r.start}` : 'none thrown out yet', lx, top + 29, `700 9px ${MONO}`, '#9AA4AC');
+  }
+}
+// the copy rail under the main rail, kept up to date by the runner (lesson 11)
+function drawCopyRail(rail, rdt) {
+  const R = S.rep, cy = copyY(), X = save.xray, s = .6, tw = G.TW * s, th = G.TH * s;
+  ctx.save(); if (!R.up) ctx.globalAlpha = .35;
+  const gr = ctx.createLinearGradient(0, cy + 4, 0, cy + 10);
+  gr.addColorStop(0, '#E4EAEE'); gr.addColorStop(.4, '#9AA6AE'); gr.addColorStop(1, '#4F5961');
+  ctx.fillStyle = gr; rr(G.railL - 6, cy + 4, G.railR - G.railL + 12, 6, 3); ctx.fill();
+  ctx.restore();
+  const who = 'AB'[2 - R.lead];
+  if (X) xlabel(R.up ? `follower replica · broker ${3 - R.lead}${R.f < landedN(rail) - 2 ? ' · catching up' : ' · in sync'}` : `broker ${3 - R.lead} down · out of sync`, G.railR, cy - 4, 'right');
+  else txt(R.up ? `COPY RAIL · ${who}${R.f < landedN(rail) - 2 ? ' · CATCHING UP' : ''}` : `RAIL ${who} FELL · BEING HUNG BACK UP…`, G.railR, cy - 3, `700 9px ${MONO}`, R.up ? '#C9D2D8' : '#FF8A75', 'right');
+  if (!R.up) return;
+  for (let o = Math.max(0, rail.clip - 5); o < Math.min(R.f, rail.tickets.length); o++) {
+    const t = rail.tickets[o];
+    if (!t.landed) continue;
+    const k = t.cpAt ? Math.min(1, (NOW - t.cpAt) / .45) : 1;             // the runner carrying the copy down
+    const x = t.rx + (G.TW - tw) / 2, y = cy + 10 - (1 - k * (2 - k)) * (cy - G.st[0].rails[0] - 2);
+    let a = 1;
+    if (t.off < rail.clip) a = Math.max(0, Math.min(1, (x - G.railL + 10) / (G.SLOT * 1.3))) * .8;
+    if (a <= .02 || x > G.railR) continue;
+    ctx.save(); ctx.globalAlpha = a * (.4 + .6 * k); ctx.translate(x, y); ctx.scale(s, s);
+    ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 4; ctx.fillStyle = '#E9E4D8'; ticketPath(); ctx.fill(); ctx.shadowBlur = 0;
+    txt('#' + t.off, 4, 15, `700 12px ${MONO}`, '#1D1B18');
+    emoji(t.e, G.TW / 2, G.TH / 2 + 8, 20);
+    ctx.restore();
   }
 }
 
@@ -2547,6 +2819,11 @@ function renderCtls() {
     .map(([v, l]) => `<button data-v="${v}" class="${(S.keys ? S.keyBy : 'none') === v ? 'on' : ''}" ${on ? '' : 'disabled'}>${l}</button>`).join('')}</div></div>`;
   if (c.commit) h += `<div class="knob" id="commitK"><label><span>Move the clip</span></label><div class="seg" id="commit">${[['grab', '🤖 auto (on grab)'], ['plate', '✋ after plating']]
     .map(([v, l]) => `<button data-v="${v}" class="${S.commit === v ? 'on' : ''}">${l}</button>`).join('')}</div></div>`;
+  if (c.ret) h += `<div class="knob" id="retK"><label><span>${save.xray ? 'retention.ms' : 'Keep tickets'}</span></label><div class="seg" id="ret">${[['short', '⏱ 10 seconds'], ['long', '⏱ 1 minute']]
+    .map(([v, l]) => `<button data-v="${v}" class="${S.ret === v ? 'on' : ''}" ${on ? '' : 'disabled'}>${l}</button>`).join('')}</div></div>`;
+  if (c.acks) h += `<div class="knob" id="acksK"><label><span>${save.xray ? 'Producer acks' : 'Waiter says it’s in'}</span></label><div class="seg" id="acks">${[['1', '⚡ once it’s clipped'], ['all', '✅ once it’s copied']]
+    .map(([v, l]) => `<button data-v="${v}" class="${S.rep.acks === v ? 'on' : ''}" ${on ? '' : 'disabled'}>${l}</button>`).join('')}</div></div>`;
+  if (c.fall) h += `<sakuga-button variant="secondary" class="skb" id="fall" ${on && S.rep.up && !S.rep.arm ? '' : 'disabled'}>💥 ${S.rep.arm ? 'Waiting for the worst moment…' : S.rep.up ? 'Drop the main rail<small>at the worst moment</small>' : 'Hanging the rail back up…'}</sakuga-button>`;
   if (c.trip) h += `<sakuga-button variant="secondary" class="skb" id="trip" ${on && !S.tripArm && crew.length > 1 ? '' : 'disabled'}>💥 ${S.tripArm ? 'Waiting for the worst moment…' : c.trip === 'worst' ? 'Trip the chef<small>at the worst moment</small>' : 'Trip a chef'}</sakuga-button>`;
   if (c.leave) h += `<sakuga-button variant="secondary" class="skb" id="leave" ${on && crew.length > 1 ? '' : 'disabled'}>👋 Clock out a chef<small>the proper way</small></sakuga-button>`;
   h += `<div class="row trow"><div class="seg" id="speed" aria-label="Speed">${[[.5, '🐢 Slow'], [1, '🐇 Normal']]
@@ -2563,16 +2840,19 @@ function renderCtls() {
   if ($('#trip')) $('#trip').onclick = tripChef;
   if ($('#leave')) $('#leave').onclick = clockOut;
   $('#commit')?.querySelectorAll('button').forEach(b => b.onclick = () => setCommit(b.dataset.v));
+  $('#ret')?.querySelectorAll('button').forEach(b => b.onclick = () => setRet(b.dataset.v));
+  $('#acks')?.querySelectorAll('button').forEach(b => b.onclick = () => setAcks(b.dataset.v));
+  if ($('#fall')) $('#fall').onclick = dropRail;
   $('#keyBy')?.querySelectorAll('button').forEach(b => b.onclick = () => setKey(b.dataset.v));
   $('#speed').querySelectorAll('button').forEach(b => b.onclick = () => { S.speed = save.speed = +b.dataset.v; persist(); renderCtls() });
   $('#pause').onclick = togglePause;
   $('#restart').onclick = () => load(S.lvl);
   document.querySelectorAll('#xray.glow,#codebtn.glow').forEach(el => el.classList.remove('glow'));
   const g = S.phase === 'wait' && STEP().btn;
-  if (g) $({'#rate': '#rateK', '#commit': '#commitK', '#keyBy': '#keyK'}[g] || g)?.classList.add('glow');
+  if (g) $({'#rate': '#rateK', '#commit': '#commitK', '#keyBy': '#keyK', '#ret': '#retK', '#acks': '#acksK'}[g] || g)?.classList.add('glow');
   // lock every action that isn't this step's job (speed, pause, restart and "next lesson" stay usable)
-  const gt = gate(), wrap = {'#rate': 'rateK', '#commit': 'commitK', '#keyBy': 'keyK'}, allowed = gt.btn ? (wrap[gt.btn] || gt.btn.slice(1)) : null;
-  for (const id of ['rateK', 'hire', 'open', 'addrail', 'aud', 'trip', 'leave', 'commitK', 'keyK'])
+  const gt = gate(), wrap = {'#rate': 'rateK', '#commit': 'commitK', '#keyBy': 'keyK', '#ret': 'retK', '#acks': 'acksK'}, allowed = gt.btn ? (wrap[gt.btn] || gt.btn.slice(1)) : null;
+  for (const id of ['rateK', 'hire', 'open', 'addrail', 'aud', 'trip', 'leave', 'commitK', 'keyK', 'retK', 'acksK', 'fall'])
     $('#' + id)?.classList.toggle('locked', !gt.all && id !== allowed);
   $('#ctls').querySelectorAll('.crew').forEach(el => el.classList.toggle('locked', !gt.all));
   renderNow();
@@ -2889,9 +3169,24 @@ function codeFiles() {
     ['async function takeOrder(order) {'],
     ['  await waiter.send({', 'send'],
     [S.stations.length > 1 ? "    topic: order.isDessert ? 'desserts' : 'mains'," : "    topic: 'mains',", 'send'],
+    ...(S.rep ? [[S.rep.acks === 'all' ? '    acks: -1,  // all in-sync copies   ← click to flip' : '    acks: 1,   // leader only        ← click to flip', 'acks', 'acks']] : []),
     [S.keys ? `    messages: [{ key: order.${S.keyBy}, value: order }],` : '    messages: [{ value: order }],', S.keys ? 'send key' : 'send'],
     ['  })'],
     ['}'],
+  ]]);
+  if (S.ret || S.rep) files.push(['topic.js', 'admin', [
+    ['await admin.createTopics({ topics: [{'],
+    ["  topic: 'mains',"],
+    ...(S.rep ? [
+      ['  replicationFactor: 2,  // main rail + copy rail', 'copy'],
+      ["  configEntries: [{ name: 'min.insync.replicas', value: '1' }],", 'acks'],
+    ] : [
+      ['  configEntries: [{', 'retention'],
+      [`    name: 'retention.ms', value: '${RET[S.ret] * 1000}'  // ← click to flip`, 'retention', 'ret'],
+      ['  }],', 'retention'],
+    ]),
+    ['}] })'],
+    ...(S.rep ? [[''], ['// broker down → an in-sync follower is elected leader', 'leader']] : []),
   ]]);
   if (c.rails) files.push(['manager.js', 'admin', [
     ['// the ＋ Add a rail button'],
@@ -2963,7 +3258,10 @@ function codeFiles() {
     [`// ${S.aud.on ? 'running' : 'stopped: her offsets stay saved in Kafka'}`],
     ["const auditor = kafka.consumer({ groupId: 'billing' })"],
     ["await auditor.subscribe({"],
-    ["  topics: ['mains'], fromBeginning: true })"],
+    ...(S.ret ? [
+      ["  topics: ['mains'],", 'reset'],
+      ['  fromBeginning: true })  // no offset, or out of range → earliest', 'reset'],
+    ] : [["  topics: ['mains'], fromBeginning: true })"]]),
     ['await auditor.run({'],
     ['  eachMessage: async ({ message }) => {', 'audit'],
     ['    await books.record(JSON.parse(message.value))', 'audit'],
@@ -2991,6 +3289,8 @@ function renderCode() {
     if (!S.started) return;
     if (el.dataset.act === 'commit') setCommit(S.commit === 'grab' ? 'plate' : 'grab');
     if (el.dataset.act === 'rails') addRail();
+    if (el.dataset.act === 'ret') setRet(S.ret === 'short' ? 'long' : 'short');
+    if (el.dataset.act === 'acks') setAcks(S.rep.acks === '1' ? 'all' : '1');
   });
   fitCode(); focusCode();
 }
@@ -3023,6 +3323,8 @@ const CODE_FOCUS = {
   'A second reader': 'audit', 'Everyone gets everything': 'audit handle',
   'Clip first, cook later': 'commit-mode commit', 'A vanished order': 'commit cook', 'Clip after plating': 'commit-mode commit', 'Two plates, one order': 'serve commit',
   'Nobody noticed': 'session', 'Noticed': 'session rebalance', 'Clocking out properly': 'leave',
+  'Into the bin': 'retention', 'A new reader': 'reset audit', 'She steps out': 'retention', 'Gone for good': 'reset', 'Keep them longer': 'retention',
+  'A copy of every ticket': 'copy', 'Only copied tickets': 'copy handle', 'The main rail falls': 'leader acks', 'Wait for the copy': 'acks', 'It falls again': 'leader send', 'Back on the wall': 'copy',
 };
 function focusCode() {
   if (!save.code) return;
